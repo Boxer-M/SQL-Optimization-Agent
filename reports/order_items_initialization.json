@@ -1,0 +1,65 @@
+{
+  "measured_at_utc": "2026-11-18T13:10:00.414601+00:00",
+  "orders_before": {
+    "rows": 300005,
+    "fingerprint": "755ed4545855a8702c74eac1ebe27719"
+  },
+  "load_1": {
+    "psql_output": [
+      "BEGIN",
+      "DO",
+      "CREATE TABLE",
+      "LOCK TABLE",
+      "LOCK TABLE",
+      "SELECT 400008",
+      "DO",
+      "INSERT 0 400008",
+      "CREATE INDEX",
+      "GRANT",
+      "ANALYZE",
+      "COMMIT"
+    ],
+    "items": {
+      "rows": 400008,
+      "distinct_item_ids": 400008,
+      "null_order_ids": 0,
+      "fingerprint": "2f7de529b3db348683840cd6d113e582"
+    },
+    "orders": {
+      "rows": 300005,
+      "fingerprint": "755ed4545855a8702c74eac1ebe27719"
+    }
+  },
+  "load_2": {
+    "psql_output": [
+      "BEGIN",
+      "DO",
+      "CREATE TABLE",
+      "LOCK TABLE",
+      "LOCK TABLE",
+      "SELECT 400008",
+      "DO",
+      "INSERT 0 0",
+      "CREATE INDEX",
+      "GRANT",
+      "ANALYZE",
+      "COMMIT"
+    ],
+    "items": {
+      "rows": 400008,
+      "distinct_item_ids": 400008,
+      "null_order_ids": 0,
+      "fingerprint": "2f7de529b3db348683840cd6d113e582"
+    },
+    "orders": {
+      "rows": 300005,
+      "fingerprint": "755ed4545855a8702c74eac1ebe27719"
+    }
+  },
+  "reader_permissions": {
+    "select": true,
+    "writes": false,
+    "owner": "sql_optimization_admin",
+    "schema_create": false
+  }
+}

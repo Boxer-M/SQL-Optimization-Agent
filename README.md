@@ -110,7 +110,7 @@ SQL
 
 ## 应用只读账号
 
-初始化账号仅用于管理数据库。应用账号 `sql_optimization_reader` 仅获授数据库 `CONNECT`、`public` schema 的 `USAGE` 和 `public.orders` 的 `SELECT`，不拥有业务表，不加入其他角色，也不授予后续新表的默认权限。请先装载订单数据集。
+初始化账号仅用于管理数据库。应用账号 `sql_optimization_reader` 初始仅获授数据库 `CONNECT`、`public` schema 的 `USAGE` 和 `public.orders` 的 `SELECT`，不拥有业务表，不加入其他角色，也不授予后续新表的默认权限。请先装载订单数据集。加载下述明细数据集时，会单独额外授予 `public.order_items` 的 `SELECT`，不会扩大为所有表权限。
 
 在项目根目录执行以下命令：补齐 `.env` 中的只读账号与随机密码，保留已有配置，并创建角色。密码不会写入 SQL、命令参数或输出；Python 在内存中生成 PostgreSQL SCRAM-SHA-256 校验值，通过环境变量传给容器内的 psql。已有同名数据库角色时脚本会停止并回滚，必须先人工核查用途、权限和凭据，不会重设其密码或权限。
 
@@ -471,4 +471,80 @@ SQL_OPTIMIZATION_MODEL_FIXTURE=wrong-upper .venv/bin/python scripts/call_optimiz
 GitHub Actions 的远端运行结果需在创建本 PR 后确认；仅推送功能分支不会触发当前配置的工作流。
 
 接口日期扩展的本地验收：50 项 pytest 测试通过（另含 11 个子测试）。实际 loopback HTTP 服务与 stdio MCP 均以可控建议连接本地 PostgreSQL：省略日期时为 `2025-06-15`、825/825 行，显式 `2025-06-16` 时为 823/823 行，完整结果比较通过；`2025-02-29` 分别返回 HTTP 400 和 MCP 工具参数错误，模型请求数均为 0。该轮未调用真实千问。
+
+## 订单明细数据与 JOIN/EXISTS 固定基准
+
+本节仅提供可复现数据及独立验收脚本，尚未接入公共服务、Agent CLI 场景或千问。复用现有 Compose 数据库、`.env`、初始化账号和应用只读账号，不创建新容器或数据卷。
+
+### 初始化与重复装载
+
+前提：已按前文创建 `public.orders`、装载订单并配置 `sql_optimization_reader`。在项目根目录执行：
+
+```sh
+docker compose up -d --wait
+docker compose exec -T postgres sh -c 'PGPASSWORD="$POSTGRES_PASSWORD" psql -h 127.0.0.1 -U "$POSTGRES_USER" -d "$POSTGRES_DB" -w -v ON_ERROR_STOP=1' < sql/seed_order_items.sql
+# 再执行同一命令，验证重复装载
+docker compose exec -T postgres sh -c 'PGPASSWORD="$POSTGRES_PASSWORD" psql -h 127.0.0.1 -U "$POSTGRES_USER" -d "$POSTGRES_DB" -w -v ON_ERROR_STOP=1' < sql/seed_order_items.sql
+```
+
+脚本创建 `public.order_items(item_id bigint PRIMARY KEY, order_id bigint NOT NULL REFERENCES public.orders(order_id), line_number smallint NOT NULL)`，明细行号限制为 1–3；创建 `order_items_order_id_idx` 原列 B-tree 索引，单独授予现有应用账号 SELECT，并执行 `ANALYZE public.order_items`。不会修改账号密码、订单行、现有数据卷或其他表授权。
+
+仅对原有种子订单主键 `1–300000` 和 `900001–900005` 造数：`order_id % 3` 为 0、1、2 时分别生成 0、1、3 条明细，`item_id = order_id * 10 + line_number`。重复执行只补齐缺失记录；主键内容冲突时报错并回滚，不覆盖或删除已有数据。额外既有明细也会保留，因此有额外数据的库应比较实际前后行数，而不能强制要求固定总数。
+
+本轮真实装载记录在 `reports/order_items_initialization.json`：两次均为 **400008** 行，第二次新增 0 行；明细内容指纹一致。原有 **300005** 条订单的行数与完整行内容聚合指纹在两次装载前后均一致。实际核查外键已验证、`order_id` 为 `bigint NOT NULL`，无空关联或孤儿明细；表所有者仍为初始化账号，应用账号仅获得 SELECT，无写权限或 schema CREATE 权限。
+
+### 两条固定 SQL 与验收
+
+```sql
+-- JOIN + COUNT(DISTINCT)
+SELECT COUNT(DISTINCT o.order_id) AS order_count
+FROM public.orders AS o
+JOIN public.order_items AS i ON i.order_id = o.order_id
+WHERE o.created_at >= TIMESTAMP '2025-06-15 00:00:00'
+  AND o.created_at <  TIMESTAMP '2025-06-16 00:00:00';
+
+-- EXISTS + COUNT(*)
+SELECT COUNT(*) AS order_count
+FROM public.orders AS o
+WHERE o.created_at >= TIMESTAMP '2025-06-15 00:00:00'
+  AND o.created_at <  TIMESTAMP '2025-06-16 00:00:00'
+  AND EXISTS (
+      SELECT 1 FROM public.order_items AS i WHERE i.order_id = o.order_id
+  );
+```
+
+使用独立验收脚本复现（内部使用绑定参数，不接受外部 SQL 或场景输入）：
+
+```sh
+.venv/bin/python scripts/benchmark_order_items.py > /tmp/order-items-benchmark.json
+.venv/bin/python -m pytest -q
+```
+
+脚本使用 `.env` 中的应用只读凭据，在同一个 REPEATABLE READ 只读事务内：统计明细和三类订单 → 比较 JOIN DISTINCT 与 EXISTS 的完整订单 ID 结果及双向差集 → 核对计数 → 各预热一次、严格交替采样各 7 次。ID 比较沿用 10000 行/16 MiB 的取数预算、5 秒语句超时及 30 秒取数预算；不一致或超预算不会进入计时。仅计数相同并不足以通过，测试专门验证了“计数相同但一进一出”的 ID 差异会被拦截。
+
+使用 `EXPLAIN (ANALYZE, BUFFERS, TIMING OFF, FORMAT JSON)`，不强制连接方式、索引或关闭顺序扫描。报告保留全部两组 ID、双向差集、计数、14 个原始耗时、自然计划条件、缓冲区访问、Join Type、Heap Fetches 与排序信息。父子节点的缓冲区指标不能重复相加。
+
+本轮实测结果见 `reports/order_items_benchmark.json`：数据库 PostgreSQL 16.15，账号 `sql_optimization_reader`，事务只读且隔离级别为 repeatable read。
+
+| 数据覆盖 | 实测数量 |
+| --- | ---: |
+| 全库明细行数 | 400008 |
+| 2025-06-15 订单数 | 825 |
+| 零条明细订单 | 274 |
+| 一条明细订单 | 275 |
+| 多条明细订单（各 3 条） | 276 |
+| 当日关联明细行数 | 1103 |
+| 两侧纳入的订单 ID 数 / 最终计数 | 551 / 551 |
+| JOIN − EXISTS / EXISTS − JOIN | 0 / 0 |
+
+| 性能指标 | JOIN + COUNT(DISTINCT) | EXISTS + COUNT(*) |
+| --- | --- | --- |
+| 自然计划 | Aggregate → Sort → Nested Loop (Inner) | Aggregate → Nested Loop (Semi) |
+| 扫描 | orders Index Scan + order_items Index Only Scan | 相同的两个索引扫描 |
+| 索引 | orders_created_at_idx、order_items_order_id_idx | 相同 |
+| 7 次执行时间（ms） | 0.541, 0.505, 0.531, 0.526, 0.560, 0.554, 0.538 | 0.486, 0.419, 0.424, 0.444, 0.443, 0.433, 0.433 |
+| 中位数（ms） | 0.538 | 0.433 |
+| 根节点 shared hit / read blocks | 每次 2492 / 0 | 每次 2492 / 0 |
+
+结论：**在本次测试数据上结果一致**，551 个实际订单 ID 完全相同，不仅是计数一致。EXISTS 中位耗时本次下降约 **19.52%**，绝对差只有 **0.105 ms**；这是本地热缓存的小样本，不应推断其他数据或负载也有相同收益。原查询需处理 1103 条关联行并排序去重，Semi Join 输出 551 笔订单。报告中 `original` 指 JOIN，`rewritten` 指 EXISTS。
 
