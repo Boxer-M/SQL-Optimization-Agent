@@ -1,9 +1,11 @@
 """Local stdio MCP interface; stdout is reserved for protocol messages."""
 
 import json
+from typing import Annotated
 
 from mcp.server.fastmcp import FastMCP
 from mcp.types import CallToolResult, TextContent, ToolAnnotations
+from pydantic import Field
 
 from sql_optimization_agent.service import ORDERS_DATE_SCENARIO, configured_service
 
@@ -13,9 +15,14 @@ def create_server(service=None) -> FastMCP:
     server = FastMCP("SQL Optimization Agent")
 
     @server.tool(annotations=ToolAnnotations(readOnlyHint=True, openWorldHint=True))
-    def optimize_orders_date(scenario: str = ORDERS_DATE_SCENARIO) -> CallToolResult:
-        """Optimize only orders_date_filter_2025_06_15; arbitrary SQL is not accepted."""
-        report = service.optimize(scenario)
+    def optimize_orders_date(
+        scenario: str = ORDERS_DATE_SCENARIO,
+        date: Annotated[str | None, Field(description="Optional YYYY-MM-DD calendar date; omission uses the public service default")] = None,
+    ) -> CallToolResult:
+        """Optimize the supported orders scenario for an optional date; arbitrary SQL is not accepted."""
+        report = service.optimize(scenario, date=date)
+        if report["status"] == "invalid_date":
+            report = {**report, "error": {"type": "invalid_tool_argument", "parameter": "date"}}
         return CallToolResult(
             content=[TextContent(type="text", text=json.dumps(report, ensure_ascii=False))],
             structuredContent=report,

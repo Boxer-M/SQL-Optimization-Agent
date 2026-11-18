@@ -384,7 +384,7 @@ WHERE created_at >= %s::timestamp without time zone
 
 日期必须为严格的 `YYYY-MM-DD`，且能计算次日。默认值只在公共服务 `DEFAULT_ORDER_DATE` 定义；旧场景标识保持兼容，不再从标识中提取日期。`orders.created_at` 已确认是允许 NULL 的 `timestamp without time zone`，因此按无时区日历日生成 `[当天零点, 次日零点)`，不使用 UTC 或本机时区转换。提示词、可控响应、候选校验和报告共用此上下文；诊断、结果比较、原查询预热及全部计时使用同一份 SQL 模板与日期参数。旧的固定基准入口仍保留原日期回归用例。
 
-本轮只给 CLI 增加日期输入；HTTP 请求模型和 MCP 工具参数不变，省略日期仍由公共服务选择原默认值。报告以 `target_date` 和 `date_context` 记录实际日期。错误 `<=` 上界结构上允许进入验证，但在包含次日零点记录时由完整结果比较拒绝，并跳过计时。
+CLI、HTTP 请求体和 MCP 工具均支持可选日期，省略日期统一由公共服务选择原默认值，各适配层不重复定义默认日期或校验规则。报告以 `target_date` 和 `date_context` 记录实际日期。错误 `<=` 上界结构上允许进入验证，但在包含次日零点记录时由完整结果比较拒绝，并跳过计时。
 
 日期参数化的真实千问验收记录位于 `reports/qwen_date_2025_06_16_live.json`：以 `--date 2025-06-16` 请求 `qwen3.7-plus` 一次，候选边界为 `[2025-06-16 00:00:00, 2025-06-17 00:00:00)`，原查询和候选均为 823 行，在本次测试数据上结果一致。自然计划由 Parallel Seq Scan 变为 `orders_created_at_idx` Index Scan，中位数 `8.416 → 0.085 ms`；原查询样本波动较大，完整原始计时及缓冲区指标保留在报告中。该验收没有运行独立连通性探测或重试。
 
@@ -408,9 +408,17 @@ SQL_OPTIMIZATION_MODEL_FIXTURE=normal .venv/bin/python -m uvicorn sql_optimizati
 curl -sS http://127.0.0.1:8010/optimize \
   -H 'Content-Type: application/json' \
   -d '{"scenario":"orders_date_filter_2025_06_15"}'
+# 显式日期：报告 target_date=2025-06-16
+curl -sS http://127.0.0.1:8010/optimize \
+  -H 'Content-Type: application/json' \
+  -d '{"scenario":"orders_date_filter_2025_06_15","date":"2025-06-16"}'
+# 非法日期：预期 HTTP 400、status=invalid_date、model_requests=0
+curl -i http://127.0.0.1:8010/optimize \
+  -H 'Content-Type: application/json' \
+  -d '{"scenario":"orders_date_filter_2025_06_15","date":"2025-02-29"}'
 ```
 
-未知场景返回 HTTP 400 和 `unsupported_scenario`；缺少场景或额外传入 `sql` 等字段返回 422。支持场景的成功、无建议和候选拒绝均返回 HTTP 200，并由报告的 `status` 区分；配置、鉴权或服务异常等返回 503 及脱敏报告。测试模式只能由服务端启动环境选择，不能由请求体切换。服务启动后按 Ctrl-C 停止。
+`date` 是可选的 `YYYY-MM-DD` 字符串；省略或传 null 时使用公共服务默认日期 `2025-06-15`。非法日历日期由公共服务在模型调用前拒绝，映射为 HTTP 400 和 `invalid_date`。未知场景返回 HTTP 400 和 `unsupported_scenario`；缺少场景、日期类型错误或额外传入 `sql` 等字段返回 422。支持场景的成功、无建议和候选拒绝均返回 HTTP 200，并由报告的 `status` 区分；配置、鉴权或服务异常等返回 503 及脱敏报告。测试模式只能由服务端启动环境选择，不能由请求体切换。服务启动后按 Ctrl-C 停止。
 
 ### 本地 stdio MCP
 
@@ -428,23 +436,27 @@ stdio 服务启动命令如下，stdout 仅用于 MCP 协议：
 .venv/bin/python scripts/call_optimization_mcp.py
 # 可控模型建议 + 真实 PostgreSQL
 SQL_OPTIMIZATION_MODEL_FIXTURE=normal .venv/bin/python scripts/call_optimization_mcp.py
+# 显式日期
+SQL_OPTIMIZATION_MODEL_FIXTURE=normal .venv/bin/python scripts/call_optimization_mcp.py --date 2025-06-16
+# 非法日期：预期工具参数错误和退出码 1，模型请求数为 0
+SQL_OPTIMIZATION_MODEL_FIXTURE=normal .venv/bin/python scripts/call_optimization_mcp.py --date 2025-02-29
 # 复现错误上界拒绝；预期退出码为 1
 SQL_OPTIMIZATION_MODEL_FIXTURE=wrong-upper .venv/bin/python scripts/call_optimization_mcp.py
 ```
 
-工具名为 `optimize_orders_date`，调用参数为：
+工具名为 `optimize_orders_date`，参数 `date` 是可选的 `YYYY-MM-DD` 字符串，省略或传 null 时使用公共服务默认日期。显式调用参数为：
 
 ```json
-{"scenario":"orders_date_filter_2025_06_15"}
+{"scenario":"orders_date_filter_2025_06_15","date":"2025-06-16"}
 ```
 
-未知场景返回 `unsupported_scenario` 并设置 MCP `isError=true`；候选被拒绝或模型调用失败也会设置错误标记，同时保留 `structuredContent` 中的完整报告。MCP 使用官方 Python SDK 1.x 的 stdio 传输，示例客户端将发现信息写入 stderr，将结构化报告写入 stdout。参考 [MCP Python SDK](https://github.com/modelcontextprotocol/python-sdk/tree/v1.26.0)。
+非法日期返回 MCP `isError=true`，结构化报告包含 `status=invalid_date`、`error.type=invalid_tool_argument`、`error.parameter=date` 及 `model_requests=0`，不会调用模型。未知场景返回 `unsupported_scenario` 并设置 MCP `isError=true`；候选被拒绝或模型调用失败也会设置错误标记，同时保留 `structuredContent` 中的完整报告。MCP 使用官方 Python SDK 1.x 的 stdio 传输，示例客户端将发现信息写入 stderr，将结构化报告写入 stdout。参考 [MCP Python SDK](https://github.com/modelcontextprotocol/python-sdk/tree/v1.26.0)。
 
 ### CI 与本轮验收
 
 `.github/workflows/ci.yml` 在面向 `main` 的 PR 以及 `main` 更新时执行：Python 3.12 → 安装 `.[test]` → `pip check` → `pytest -q`。不配置数据库服务、不注入百炼密钥。测试使用可控模型响应及数据库边界替身，实际运行建议校验、完整结果比较、HTTP 适配和 MCP 协议；自动阻止意外真实 HTTP/数据库连接。另有真实 stdio 子进程的工具发现和未知场景调用测试，无需外部服务。
 
-本地 pytest 验收为 22 项通过（另含 11 个子测试），`pip check` 通过。Mac 上的 PostgreSQL 16 端到端记录保存在 `reports/interfaces_acceptance.json`，明确标注为可控模型建议 + 真实数据库测量：
+初版接口交付的 pytest 验收为 22 项通过（另含 11 个子测试），`pip check` 通过。Mac 上的 PostgreSQL 16 端到端记录保存在 `reports/interfaces_acceptance.json`，明确标注为可控模型建议 + 真实数据库测量：
 
 | 入口 | 结果行数 | 原查询/候选中位耗时（ms） | 自然计划 |
 | --- | --- | --- | --- |
@@ -457,4 +469,6 @@ SQL_OPTIMIZATION_MODEL_FIXTURE=wrong-upper .venv/bin/python scripts/call_optimiz
 本轮按原命令单独补跑了一次真实千问流程，报告为 `reports/qwen_live_interfaces.json`，与上一轮可控建议报告分别保留。请求次数为 1，在 `model_request` 阶段返回 `authentication_error`；没有得到实际模型 ID 或候选，也没有执行该次性能测试。需核查本地百炼密钥、地域和模型权限后再次运行；本轮未自动重试或修改密钥。
 
 GitHub Actions 的远端运行结果需在创建本 PR 后确认；仅推送功能分支不会触发当前配置的工作流。
+
+接口日期扩展的本地验收：50 项 pytest 测试通过（另含 11 个子测试）。实际 loopback HTTP 服务与 stdio MCP 均以可控建议连接本地 PostgreSQL：省略日期时为 `2025-06-15`、825/825 行，显式 `2025-06-16` 时为 823/823 行，完整结果比较通过；`2025-02-29` 分别返回 HTTP 400 和 MCP 工具参数错误，模型请求数均为 0。该轮未调用真实千问。
 
