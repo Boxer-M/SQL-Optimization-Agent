@@ -108,3 +108,88 @@ SQL
 
 再次运行装载命令及上述查询，确认总行数仍为 300005（有额外既存订单时，与第一次的实际总行数比较）。
 
+## 应用只读账号
+
+初始化账号仅用于管理数据库。应用账号 `sql_optimization_reader` 仅获授数据库 `CONNECT`、`public` schema 的 `USAGE` 和 `public.orders` 的 `SELECT`，不拥有业务表，不加入其他角色，也不授予后续新表的默认权限。请先装载订单数据集。
+
+在项目根目录执行以下命令：补齐 `.env` 中的只读账号与随机密码，保留已有配置，并创建角色。密码不会写入 SQL、命令参数或输出；Python 在内存中生成 PostgreSQL SCRAM-SHA-256 校验值，通过环境变量传给容器内的 psql。已有同名数据库角色时脚本会停止并回滚，必须先人工核查用途、权限和凭据，不会重设其密码或权限。
+
+```sh
+.venv/bin/python - <<'PY'
+from pathlib import Path
+import base64
+import hashlib
+import hmac
+import os
+import secrets
+import subprocess
+
+path = Path('.env')
+text = path.read_text()
+values = dict(line.split('=', 1) for line in text.splitlines()
+              if line and not line.startswith('#') and '=' in line)
+for key, default in [('POSTGRES_READER_USER', 'sql_optimization_reader'),
+                     ('POSTGRES_READER_PASSWORD', secrets.token_hex(32))]:
+    if not values.get(key):
+        if key in values:
+            text = text.replace(f'{key}=\n', f'{key}={default}\n')
+        else:
+            text = text.rstrip() + f'\n{key}={default}\n'
+        values[key] = default
+assert values['POSTGRES_READER_USER'] == 'sql_optimization_reader'
+path.write_text(text)
+path.chmod(0o600)
+salt = secrets.token_bytes(16)
+salted = hashlib.pbkdf2_hmac('sha256', values['POSTGRES_READER_PASSWORD'].encode(), salt, 4096)
+stored = hashlib.sha256(hmac.digest(salted, b'Client Key', 'sha256')).digest()
+server = hmac.digest(salted, b'Server Key', 'sha256')
+b64 = lambda value: base64.b64encode(value).decode()
+env = os.environ.copy()
+env['POSTGRES_READER_PASSWORD_VERIFIER'] = f'SCRAM-SHA-256$4096:{b64(salt)}${b64(stored)}:{b64(server)}'
+subprocess.run(['docker', 'compose', 'exec', '-T', '-e', 'POSTGRES_READER_PASSWORD_VERIFIER',
+                'postgres', 'sh', '-c',
+                'PGPASSWORD="$POSTGRES_PASSWORD" psql -h 127.0.0.1 -U "$POSTGRES_USER" '
+                '-d "$POSTGRES_DB" -w -v ON_ERROR_STOP=1'],
+               input=Path('sql/create_reader.sql').read_bytes(), env=env, check=True)
+PY
+```
+
+以下命令使用临时 `postgres:16` 客户端，经宿主机 `127.0.0.1:5434` 登录；需要 Docker Desktop 开启 host networking。客户端退出后自动删除，不改变数据库数据卷。若修改过 `.env` 的端口，命令会使用对应端口。密码仅通过环境传递，请勿启用 shell 的 `set -x`。
+
+```sh
+(
+  set -a
+  . ./.env
+  set +a
+  export PGPASSWORD="$POSTGRES_READER_PASSWORD"
+  docker run --rm -i --network host --env PGPASSWORD postgres:16 \
+    psql -h 127.0.0.1 -p "${POSTGRES_PORT:-5434}" \
+    -U "$POSTGRES_READER_USER" -d sql_optimization -w -v ON_ERROR_STOP=1 <<'SQL'
+SELECT current_database(), current_user;
+SELECT COUNT(*) FROM public.orders;
+SELECT has_database_privilege(current_user, current_database(), 'CONNECT') AS can_connect,
+       has_schema_privilege(current_user, 'public', 'USAGE') AS schema_usage,
+       has_schema_privilege(current_user, 'public', 'CREATE') AS schema_create,
+       has_table_privilege(current_user, 'public.orders', 'SELECT') AS can_select,
+       has_table_privilege(current_user, 'public.orders',
+           'INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER') AS has_write_or_other_grants;
+SELECT rolname, rolsuper, rolinherit, rolcreatedb, rolcreaterole, rolreplication, rolbypassrls
+FROM pg_roles WHERE rolname = current_user;
+SELECT count(*) AS role_memberships FROM pg_auth_members
+WHERE member = (SELECT oid FROM pg_roles WHERE rolname = current_user);
+SELECT tableowner FROM pg_tables WHERE schemaname = 'public' AND tablename = 'orders';
+SQL
+
+  # 显式事务用于保护意外成功的情况；无论 UPDATE 是否成功，均回滚。
+  docker run --rm -i --network host --env PGPASSWORD postgres:16 \
+    psql -h 127.0.0.1 -p "${POSTGRES_PORT:-5434}" \
+    -U "$POSTGRES_READER_USER" -d sql_optimization -w <<'SQL'
+BEGIN;
+UPDATE public.orders SET status = status WHERE FALSE;
+ROLLBACK;
+SQL
+)
+```
+
+预期数据库为 `sql_optimization`、用户为 `sql_optimization_reader`、订单数为 `300005`；CONNECT、USAGE、SELECT 为真，schema CREATE 和表写入等其他授权为假；角色管理属性均为假、角色成员关系为 0、表所有者仍为初始化账号。UPDATE 必须返回 `permission denied for table orders`，不能仅依赖事务只读设置或 `WHERE FALSE`。若 UPDATE 意外成功，停止使用该账号，核查实际授权并修正后重新验收。
+
