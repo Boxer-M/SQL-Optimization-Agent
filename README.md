@@ -296,3 +296,61 @@ WHERE created_at >= TIMESTAMP '2025-06-15 00:00:00'
 
 错误 `<=` 用例返回 826 行，额外纳入 `(10003, 2025-06-16 00:00:00, pending, 345.67)`，已拒绝进行该 SQL 对的性能测试。NULL 创建时间在三个条件下均不命中；原有重复行按出现次数保留。实际验证了行数与字节预算超限会停止，且不进入性能采样。
 
+## 千问优化与命令行编排
+
+本模块仅支持现有订单日期过滤场景，原 SQL 固定为前述 `created_at::date = DATE '2025-06-15'`。流程为：Schema Inspector 读取字段及索引 → 获取原 SQL 的估算计划（不执行 ANALYZE）→ 一次模型请求 → 校验结构化范围建议 → 应用构造绑定参数的候选 → 同一只读快照完整结果比较 → 仅对一致候选预热和交替采样。
+
+### 本地模型配置
+
+在被 Git 忽略的项目根目录 `.env` 中填写以下变量。`.env.example` 只提供空密钥和占位值，不要将实际密钥写进模板、报告或命令行参数。
+
+```dotenv
+QWEN_API_KEY=<在本地填写百炼密钥>
+QWEN_BASE_URL=https://<workspace-id>.cn-beijing.maas.aliyuncs.com/compatible-mode/v1
+QWEN_MODEL=<百炼中已开通的模型ID>
+```
+
+建议先使用截图中可见的通用文本模型 `qwen3.7-plus`。北京业务空间专属 endpoint 如上，将 `<workspace-id>` 替换为业务空间 ID；北京旧地址 `https://dashscope.aliyuncs.com/compatible-mode/v1` 仍可使用。本轮已在本地 `.env` 预填该旧地址和建议模型，只保留 `QWEN_API_KEY` 为空。API Key 和 endpoint 必须属于同一地域，模型须在你的账号中可调用；免费额度与“用完即停”设置以控制台为准。参考[百炼 OpenAI 兼容接口文档](https://help.aliyun.com/zh/model-studio/compatibility-of-openai-with-dashscope)。
+
+千问只接收原 SQL、表字段/索引摘要、估算计划摘要，不接收数据库凭据或业务行。程序不输出 HTTP 响应原始错误、认证头或连接串，报告还会脱敏已知本地密钥。连接超时 5 秒，HTTP 读写等待超时 30 秒，响应上限 64 KiB；每次优化最多一次 HTTP POST，不自动重试、重定向或发起格式修复请求。报告明确区分缺配置、鉴权、额度/限流、超时、格式错误、无建议和结果不一致等状态。
+
+### 运行与报告
+
+```sh
+.venv/bin/python -m pip install -e .
+.venv/bin/python -m pip check
+# 真实千问调用；先在 .env 中填写有效配置
+.venv/bin/python scripts/optimize_orders.py > /tmp/qwen-orders-live.json
+# 无需模型密钥的可控响应；这些命令仍实际访问 PostgreSQL
+.venv/bin/python scripts/optimize_orders.py --fixture normal > /tmp/qwen-orders-normal.json
+.venv/bin/python scripts/optimize_orders.py --fixture malformed > /tmp/qwen-orders-malformed.json
+.venv/bin/python scripts/optimize_orders.py --fixture wrong-upper > /tmp/qwen-orders-wrong-upper.json
+.venv/bin/python scripts/optimize_orders.py --fixture no-suggestion > /tmp/qwen-orders-no-suggestion.json
+.venv/bin/python -m unittest discover -s tests -v
+```
+
+成功或无建议退出码为 0；配置阻塞、格式错误和结果不一致退出码为 1，同时仍输出有原因的 JSON 报告。原有 `scripts/benchmark_orders.py` 入口保持可运行，不调用模型。
+
+建议格式仅允许 `action=date_range`、`start`、`end`、两个包含性布尔值及 `reason`；也允许仅含 `action=no_suggestion` 与 `reason` 的对象。当前只接受 2025-06-15 零点至 2025-06-16 零点的无时区时间边界，拒绝额外字段、原始 SQL、未知操作、重复 JSON 键、非布尔标记和不支持的范围。包含性标记仅用于在应用预定义的比较操作符之间选择；即使结构合法，也必须通过数据库结果验证。候选固定使用 `public.orders` 和四个投影列，时间值通过 psycopg 参数绑定：
+
+```sql
+SELECT customer_id, created_at, status, amount
+FROM public.orders
+WHERE created_at >= %s::timestamp without time zone
+  AND created_at < %s::timestamp without time zone
+```
+
+绑定参数为 `2025-06-15 00:00:00`、`2025-06-16 00:00:00`，不会执行模型返回的文本。比较沿用 10000 行/16 MiB 取数预算、5 秒语句超时、30 秒取数时间预算；性能测量沿用各预热一次、交替各 7 次的自然计划方法。报告包含来源、实际模型 ID、收到的原始内容和结构化建议、候选模板与参数、比较结果、扫描条件、14 个原始样本、缓冲区指标及中位数。诊断连接在模型等待期间关闭；结果比较和性能测试另在同一个 REPEATABLE READ 只读事务内执行。
+
+### 本轮实测来源
+
+| 报告 | 模型来源 | 真实 PostgreSQL 验收结果 |
+| --- | --- | --- |
+| `reports/qwen_normal.json` | 可控正常建议，没有调用千问 | 825/825 行，在本次测试数据上结果一致；Parallel Seq Scan → `orders_created_at_idx` Index Scan |
+| `reports/qwen_malformed.json` | 可控格式错误 | 拒绝建议，不执行候选和性能测量 |
+| `reports/qwen_wrong-upper.json` | 可控错误上界 | 825/826 行，多出次日零点记录；不进行性能测量 |
+| `reports/qwen_no-suggestion.json` | 可控无建议 | 正常结束，无候选和性能测量 |
+| `reports/qwen_live.json` | 真实模式入口，但未发起请求 | `missing_config`：缺少 `QWEN_API_KEY`，HTTP 请求次数为 0 |
+
+正常可控建议的真实数据库样本（毫秒）：原查询 `[8.239, 7.556, 7.056, 7.289, 6.557, 6.670, 6.936]`；候选 `[0.085, 0.078, 0.071, 0.062, 0.056, 0.061, 0.067]`。中位数为 `7.056 → 0.067 ms`，耗时变化约 `-99.05%`。两组极差均未超过中位数的 50%，但仍只是本地热缓存的小样本观察，不能视为真实千问调用结果或通用性能保证。
+

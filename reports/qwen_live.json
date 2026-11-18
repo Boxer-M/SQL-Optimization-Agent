@@ -1,0 +1,78 @@
+{
+  "source": "live_qwen",
+  "fixture": null,
+  "requested_model": "qwen3.7-plus",
+  "measured_at_utc": "2026-11-18T06:07:32.650828+00:00",
+  "model_requests": 0,
+  "benchmark": null,
+  "diagnostic_context": {
+    "scenario": "orders_date_filter_2025_06_15",
+    "original_sql": "SELECT customer_id, created_at, status, amount\nFROM public.orders\nWHERE created_at::date = DATE '2025-06-15'",
+    "table": {
+      "schema": "public",
+      "table": "orders",
+      "columns": [
+        {
+          "name": "order_id",
+          "data_type": "bigint",
+          "nullable": false
+        },
+        {
+          "name": "customer_id",
+          "data_type": "integer",
+          "nullable": false
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp without time zone",
+          "nullable": true
+        },
+        {
+          "name": "status",
+          "data_type": "text",
+          "nullable": false
+        },
+        {
+          "name": "amount",
+          "data_type": "numeric(12,2)",
+          "nullable": false
+        }
+      ],
+      "primary_key": [
+        "order_id"
+      ],
+      "indexes": [
+        {
+          "name": "orders_created_at_idx",
+          "definition": "CREATE INDEX orders_created_at_idx ON public.orders USING btree (created_at)"
+        },
+        {
+          "name": "orders_pkey",
+          "definition": "CREATE UNIQUE INDEX orders_pkey ON public.orders USING btree (order_id)"
+        }
+      ]
+    },
+    "estimated_plan": [
+      {
+        "Node Type": "Gather",
+        "Parallel Aware": false,
+        "Startup Cost": 1000.0,
+        "Total Cost": 6510.1,
+        "Plan Rows": 1500,
+        "Plan Width": 27
+      },
+      {
+        "Node Type": "Seq Scan",
+        "Parallel Aware": true,
+        "Relation Name": "orders",
+        "Startup Cost": 0.0,
+        "Total Cost": 5360.1,
+        "Plan Rows": 882,
+        "Plan Width": 27,
+        "Filter": "((created_at)::date = '2025-06-15'::date)"
+      }
+    ]
+  },
+  "status": "missing_config",
+  "reason": "Missing Qwen configuration: QWEN_API_KEY"
+}
