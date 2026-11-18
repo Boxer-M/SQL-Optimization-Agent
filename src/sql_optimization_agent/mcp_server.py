@@ -16,17 +16,17 @@ def create_server(service=None) -> FastMCP:
 
     @server.tool(annotations=ToolAnnotations(readOnlyHint=True, openWorldHint=True))
     def optimize_orders_date(
-        scenario: str = ORDERS_DATE_SCENARIO,
+        scenario: Annotated[str, Field(description="orders_date_filter_2025_06_15 or orders_with_items_count")] = ORDERS_DATE_SCENARIO,
         date: Annotated[str | None, Field(description="Optional YYYY-MM-DD calendar date; omission uses the public service default")] = None,
     ) -> CallToolResult:
-        """Optimize the supported orders scenario for an optional date; arbitrary SQL is not accepted."""
+        """Optimize either supported orders scenario for an optional date using server-side model settings."""
         report = service.optimize(scenario, date=date)
         if report["status"] == "invalid_date":
             report = {**report, "error": {"type": "invalid_tool_argument", "parameter": "date"}}
         return CallToolResult(
             content=[TextContent(type="text", text=json.dumps(report, ensure_ascii=False))],
             structuredContent=report,
-            isError=report["status"] not in ("completed", "no_suggestion"),
+            isError=report["status"] not in ("completed", "no_suggestion", "no_rewrite"),
         )
 
     return server
