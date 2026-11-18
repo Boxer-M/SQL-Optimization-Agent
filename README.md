@@ -251,3 +251,48 @@ PY
 
 schema 和表名必须显式传入，按数据库中真实名称精确匹配，不受 `search_path` 影响；通过参数绑定查询系统目录，不将输入拼接进 SQL。不存在的目标抛出带 schema、表名的 `TableNotFoundError`。支持普通表、分区表和外部表；本入口不将视图视为表，不读取业务行或统计信息。
 
+## SQL 优化验证与性能基准
+
+在项目根目录、数据库运行且 `.env` 已配置只读账号时执行：
+
+```sh
+.venv/bin/python scripts/benchmark_orders.py
+# 保存新报告而不覆盖仓库中本轮的实测报告：
+.venv/bin/python scripts/benchmark_orders.py > /tmp/orders-date-benchmark.json
+# 不连接数据库的比较逻辑测试：
+.venv/bin/python -m unittest discover -s tests -v
+```
+
+入口不接受任何参数或外部 SQL，仅运行代码内固定查询。两条查询都投影 `customer_id, created_at, status, amount`，比较以下条件：
+
+```sql
+-- 原查询
+WHERE created_at::date = DATE '2025-06-15'
+-- 正确改写：左闭右开
+WHERE created_at >= TIMESTAMP '2025-06-15 00:00:00'
+  AND created_at < TIMESTAMP '2025-06-16 00:00:00'
+-- 固定负向用例：错误包含次日零点
+WHERE created_at >= TIMESTAMP '2025-06-15 00:00:00'
+  AND created_at <= TIMESTAMP '2025-06-16 00:00:00'
+```
+
+验证复用 `db.readonly_connection`，在同一 REPEATABLE READ 只读事务快照中比较列名、PostgreSQL 类型 OID、长度、精度和小数位，以及完整结果的整行值和出现次数。内部保留 `None`、`datetime` 和 `Decimal`，不按集合去重、不转换成浮点数。差异示例在 JSON 中用带类型标记的时间和 Decimal 展示，NULL 保持 JSON null。
+
+取数使用服务端游标，每批最多 256 行。每条查询最多 10000 行、16 MiB 的逐行 pickle 序列化大小（不是 Python 堆内存的精确上限），取数阶段总预算为 30 秒；每条数据库语句超时为 5 秒。超预算或超时会停止并报出原因，不继续性能测试；列或结果不一致时报告差异并跳过该 SQL 对的性能测试。固定负向用例必须检出差异。
+
+仅对一致的查询对各预热一次，随后严格按原查询、改写查询交替采样，各 7 次。使用 `EXPLAIN (ANALYZE, BUFFERS, TIMING OFF, FORMAT JSON)`，保留自然规划器设置，不禁用顺序扫描或强制索引。输出 14 个原始执行时间、每组中位数、耗时变化百分比、计划节点及条件、每次采样的缓冲区指标。指标为 PostgreSQL 服务端 EXPLAIN 执行时间，不包含向 Python 传输全部业务结果的耗时。父节点缓冲区指标包含子节点，不应重复相加。
+
+本轮实测报告保存在 `reports/orders_date_benchmark.json`：
+
+| 项目 | 原查询 | 正确改写 |
+| --- | --- | --- |
+| 命中行数 | 825 | 825 |
+| 自然计划 | Gather → Parallel Seq Scan | Index Scan，`orders_created_at_idx` |
+| 7 次执行时间（毫秒） | 13.589, 9.838, 8.081, 7.451, 7.560, 6.969, 7.052 | 0.119, 0.079, 0.062, 0.073, 0.063, 0.054, 0.057 |
+| 中位数（毫秒） | 7.560 | 0.063 |
+| 根节点 shared hit/read blocks（各次均相同） | 2713 / 0 | 16 / 0 |
+
+结论：**在本次测试数据上结果一致**。改写中位耗时变化 `(0.063 / 7.560 - 1) × 100% = -99.17%`。两组样本均有较大波动，极差/中位数分别约 87.6% 和 103.2%；这是一份热缓存、小样本的本地观察，不能据此保证其他负载或数据上的相同收益。
+
+错误 `<=` 用例返回 826 行，额外纳入 `(10003, 2025-06-16 00:00:00, pending, 345.67)`，已拒绝进行该 SQL 对的性能测试。NULL 创建时间在三个条件下均不命中；原有重复行按出现次数保留。实际验证了行数与字节预算超限会停止，且不进入性能采样。
+
