@@ -100,10 +100,11 @@ def run_workflow(config: Mapping, *, fixture: str | None = None) -> dict:
     report = {"source": "controlled_model_response" if fixture else "live_qwen",
               "fixture": fixture, "requested_model": config.get("QWEN_MODEL"),
               "measured_at_utc": datetime.now(timezone.utc).isoformat(), "model_requests": 0,
-              "benchmark": None}
+              "benchmark": None, "stage": "diagnosis"}
     try:
         context = diagnostic_context(config)
         report["diagnostic_context"] = context
+        report["stage"] = "model_request"
         if fixture:
             if fixture not in FIXTURES:
                 raise QwenFailure("invalid_fixture", "Unknown controlled response fixture")
@@ -118,13 +119,15 @@ def run_workflow(config: Mapping, *, fixture: str | None = None) -> dict:
                 raise
         report["model_id"] = reply.model
         report["received_content"] = reply.content
+        report["stage"] = "suggestion_validation"
         suggestion, candidate = parse_suggestion(reply.content)
         report["suggestion"] = suggestion
         if candidate is None:
-            report.update(status="no_suggestion", reason="Model returned no suggestion")
+            report.update(status="no_suggestion", stage="complete", reason="Model returned no suggestion")
         else:
             report["candidate"] = {"sql": candidate.sql,
                                    "parameters": [value.isoformat(sep=" ") for value in candidate.params]}
+            report["stage"] = "result_validation"
             with readonly_connection(config) as connection, _timeout_errors():
                 connection.isolation_level = psycopg.IsolationLevel.REPEATABLE_READ
                 connection.execute("SET LOCAL statement_timeout = '5s'")
@@ -139,8 +142,9 @@ def run_workflow(config: Mapping, *, fixture: str | None = None) -> dict:
                 comparison = _compare(original, proposed)
                 report["comparison"] = comparison
                 if comparison["equivalent"]:
+                    report["stage"] = "benchmark"
                     report["benchmark"] = measure_pair(connection, candidate.sql, candidate.params)
-                    report.update(status="completed", reason="在本次测试数据上结果一致")
+                    report.update(status="completed", stage="complete", reason="在本次测试数据上结果一致")
                 else:
                     report.update(status="result_mismatch", reason="Full results differ; candidate benchmark skipped")
     except QwenFailure as error:
