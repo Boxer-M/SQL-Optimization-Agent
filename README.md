@@ -354,3 +354,94 @@ WHERE created_at >= %s::timestamp without time zone
 
 正常可控建议的真实数据库样本（毫秒）：原查询 `[8.239, 7.556, 7.056, 7.289, 6.557, 6.670, 6.936]`；候选 `[0.085, 0.078, 0.071, 0.062, 0.056, 0.061, 0.067]`。中位数为 `7.056 → 0.067 ms`，耗时变化约 `-99.05%`。两组极差均未超过中位数的 50%，但仍只是本地热缓存的小样本观察，不能视为真实千问调用结果或通用性能保证。
 
+## HTTP、MCP 与持续集成
+
+命令行、HTTP 和 MCP 统一调用 `OptimizationService.optimize(scenario)`，复用同一份千问优化、结果验证和 Benchmark Runner。当前唯一支持的场景标识为 `orders_date_filter_2025_06_15`；不支持通用 SQL 输入。报告沿用结构化状态、建议、候选模板及绑定参数、结果比较、计划与计时，同时用 `stage` 标明完成或失败阶段。只读连接、5 秒 SQL 超时和取数预算保持不变。
+
+安装项目及测试依赖：
+
+```sh
+.venv/bin/python -m pip install -e '.[test]'
+.venv/bin/python -m pip check
+.venv/bin/python -m pytest -q
+```
+
+### 命令行
+
+```sh
+# 真实千问模式；有效 API 配置需在 .env 中填写
+.venv/bin/python scripts/optimize_orders.py --scenario orders_date_filter_2025_06_15
+# 可控模型建议 + 真实 PostgreSQL，不消耗模型额度
+.venv/bin/python scripts/optimize_orders.py --fixture normal
+```
+
+### FastAPI
+
+在一个终端启动本机 HTTP 服务：
+
+```sh
+.venv/bin/python -m uvicorn sql_optimization_agent.api:app --host 127.0.0.1 --port 8010
+```
+
+若只想复现可控建议，可以改用以下启动命令（二选一，不要同时占用同一端口）：
+
+```sh
+SQL_OPTIMIZATION_MODEL_FIXTURE=normal .venv/bin/python -m uvicorn sql_optimization_agent.api:app --host 127.0.0.1 --port 8010
+```
+
+在另一个终端调用：
+
+```sh
+curl -sS http://127.0.0.1:8010/optimize \
+  -H 'Content-Type: application/json' \
+  -d '{"scenario":"orders_date_filter_2025_06_15"}'
+```
+
+未知场景返回 HTTP 400 和 `unsupported_scenario`；缺少场景或额外传入 `sql` 等字段返回 422。支持场景的成功、无建议和候选拒绝均返回 HTTP 200，并由报告的 `status` 区分；配置、鉴权或服务异常等返回 503 及脱敏报告。测试模式只能由服务端启动环境选择，不能由请求体切换。服务启动后按 Ctrl-C 停止。
+
+### 本地 stdio MCP
+
+stdio 服务启动命令如下，stdout 仅用于 MCP 协议：
+
+```sh
+.venv/bin/python -m sql_optimization_agent.mcp_server
+# 安装后也可使用 .venv/bin/sql-optimization-mcp
+```
+
+演示客户端会自动启动服务、初始化会话、发现工具并调用，无需另外手动启动服务：
+
+```sh
+# 真实模型模式
+.venv/bin/python scripts/call_optimization_mcp.py
+# 可控模型建议 + 真实 PostgreSQL
+SQL_OPTIMIZATION_MODEL_FIXTURE=normal .venv/bin/python scripts/call_optimization_mcp.py
+# 复现错误上界拒绝；预期退出码为 1
+SQL_OPTIMIZATION_MODEL_FIXTURE=wrong-upper .venv/bin/python scripts/call_optimization_mcp.py
+```
+
+工具名为 `optimize_orders_date`，调用参数为：
+
+```json
+{"scenario":"orders_date_filter_2025_06_15"}
+```
+
+未知场景返回 `unsupported_scenario` 并设置 MCP `isError=true`；候选被拒绝或模型调用失败也会设置错误标记，同时保留 `structuredContent` 中的完整报告。MCP 使用官方 Python SDK 1.x 的 stdio 传输，示例客户端将发现信息写入 stderr，将结构化报告写入 stdout。参考 [MCP Python SDK](https://github.com/modelcontextprotocol/python-sdk/tree/v1.26.0)。
+
+### CI 与本轮验收
+
+`.github/workflows/ci.yml` 在面向 `main` 的 PR 以及 `main` 更新时执行：Python 3.12 → 安装 `.[test]` → `pip check` → `pytest -q`。不配置数据库服务、不注入百炼密钥。测试使用可控模型响应及数据库边界替身，实际运行建议校验、完整结果比较、HTTP 适配和 MCP 协议；自动阻止意外真实 HTTP/数据库连接。另有真实 stdio 子进程的工具发现和未知场景调用测试，无需外部服务。
+
+本地 pytest 验收为 22 项通过（另含 11 个子测试），`pip check` 通过。Mac 上的 PostgreSQL 16 端到端记录保存在 `reports/interfaces_acceptance.json`，明确标注为可控模型建议 + 真实数据库测量：
+
+| 入口 | 结果行数 | 原查询/候选中位耗时（ms） | 自然计划 |
+| --- | --- | --- | --- |
+| CLI | 825/825 | 7.172 / 0.064 | Parallel Seq Scan → Index Scan |
+| 实际 HTTP 服务 | 825/825 | 7.793 / 0.073 | Parallel Seq Scan → Index Scan |
+| 实际 stdio MCP | 825/825 | 7.217 / 0.066 | Parallel Seq Scan → Index Scan |
+
+三条路径均为“在本次测试数据上结果一致”，候选使用 `orders_created_at_idx`。HTTP 与 MCP 的错误上界用例均返回 825/826 行，拒绝后未执行性能测量；实际 HTTP 未知场景返回 400。报告包含原始样本与扫描条件，这些热缓存本地测量不能视为模型实回或其他环境的性能保证。
+
+本轮按原命令单独补跑了一次真实千问流程，报告为 `reports/qwen_live_interfaces.json`，与上一轮可控建议报告分别保留。请求次数为 1，在 `model_request` 阶段返回 `authentication_error`；没有得到实际模型 ID 或候选，也没有执行该次性能测试。需核查本地百炼密钥、地域和模型权限后再次运行；本轮未自动重试或修改密钥。
+
+GitHub Actions 的远端运行结果需在创建本 PR 后确认；仅推送功能分支不会触发当前配置的工作流。
+

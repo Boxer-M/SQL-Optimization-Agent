@@ -1,0 +1,573 @@
+{
+  "source": "controlled_model_responses_with_real_mac_postgresql",
+  "measured_at_utc": "2026-11-18T06:39:41.098064+00:00",
+  "database": "127.0.0.1:5434",
+  "cli_normal": {
+    "status": "completed",
+    "source": "controlled_model_response",
+    "model_id": "controlled-fixture-not-a-real-model",
+    "candidate": {
+      "sql": "SELECT customer_id, created_at, status, amount\nFROM public.orders\nWHERE created_at >= %s::timestamp without time zone\n  AND created_at < %s::timestamp without time zone",
+      "parameters": [
+        "2025-06-15 00:00:00",
+        "2025-06-16 00:00:00"
+      ]
+    },
+    "comparison": {
+      "original_rows": 825,
+      "candidate_rows": 825,
+      "columns_equal": true,
+      "rows_and_multiplicities_equal": true,
+      "equivalent": true,
+      "reason": "在本次测试数据上结果一致",
+      "missing_from_candidate": [],
+      "extra_in_candidate": [],
+      "columns": [
+        [
+          "customer_id",
+          23,
+          4,
+          null,
+          null
+        ],
+        [
+          "created_at",
+          1114,
+          8,
+          null,
+          null
+        ],
+        [
+          "status",
+          25,
+          null,
+          null,
+          null
+        ],
+        [
+          "amount",
+          1700,
+          null,
+          12,
+          2
+        ]
+      ]
+    },
+    "reason": "在本次测试数据上结果一致",
+    "benchmark": {
+      "execution_ms": {
+        "original": [
+          8.108,
+          7.682,
+          7.474,
+          7.172,
+          6.956,
+          6.962,
+          6.408
+        ],
+        "rewritten": [
+          0.064,
+          0.064,
+          0.066,
+          0.065,
+          0.062,
+          0.054,
+          0.055
+        ]
+      },
+      "median_ms": {
+        "original": 7.172,
+        "rewritten": 0.064
+      },
+      "rewritten_time_change_percent": -99.10764082543224,
+      "variability_note": "本次两组极差均不超过中位数的 50%",
+      "plan_nodes": {
+        "original": [
+          {
+            "Node Type": "Gather",
+            "Parallel Aware": false,
+            "Actual Rows": 825,
+            "Actual Loops": 1,
+            "Shared Hit Blocks": 2713,
+            "Shared Read Blocks": 0,
+            "Shared Dirtied Blocks": 0,
+            "Shared Written Blocks": 0,
+            "Local Hit Blocks": 0,
+            "Local Read Blocks": 0,
+            "Local Dirtied Blocks": 0,
+            "Local Written Blocks": 0,
+            "Temp Read Blocks": 0,
+            "Temp Written Blocks": 0
+          },
+          {
+            "Node Type": "Seq Scan",
+            "Parallel Aware": true,
+            "Relation Name": "orders",
+            "Actual Rows": 412,
+            "Actual Loops": 2,
+            "Filter": "((created_at)::date = '2025-06-15'::date)",
+            "Rows Removed by Filter": 149590,
+            "Shared Hit Blocks": 2713,
+            "Shared Read Blocks": 0,
+            "Shared Dirtied Blocks": 0,
+            "Shared Written Blocks": 0,
+            "Local Hit Blocks": 0,
+            "Local Read Blocks": 0,
+            "Local Dirtied Blocks": 0,
+            "Local Written Blocks": 0,
+            "Temp Read Blocks": 0,
+            "Temp Written Blocks": 0
+          }
+        ],
+        "rewritten": [
+          {
+            "Node Type": "Index Scan",
+            "Parallel Aware": false,
+            "Scan Direction": "Forward",
+            "Index Name": "orders_created_at_idx",
+            "Relation Name": "orders",
+            "Actual Rows": 825,
+            "Actual Loops": 1,
+            "Index Cond": "((created_at >= '2025-06-15 00:00:00'::timestamp without time zone) AND (created_at < '2025-06-16 00:00:00'::timestamp without time zone))",
+            "Shared Hit Blocks": 16,
+            "Shared Read Blocks": 0,
+            "Shared Dirtied Blocks": 0,
+            "Shared Written Blocks": 0,
+            "Local Hit Blocks": 0,
+            "Local Read Blocks": 0,
+            "Local Dirtied Blocks": 0,
+            "Local Written Blocks": 0,
+            "Temp Read Blocks": 0,
+            "Temp Written Blocks": 0
+          }
+        ]
+      }
+    }
+  },
+  "http_normal": {
+    "status": "completed",
+    "source": "controlled_model_response",
+    "model_id": "controlled-fixture-not-a-real-model",
+    "candidate": {
+      "sql": "SELECT customer_id, created_at, status, amount\nFROM public.orders\nWHERE created_at >= %s::timestamp without time zone\n  AND created_at < %s::timestamp without time zone",
+      "parameters": [
+        "2025-06-15 00:00:00",
+        "2025-06-16 00:00:00"
+      ]
+    },
+    "comparison": {
+      "original_rows": 825,
+      "candidate_rows": 825,
+      "columns_equal": true,
+      "rows_and_multiplicities_equal": true,
+      "equivalent": true,
+      "reason": "在本次测试数据上结果一致",
+      "missing_from_candidate": [],
+      "extra_in_candidate": [],
+      "columns": [
+        [
+          "customer_id",
+          23,
+          4,
+          null,
+          null
+        ],
+        [
+          "created_at",
+          1114,
+          8,
+          null,
+          null
+        ],
+        [
+          "status",
+          25,
+          null,
+          null,
+          null
+        ],
+        [
+          "amount",
+          1700,
+          null,
+          12,
+          2
+        ]
+      ]
+    },
+    "reason": "在本次测试数据上结果一致",
+    "benchmark": {
+      "execution_ms": {
+        "original": [
+          9.335,
+          7.967,
+          7.94,
+          7.712,
+          7.793,
+          7.111,
+          6.719
+        ],
+        "rewritten": [
+          0.079,
+          0.078,
+          0.078,
+          0.069,
+          0.073,
+          0.061,
+          0.072
+        ]
+      },
+      "median_ms": {
+        "original": 7.793,
+        "rewritten": 0.073
+      },
+      "rewritten_time_change_percent": -99.06326190170665,
+      "variability_note": "本次两组极差均不超过中位数的 50%",
+      "plan_nodes": {
+        "original": [
+          {
+            "Node Type": "Gather",
+            "Parallel Aware": false,
+            "Actual Rows": 825,
+            "Actual Loops": 1,
+            "Shared Hit Blocks": 2713,
+            "Shared Read Blocks": 0,
+            "Shared Dirtied Blocks": 0,
+            "Shared Written Blocks": 0,
+            "Local Hit Blocks": 0,
+            "Local Read Blocks": 0,
+            "Local Dirtied Blocks": 0,
+            "Local Written Blocks": 0,
+            "Temp Read Blocks": 0,
+            "Temp Written Blocks": 0
+          },
+          {
+            "Node Type": "Seq Scan",
+            "Parallel Aware": true,
+            "Relation Name": "orders",
+            "Actual Rows": 412,
+            "Actual Loops": 2,
+            "Filter": "((created_at)::date = '2025-06-15'::date)",
+            "Rows Removed by Filter": 149590,
+            "Shared Hit Blocks": 2713,
+            "Shared Read Blocks": 0,
+            "Shared Dirtied Blocks": 0,
+            "Shared Written Blocks": 0,
+            "Local Hit Blocks": 0,
+            "Local Read Blocks": 0,
+            "Local Dirtied Blocks": 0,
+            "Local Written Blocks": 0,
+            "Temp Read Blocks": 0,
+            "Temp Written Blocks": 0
+          }
+        ],
+        "rewritten": [
+          {
+            "Node Type": "Index Scan",
+            "Parallel Aware": false,
+            "Scan Direction": "Forward",
+            "Index Name": "orders_created_at_idx",
+            "Relation Name": "orders",
+            "Actual Rows": 825,
+            "Actual Loops": 1,
+            "Index Cond": "((created_at >= '2025-06-15 00:00:00'::timestamp without time zone) AND (created_at < '2025-06-16 00:00:00'::timestamp without time zone))",
+            "Shared Hit Blocks": 16,
+            "Shared Read Blocks": 0,
+            "Shared Dirtied Blocks": 0,
+            "Shared Written Blocks": 0,
+            "Local Hit Blocks": 0,
+            "Local Read Blocks": 0,
+            "Local Dirtied Blocks": 0,
+            "Local Written Blocks": 0,
+            "Temp Read Blocks": 0,
+            "Temp Written Blocks": 0
+          }
+        ]
+      }
+    }
+  },
+  "http_unknown": {
+    "http_status": 400,
+    "status": "unsupported_scenario",
+    "reason": "Unknown scenario; use orders_date_filter_2025_06_15",
+    "benchmark": null
+  },
+  "mcp_normal": {
+    "status": "completed",
+    "source": "controlled_model_response",
+    "model_id": "controlled-fixture-not-a-real-model",
+    "candidate": {
+      "sql": "SELECT customer_id, created_at, status, amount\nFROM public.orders\nWHERE created_at >= %s::timestamp without time zone\n  AND created_at < %s::timestamp without time zone",
+      "parameters": [
+        "2025-06-15 00:00:00",
+        "2025-06-16 00:00:00"
+      ]
+    },
+    "comparison": {
+      "original_rows": 825,
+      "candidate_rows": 825,
+      "columns_equal": true,
+      "rows_and_multiplicities_equal": true,
+      "equivalent": true,
+      "reason": "在本次测试数据上结果一致",
+      "missing_from_candidate": [],
+      "extra_in_candidate": [],
+      "columns": [
+        [
+          "customer_id",
+          23,
+          4,
+          null,
+          null
+        ],
+        [
+          "created_at",
+          1114,
+          8,
+          null,
+          null
+        ],
+        [
+          "status",
+          25,
+          null,
+          null,
+          null
+        ],
+        [
+          "amount",
+          1700,
+          null,
+          12,
+          2
+        ]
+      ]
+    },
+    "reason": "在本次测试数据上结果一致",
+    "benchmark": {
+      "execution_ms": {
+        "original": [
+          8.44,
+          7.755,
+          7.783,
+          7.217,
+          6.995,
+          6.842,
+          6.952
+        ],
+        "rewritten": [
+          0.087,
+          0.081,
+          0.066,
+          0.066,
+          0.061,
+          0.077,
+          0.056
+        ]
+      },
+      "median_ms": {
+        "original": 7.217,
+        "rewritten": 0.066
+      },
+      "rewritten_time_change_percent": -99.08549258694748,
+      "variability_note": "本次两组极差均不超过中位数的 50%",
+      "plan_nodes": {
+        "original": [
+          {
+            "Node Type": "Gather",
+            "Parallel Aware": false,
+            "Actual Rows": 825,
+            "Actual Loops": 1,
+            "Shared Hit Blocks": 2713,
+            "Shared Read Blocks": 0,
+            "Shared Dirtied Blocks": 0,
+            "Shared Written Blocks": 0,
+            "Local Hit Blocks": 0,
+            "Local Read Blocks": 0,
+            "Local Dirtied Blocks": 0,
+            "Local Written Blocks": 0,
+            "Temp Read Blocks": 0,
+            "Temp Written Blocks": 0
+          },
+          {
+            "Node Type": "Seq Scan",
+            "Parallel Aware": true,
+            "Relation Name": "orders",
+            "Actual Rows": 412,
+            "Actual Loops": 2,
+            "Filter": "((created_at)::date = '2025-06-15'::date)",
+            "Rows Removed by Filter": 149590,
+            "Shared Hit Blocks": 2713,
+            "Shared Read Blocks": 0,
+            "Shared Dirtied Blocks": 0,
+            "Shared Written Blocks": 0,
+            "Local Hit Blocks": 0,
+            "Local Read Blocks": 0,
+            "Local Dirtied Blocks": 0,
+            "Local Written Blocks": 0,
+            "Temp Read Blocks": 0,
+            "Temp Written Blocks": 0
+          }
+        ],
+        "rewritten": [
+          {
+            "Node Type": "Index Scan",
+            "Parallel Aware": false,
+            "Scan Direction": "Forward",
+            "Index Name": "orders_created_at_idx",
+            "Relation Name": "orders",
+            "Actual Rows": 825,
+            "Actual Loops": 1,
+            "Index Cond": "((created_at >= '2025-06-15 00:00:00'::timestamp without time zone) AND (created_at < '2025-06-16 00:00:00'::timestamp without time zone))",
+            "Shared Hit Blocks": 16,
+            "Shared Read Blocks": 0,
+            "Shared Dirtied Blocks": 0,
+            "Shared Written Blocks": 0,
+            "Local Hit Blocks": 0,
+            "Local Read Blocks": 0,
+            "Local Dirtied Blocks": 0,
+            "Local Written Blocks": 0,
+            "Temp Read Blocks": 0,
+            "Temp Written Blocks": 0
+          }
+        ]
+      }
+    }
+  },
+  "http_wrong_upper": {
+    "status": "result_mismatch",
+    "source": "controlled_model_response",
+    "model_id": "controlled-fixture-not-a-real-model",
+    "candidate": {
+      "sql": "SELECT customer_id, created_at, status, amount\nFROM public.orders\nWHERE created_at >= %s::timestamp without time zone\n  AND created_at <= %s::timestamp without time zone",
+      "parameters": [
+        "2025-06-15 00:00:00",
+        "2025-06-16 00:00:00"
+      ]
+    },
+    "comparison": {
+      "original_rows": 825,
+      "candidate_rows": 826,
+      "columns_equal": true,
+      "rows_and_multiplicities_equal": false,
+      "equivalent": false,
+      "reason": "Column metadata or full row multiplicities differ; performance test skipped",
+      "missing_from_candidate": [],
+      "extra_in_candidate": [
+        {
+          "row": [
+            10003,
+            {
+              "timestamp": "2025-06-16T00:00:00"
+            },
+            "pending",
+            {
+              "decimal": "345.67"
+            }
+          ],
+          "copies": 1
+        }
+      ],
+      "columns": [
+        [
+          "customer_id",
+          23,
+          4,
+          null,
+          null
+        ],
+        [
+          "created_at",
+          1114,
+          8,
+          null,
+          null
+        ],
+        [
+          "status",
+          25,
+          null,
+          null,
+          null
+        ],
+        [
+          "amount",
+          1700,
+          null,
+          12,
+          2
+        ]
+      ]
+    },
+    "reason": "Full results differ; candidate benchmark skipped",
+    "benchmark": null
+  },
+  "mcp_wrong_upper": {
+    "status": "result_mismatch",
+    "source": "controlled_model_response",
+    "model_id": "controlled-fixture-not-a-real-model",
+    "candidate": {
+      "sql": "SELECT customer_id, created_at, status, amount\nFROM public.orders\nWHERE created_at >= %s::timestamp without time zone\n  AND created_at <= %s::timestamp without time zone",
+      "parameters": [
+        "2025-06-15 00:00:00",
+        "2025-06-16 00:00:00"
+      ]
+    },
+    "comparison": {
+      "original_rows": 825,
+      "candidate_rows": 826,
+      "columns_equal": true,
+      "rows_and_multiplicities_equal": false,
+      "equivalent": false,
+      "reason": "Column metadata or full row multiplicities differ; performance test skipped",
+      "missing_from_candidate": [],
+      "extra_in_candidate": [
+        {
+          "row": [
+            10003,
+            {
+              "timestamp": "2025-06-16T00:00:00"
+            },
+            "pending",
+            {
+              "decimal": "345.67"
+            }
+          ],
+          "copies": 1
+        }
+      ],
+      "columns": [
+        [
+          "customer_id",
+          23,
+          4,
+          null,
+          null
+        ],
+        [
+          "created_at",
+          1114,
+          8,
+          null,
+          null
+        ],
+        [
+          "status",
+          25,
+          null,
+          null,
+          null
+        ],
+        [
+          "amount",
+          1700,
+          null,
+          12,
+          2
+        ]
+      ]
+    },
+    "reason": "Full results differ; candidate benchmark skipped",
+    "benchmark": null
+  }
+}
