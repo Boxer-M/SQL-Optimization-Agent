@@ -2,8 +2,6 @@
 
 from collections import Counter
 from contextlib import nullcontext
-import importlib.util
-from pathlib import Path
 from unittest.mock import MagicMock, Mock
 
 import pytest
@@ -13,29 +11,30 @@ from sql_optimization_agent.tools.sql_benchmark import QueryResult, _plan_nodes
 
 @pytest.fixture
 def benchmark_module():
-    spec = importlib.util.spec_from_file_location('items_benchmark',Path(__file__).resolve().parents[1]/'scripts/benchmark_order_items.py')
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
+    from sql_optimization_agent.tools import order_items_benchmark as module
     return module
 
 
-def test_equal_counts_with_swapped_id_stop_before_count_and_timing(benchmark_module,monkeypatch):
+def test_equal_counts_with_swapped_id_stop_before_timing(benchmark_module,monkeypatch):
     connection = MagicMock()
     connection.execute.return_value.fetchone.side_effect = [
         ('sql_optimization','sql_optimization_reader','on','repeatable read','test'),
-        (400008,), (825,274,275,276,1103)]
+        (400008,), (825,274,275,276,1103), (2,), (2,)]
     monkeypatch.setattr(benchmark_module,'readonly_connection',lambda _:nullcontext(connection))
     def result(ids):
         return QueryResult([('order_id',20)],Counter((i,) for i in ids),len(ids),100)
     monkeypatch.setattr(benchmark_module,'_fetch',Mock(side_effect=[result([1,2]),result([1,3])]))
     measure = Mock()
     monkeypatch.setattr(benchmark_module,'measure_pair',measure)
-    report = benchmark_module.run({})
+    from sql_optimization_agent.order_date import OrderDateContext
+    report = benchmark_module.run({},OrderDateContext.parse('2025-06-15'))
     assert report['status']=='membership_mismatch'
-    assert report['membership']['join_minus_exists']==[2]
-    assert report['membership']['exists_minus_join']==[3]
+    assert report['membership']['join_minus_candidate']==[2]
+    assert report['membership']['candidate_minus_join']==[3]
+    assert report['membership']['join_minus_candidate_count']==1
+    assert report['membership']['candidate_minus_join_count']==1
     assert report['benchmark'] is None
-    assert 'counts' not in report
+    assert report['counts']=={'join_count_distinct':2,'candidate_count':2}
     measure.assert_not_called()
 
 

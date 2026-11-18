@@ -356,7 +356,7 @@ WHERE created_at >= %s::timestamp without time zone
 
 ## HTTP、MCP 与持续集成
 
-命令行、HTTP 和 MCP 统一调用 `OptimizationService.optimize(scenario)`，复用同一份千问优化、结果验证和 Benchmark Runner。当前唯一支持的场景标识为 `orders_date_filter_2025_06_15`；不支持通用 SQL 输入。报告沿用结构化状态、建议、候选模板及绑定参数、结果比较、计划与计时，同时用 `stage` 标明完成或失败阶段。只读连接、5 秒 SQL 超时和取数预算保持不变。
+命令行、HTTP 和 MCP 统一调用 `OptimizationService.optimize(scenario)`，复用结果验证和 Benchmark Runner。公共服务及 CLI 支持 `orders_date_filter_2025_06_15` 和下述受控 `orders_with_items_count` 场景；HTTP/MCP 的默认服务仍仅启用原日期场景。不支持通用 SQL 输入。报告沿用结构化状态、候选模板及绑定参数、结果比较、计划与计时，同时用 `stage` 标明完成或失败阶段。只读连接、5 秒 SQL 超时和取数预算保持不变。
 
 安装项目及测试依赖：
 
@@ -474,7 +474,7 @@ GitHub Actions 的远端运行结果需在创建本 PR 后确认；仅推送功�
 
 ## 订单明细数据与 JOIN/EXISTS 固定基准
 
-本节仅提供可复现数据及独立验收脚本，尚未接入公共服务、Agent CLI 场景或千问。复用现有 Compose 数据库、`.env`、初始化账号和应用只读账号，不创建新容器或数据卷。
+本节提供可复现数据及独立验收脚本；后续的公共服务/CLI 场景复用同一套 SQL 和验证引擎，千问接入尚未开放。复用现有 Compose 数据库、`.env`、初始化账号和应用只读账号，不创建新容器或数据卷。
 
 ### 初始化与重复装载
 
@@ -547,4 +547,35 @@ WHERE o.created_at >= TIMESTAMP '2025-06-15 00:00:00'
 | 根节点 shared hit / read blocks | 每次 2492 / 0 | 每次 2492 / 0 |
 
 结论：**在本次测试数据上结果一致**，551 个实际订单 ID 完全相同，不仅是计数一致。EXISTS 中位耗时本次下降约 **19.52%**，绝对差只有 **0.105 ms**；这是本地热缓存的小样本，不应推断其他数据或负载也有相同收益。原查询需处理 1103 条关联行并排序去重，Semi Join 输出 551 笔订单。报告中 `original` 指 JOIN，`rewritten` 指 EXISTS。
+
+## 订单明细计数场景：公共服务与 CLI
+
+新场景 `orders_with_items_count` 复用上节的 JOIN/EXISTS 模板、绑定参数、完整 ID 比较和自然计划基准。共享引擎位于 `tools/order_items_benchmark.py`，独立基准脚本仅保留固定日期调用，避免维护两份算法。
+
+```sh
+# 默认日期由公共服务统一选择 2025-06-15；本场景默认即使用受控 EXISTS，不调用模型
+.venv/bin/python scripts/optimize_orders.py --scenario orders_with_items_count
+# 显式日期
+.venv/bin/python scripts/optimize_orders.py --scenario orders_with_items_count --date 2025-06-15
+.venv/bin/python scripts/optimize_orders.py --scenario orders_with_items_count --date 2025-06-16
+# 固定负向候选：同一天移出一个合格 ID，再移入一个没有明细的 ID；预期退出码 1
+.venv/bin/python scripts/optimize_orders.py --scenario orders_with_items_count --date 2025-06-15 --fixture swapped-ids
+# 原日期过滤场景仍可用可控建议回归
+.venv/bin/python scripts/optimize_orders.py --fixture normal --date 2025-06-15
+.venv/bin/python -m pytest -q
+```
+
+公共服务入口为 `OptimizationService(config).optimize('orders_with_items_count', date='2025-06-15')`，也可省略日期。非法日期继续由同一公共服务在数据库和模型调用前拒绝。本场景未接入千问，无论是否提供模型配置都不会发起模型请求；只接受默认/`normal` 的 EXISTS 候选及本地负向验收用的 `swapped-ids`，不接收外部 SQL。HTTP/MCP 的默认服务配置暂不开放该场景。
+
+同一 REPEATABLE READ 只读快照内，先查询两侧完整订单 ID，保存双向差集及各自数量，再实际查询两条计数 SQL。只有 ID 列信息、完整 ID 结果和最终计数都一致，且计数与纳入 ID 数相符，才进入预热和交替采样。ID 或计数不一致分别返回 `membership_mismatch` / `count_mismatch`，报告 `stage=result_validation`、`benchmark=null`，CLI 退出码为 1。仍沿用 10000 行/16 MiB、5 秒 SQL 超时、30 秒取数预算。
+
+报告包含 `target_date`、原查询及候选 SQL、参数、`counts.join_count_distinct` 和 `counts.candidate_count`，以及 `membership.join_minus_candidate_count`、`membership.candidate_minus_join_count`、两侧完整 ID、自然计划和各 7 个计时样本。独立脚本复用后也采用这些字段；旧实测报告原样保留。**551 仅是当前测试数据的预期值，不是运行时通过条件**；其他日期及数据变化以实际查询为准，空结果也不因为缺少三类测试订单而被拒绝。只有独立固定数据验收脚本额外要求三类订单覆盖。
+
+本轮本地真实 PostgreSQL 验收（受控候选，模型请求数均为 0）：
+
+- `2025-06-15`：551/551，双向差集 0/0；报告为 `reports/order_items_count_scenario.json`。自然计划为 Aggregate → Sort → Inner Nested Loop 与 Aggregate → Semi Nested Loop，使用现有两个 B-tree 索引；中位数 0.503/0.400 ms，原始样本在报告中。这是本地热缓存测量，不保证其他负载收益。
+- `swapped-ids`：仍为 551/551，但 JOIN 独有 ID 为 135617，候选独有 ID 为 135618，双向差集数量 1/1；报告为 `reports/order_items_count_swapped_ids.json`，拒绝并跳过计时。
+- `2025-06-16`：548/548，双向差集 0/0，验证日期及计数动态传递。
+- 原日期过滤场景：825/825，完整结果比较通过；独立明细基准入口回归通过。
+- 59 项 pytest 测试通过（另含 11 个子测试），包括非 551 的动态计数、同计数不同 ID、ID 相同但计数不同、CLI 调用及接口范围保持不变。
 
