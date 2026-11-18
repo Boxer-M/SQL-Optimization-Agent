@@ -51,13 +51,13 @@ class QueryResult:
     bytes_used: int
 
 
-def _fetch(connection, query: str, max_rows: int, max_bytes: int) -> QueryResult:
+def _fetch(connection, query: str, max_rows: int, max_bytes: int, params=None) -> QueryResult:
     # A server cursor avoids buffering an unbounded result before checking budgets.
     deadline = monotonic() + 30
     rows = Counter()
     count = size = 0
     with connection.cursor(name="benchmark_results") as cursor:
-        cursor.execute(query)
+        cursor.execute(query, params)
         columns = [
             (c.name, c.type_code, c.internal_size, c.precision, c.scale)
             for c in cursor.description
@@ -112,9 +112,9 @@ def _plan_nodes(node: dict) -> list[dict]:
     return result
 
 
-def _explain(connection, query: str) -> dict:
+def _explain(connection, query: str, params=None) -> dict:
     with connection.cursor() as cursor:
-        cursor.execute(EXPLAIN + query, prepare=False)
+        cursor.execute(EXPLAIN + query, params, prepare=False)
         plan = cursor.fetchone()[0][0]
     return {
         "execution_ms": plan["Execution Time"],
@@ -148,23 +148,8 @@ def run_benchmark(
         if negative["equivalent"]:
             raise BenchmarkValidationError("Wrong-upper-bound control unexpectedly matched")
 
-        # Each query is warmed once, then strictly alternate original / rewritten.
-        _explain(connection, ORIGINAL)
-        _explain(connection, REWRITTEN)
-        samples = {"original": [], "rewritten": []}
-        execution_order = []
+        benchmark = measure_pair(connection, REWRITTEN)
         queries = {"original": ORIGINAL, "rewritten": REWRITTEN}
-        for _ in range(7):
-            for name in ("original", "rewritten"):
-                execution_order.append(name)
-                samples[name].append(_explain(connection, queries[name]))
-        times = {name: [sample["execution_ms"] for sample in values]
-                 for name, values in samples.items()}
-        medians = {name: median(values) for name, values in times.items()}
-        change = ((medians["rewritten"] / medians["original"] - 1) * 100
-                  if medians["original"] else None)
-        spreads = {name: (max(values) - min(values)) / median(values)
-                   if median(values) else None for name, values in times.items()}
         return {
             "connection": dict(zip(("database", "user", "transaction_read_only",
                                      "isolation", "version"), identity)),
@@ -173,18 +158,40 @@ def run_benchmark(
             "sql": {**queries, "wrong_upper_bound": WRONG_UPPER_BOUND},
             "positive": positive,
             "wrong_upper_bound": {**negative, "benchmark": "skipped: results differ"},
-            "benchmark": {
-                "warmups_per_query": 1, "samples_per_query": 7,
-                "execution_order": execution_order,
-                "execution_ms": times, "median_ms": medians,
-                "rewritten_time_change_percent": change,
-                "spread_range_over_median": spreads,
-                "variability_note": "较大波动：至少一组极差超过中位数的 50%"
-                    if any(v is not None and v > 0.5 for v in spreads.values())
-                    else "本次两组极差均不超过中位数的 50%",
-                "samples": samples,
-                "method": "Natural planner settings; warm-cache EXPLAIN server execution time, not client transfer time",
-            },
+            "benchmark": benchmark,
+        }
+
+
+def measure_pair(connection, candidate_sql: str, candidate_params=None) -> dict:
+    """Measure an already validated candidate; callers must compare results first."""
+    # Each query is warmed once, then strictly alternate original / rewritten.
+    _explain(connection, ORIGINAL)
+    _explain(connection, candidate_sql, candidate_params)
+    samples = {"original": [], "rewritten": []}
+    execution_order = []
+    queries = {"original": ORIGINAL, "rewritten": candidate_sql}
+    for _ in range(7):
+        for name in ("original", "rewritten"):
+            execution_order.append(name)
+            samples[name].append(_explain(connection, queries[name], candidate_params if name == "rewritten" else None))
+    times = {name: [sample["execution_ms"] for sample in values]
+             for name, values in samples.items()}
+    medians = {name: median(values) for name, values in times.items()}
+    change = ((medians["rewritten"] / medians["original"] - 1) * 100
+              if medians["original"] else None)
+    spreads = {name: (max(values) - min(values)) / median(values)
+               if median(values) else None for name, values in times.items()}
+    return {
+            "warmups_per_query": 1, "samples_per_query": 7,
+            "execution_order": execution_order,
+            "execution_ms": times, "median_ms": medians,
+            "rewritten_time_change_percent": change,
+            "spread_range_over_median": spreads,
+            "variability_note": "较大波动：至少一组极差超过中位数的 50%"
+                if any(v is not None and v > 0.5 for v in spreads.values())
+                else "本次两组极差均不超过中位数的 50%",
+            "samples": samples,
+            "method": "Natural planner settings; warm-cache EXPLAIN server execution time, not client transfer time",
         }
 
 
