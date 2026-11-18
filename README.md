@@ -356,7 +356,7 @@ WHERE created_at >= %s::timestamp without time zone
 
 ## HTTP、MCP 与持续集成
 
-命令行、HTTP 和 MCP 统一调用 `OptimizationService.optimize(scenario)`，复用结果验证和 Benchmark Runner。公共服务及 CLI 支持 `orders_date_filter_2025_06_15` 和下述受控 `orders_with_items_count` 场景；HTTP/MCP 的默认服务仍仅启用原日期场景。不支持通用 SQL 输入。报告沿用结构化状态、候选模板及绑定参数、结果比较、计划与计时，同时用 `stage` 标明完成或失败阶段。只读连接、5 秒 SQL 超时和取数预算保持不变。
+命令行、HTTP 和 MCP 统一调用 `OptimizationService.optimize(scenario)`，复用结果验证和 Benchmark Runner。公共服务、CLI、HTTP 和 MCP 均支持 `orders_date_filter_2025_06_15` 和 `orders_with_items_count`。HTTP/MCP 使用服务端模型模式配置，客户端只传场景和可选日期。不支持通用 SQL 输入。报告沿用结构化状态、候选模板及绑定参数、结果比较、计划与计时，同时用 `stage` 标明完成或失败阶段。只读连接、5 秒 SQL 超时和取数预算保持不变。
 
 安装项目及测试依赖：
 
@@ -474,7 +474,7 @@ GitHub Actions 的远端运行结果需在创建本 PR 后确认；仅推送功�
 
 ## 订单明细数据与 JOIN/EXISTS 固定基准
 
-本节提供可复现数据及独立验收脚本；后续的公共服务/CLI 场景复用同一套 SQL 和验证引擎，千问接入尚未开放。复用现有 Compose 数据库、`.env`、初始化账号和应用只读账号，不创建新容器或数据卷。
+本节提供可复现数据及独立验收脚本；公共服务/CLI 场景复用同一套 SQL 和验证引擎，千问模式需按后文显式启用。复用现有 Compose 数据库、`.env`、初始化账号和应用只读账号，不创建新容器或数据卷。
 
 ### 初始化与重复装载
 
@@ -565,7 +565,7 @@ WHERE o.created_at >= TIMESTAMP '2025-06-15 00:00:00'
 .venv/bin/python -m pytest -q
 ```
 
-公共服务入口为 `OptimizationService(config).optimize('orders_with_items_count', date='2025-06-15')`，也可省略日期。非法日期继续由同一公共服务在数据库和模型调用前拒绝。本场景未接入千问，无论是否提供模型配置都不会发起模型请求；只接受默认/`normal` 的 EXISTS 候选及本地负向验收用的 `swapped-ids`，不接收外部 SQL。HTTP/MCP 的默认服务配置暂不开放该场景。
+公共服务入口为 `OptimizationService(config).optimize('orders_with_items_count', date='2025-06-15')`，也可省略日期。非法日期继续由同一公共服务在数据库和模型调用前拒绝。未显式启用千问时，无论是否提供模型配置都不会发起模型请求；默认模式只接受默认/`normal` 的 EXISTS 候选及本地负向验收用的 `swapped-ids`，不接收外部 SQL。HTTP/MCP 也开放该场景，但由服务端配置选择模型或受控模式，参见后面的三入口速查。
 
 同一 REPEATABLE READ 只读快照内，先查询两侧完整订单 ID，保存双向差集及各自数量，再实际查询两条计数 SQL。只有 ID 列信息、完整 ID 结果和最终计数都一致，且计数与纳入 ID 数相符，才进入预热和交替采样。ID 或计数不一致分别返回 `membership_mismatch` / `count_mismatch`，报告 `stage=result_validation`、`benchmark=null`，CLI 退出码为 1。仍沿用 10000 行/16 MiB、5 秒 SQL 超时、30 秒取数预算。
 
@@ -579,3 +579,140 @@ WHERE o.created_at >= TIMESTAMP '2025-06-15 00:00:00'
 - 原日期过滤场景：825/825，完整结果比较通过；独立明细基准入口回归通过。
 - 59 项 pytest 测试通过（另含 11 个子测试），包括非 551 的动态计数、同计数不同 ID、ID 相同但计数不同、CLI 调用及接口范围保持不变。
 
+## 订单明细计数：显式千问模式
+
+公共服务直接调用及 CLI 的默认受控模式保持不变；公共服务可显式传入 `use_qwen=True`，CLI 使用 `--qwen` 启用明细场景模型建议。HTTP/MCP 则由本地服务端 `SQL_OPTIMIZATION_ITEMS_MODE` 配置选择，默认 `qwen`，也可选 `controlled`。三个入口均复用现有 `QWEN_API_KEY`、`QWEN_BASE_URL`、`QWEN_MODEL` 与单次请求客户端。
+
+```sh
+# 真实模式：读取 .env，最多一次模型请求，不做探测、重试或格式修复请求
+.venv/bin/python scripts/optimize_orders.py --scenario orders_with_items_count --date 2025-06-15 --qwen
+# 模拟模型响应，但仍实际读取和验证本地 PostgreSQL
+.venv/bin/python scripts/optimize_orders.py --scenario orders_with_items_count --date 2025-06-15 --qwen --fixture items-exists
+.venv/bin/python scripts/optimize_orders.py --scenario orders_with_items_count --date 2025-06-15 --qwen --fixture items-no-rewrite
+# 格式/动作错误，预期退出码 1，未执行候选
+.venv/bin/python scripts/optimize_orders.py --scenario orders_with_items_count --date 2025-06-15 --qwen --fixture items-invalid
+```
+
+公共服务调用：`OptimizationService(config).optimize('orders_with_items_count', date='2025-06-15', use_qwen=True)`。模拟响应可通过构造服务时的 `fixture='items-exists'` 等参数选择。显式 `--qwen` 只用于该新场景；原日期场景仍沿用原命令和 `--fixture normal`。
+
+模型只收到原 JOIN/COUNT DISTINCT 查询、日期范围参数、两张表的字段/主键/索引、相关约束及不带 ANALYZE 的估算计划摘要，不收到连接凭据、密码或业务行。先核查实际订单主键、ID 非空性和时间类型，再调用模型；诊断连接在等待模型时关闭。结构化响应严格限定为以下两种格式，不接受 SQL、表名、日期覆盖、其他动作、额外字段或重复 JSON 键：
+
+```json
+{"action":"exists","reason":"改写理由"}
+```
+
+```json
+{"action":"no_rewrite","reason":"不建议改写的理由"}
+```
+
+执行入口 `run_action` 也只接受 `exists` 和 `no_rewrite`，不会把动作解释为旧的负向 fixture 或直接执行模型文本。`exists` 的 COUNT SQL 与订单 ID SQL 来自同一份 `EXISTS_FROM` 条件模板，并绑定同一对无时区日期范围参数。随后复用同一只读快照中的完整 ID、多重集/双向差集及最终计数验证，两项均通过才各预热一次、交替采样各 7 次。超时和取数预算与原引擎相同。
+
+`no_rewrite` 返回同名状态、CLI 退出码 0，记录模型理由并结束，不运行候选验证或计时；无效输出在 `suggestion_validation` 阶段被拒绝，退出码 1。请求失败在 `model_request` 阶段记录脱敏状态，不自动重试。报告保留请求模型、实际模型 ID、原始回复、解析后的建议及模型请求次数，不以数据库引擎自身的零请求标记覆盖实际模型调用记录。
+
+本轮验收报告分别保存：
+
+- `reports/order_items_qwen_simulated.json`：模拟 `exists` 得到 551/551、双向差集 0/0；模拟 `no_rewrite` 正常结束；模拟无效动作被拒绝，未验证/计时。原日期场景回归为 825/825。模拟模型路径实际使用本地 PostgreSQL，没有真实模型请求。
+- `reports/order_items_qwen_live.json`：真实 `qwen3.7-plus` 请求 **1 次**，返回 `{"action":"exists","reason":"explain using the actual constraints and membership semantics"}`。这是模型实际返回的示例式理由，报告原样保留，没有补写语义解释。数据库验证为 **551/551、双向差集 0/0**，在本次测试数据上结果一致。
+
+真实运行自然计划为 Aggregate → Sort → Inner Nested Loop，与 Aggregate → Semi Nested Loop，均使用 `orders_created_at_idx` 和 `order_items_order_id_idx`。原查询 7 个执行时间（ms）为 `[0.518, 0.492, 0.498, 0.493, 0.499, 0.492, 0.480]`，候选为 `[0.395, 0.394, 0.410, 0.399, 0.387, 0.390, 0.386]`；中位数 **0.493 / 0.394 ms**，本次耗时减少约 **20.08%**，绝对差只有 **0.099 ms**，仅代表本地热缓存小样本。完整 ID、自然计划条件、缓冲区访问与原始计时都在真实报告中。
+
+74 项 pytest 测试通过（另含 11 个子测试），覆盖两动作解析与执行白名单、同源 SQL 条件、显式模式选择、单次模型客户端、模拟响应及原有日期场景回归。真实链路报告在接口交付时复用，不重复调用真实模型。
+
+## 两个场景的 CLI、HTTP、MCP 交付速查
+
+三个入口复用同一公共服务、日期上下文和数据库验证引擎。默认日期只在公共服务定义为 `2025-06-15`；`date` 可省略，不能通过请求覆写模型配置或输入 SQL。模型只负责提出结构化改写动作：日期场景为 `date_range` / `no_suggestion`，明细场景为 `exists` / `no_rewrite`。程序验证动作后，用受控模板和绑定参数生成 SQL；完整结果或订单 ID/计数不一致时不会计时。
+
+### CLI：两个场景
+
+```sh
+# 日期场景：真实模式读取现有 .env；加 --fixture normal 可改用可控建议
+.venv/bin/python scripts/optimize_orders.py --scenario orders_date_filter_2025_06_15 --date 2025-06-16
+# 明细场景：--qwen 才启用模型；省略该开关仍是原受控模式
+.venv/bin/python scripts/optimize_orders.py --scenario orders_with_items_count --date 2025-06-15 --qwen
+# 无真实模型请求的明细动作验收
+.venv/bin/python scripts/optimize_orders.py --scenario orders_with_items_count --qwen --fixture items-exists
+.venv/bin/python scripts/optimize_orders.py --scenario orders_with_items_count --qwen --fixture items-no-rewrite
+.venv/bin/python scripts/optimize_orders.py --scenario orders_with_items_count --qwen --fixture items-invalid
+```
+
+### HTTP：启动和请求
+
+真实模式启动（请求时才调用模型）：
+
+```sh
+.venv/bin/python -m uvicorn sql_optimization_agent.api:app --host 127.0.0.1 --port 8010
+```
+
+本地可控模型模式启动，两个场景均不发出真实模型请求（与上面的启动命令二选一）：
+
+```sh
+SQL_OPTIMIZATION_MODEL_FIXTURE=normal \
+SQL_OPTIMIZATION_ITEMS_MODE=qwen \
+SQL_OPTIMIZATION_ITEMS_FIXTURE=items-exists \
+.venv/bin/python -m uvicorn sql_optimization_agent.api:app --host 127.0.0.1 --port 8010
+```
+
+另一个终端调用两个场景：
+
+```sh
+curl -sS http://127.0.0.1:8010/optimize -H 'Content-Type: application/json' \
+  -d '{"scenario":"orders_date_filter_2025_06_15","date":"2025-06-16"}'
+curl -sS http://127.0.0.1:8010/optimize -H 'Content-Type: application/json' \
+  -d '{"scenario":"orders_with_items_count","date":"2025-06-15"}'
+# 省略日期仍为 2025-06-15
+curl -sS http://127.0.0.1:8010/optimize -H 'Content-Type: application/json' \
+  -d '{"scenario":"orders_with_items_count"}'
+```
+
+### stdio MCP：两个场景
+
+启动命令仍为 `.venv/bin/python -m sql_optimization_agent.mcp_server`，工具名仍为 `optimize_orders_date`，工具说明已列出两个场景。演示客户端会自动启动服务并转发服务端模型环境配置，无需额外启动进程：
+
+```sh
+# 真实模式；模型配置从服务端 .env 或环境读取
+.venv/bin/python scripts/call_optimization_mcp.py --scenario orders_date_filter_2025_06_15 --date 2025-06-16
+.venv/bin/python scripts/call_optimization_mcp.py --scenario orders_with_items_count --date 2025-06-15
+# 可控模型建议 + 真实 PostgreSQL
+SQL_OPTIMIZATION_MODEL_FIXTURE=normal SQL_OPTIMIZATION_ITEMS_FIXTURE=items-exists \
+  .venv/bin/python scripts/call_optimization_mcp.py --scenario orders_with_items_count
+```
+
+直接工具参数分别为 `{"scenario":"orders_date_filter_2025_06_15","date":"2025-06-16"}` 和 `{"scenario":"orders_with_items_count","date":"2025-06-15"}`；两个场景都可省略 `date`。MCP 不开放模型模式、fixture 或 SQL 参数。
+
+### 服务端模式、拒绝路径与可复现验收
+
+以下开关仅由启动进程的本地环境设置，修改后应重启服务；不是 HTTP/MCP 请求字段：
+
+| 配置 | 用途 |
+| --- | --- |
+| `QWEN_API_KEY`、`QWEN_BASE_URL`、`QWEN_MODEL` | 继续从服务端 `.env` 或环境读取，不由调用方提交 |
+| `SQL_OPTIMIZATION_MODEL_FIXTURE=normal` | 原日期场景的可控模型建议，未设置则沿用真实模式 |
+| `SQL_OPTIMIZATION_ITEMS_MODE=qwen` | HTTP/MCP 明细场景默认模式；沿用真实模型配置 |
+| `SQL_OPTIMIZATION_ITEMS_FIXTURE=items-exists` | 明细模型响应模拟；另可选 `items-no-rewrite`、`items-invalid` |
+| `SQL_OPTIMIZATION_ITEMS_MODE=controlled` | 使用原受控候选，不调用模型；可搭配 items fixture `normal` 或 `swapped-ids` |
+
+在上述可控 HTTP 启动命令中替换 items fixture 为 `items-no-rewrite`、`items-invalid`，可复现模型无建议和格式拒绝。结果不一致的本地负向验收用 `SQL_OPTIMIZATION_ITEMS_MODE=controlled SQL_OPTIMIZATION_ITEMS_FIXTURE=swapped-ids`；这是程序内的错误候选测试，并非给模型增加第三种执行动作。模拟模型 `exists` 的结果不一致门禁也有离线测试，验证即使最终计数相同，只要 ID 不同就跳过计时。
+
+HTTP 对 `completed`、`no_suggestion`、`no_rewrite` 以及明确的候选拒绝结果返回 200，用 `status` 区分；非法日期/未知场景为 400，额外传入配置或 SQL 字段为 422，服务配置/模型请求异常为 503。MCP 对 `no_rewrite` 返回正常结果，拒绝及失败则 `isError=true`。无建议和拒绝报告都没有性能测量结果。
+
+本地验收记录为 `reports/order_items_interfaces_acceptance.json`：实际 loopback HTTP 与 stdio MCP、模拟模型响应、真实 PostgreSQL，验收进程禁止真实模型调用。
+
+- `exists`：两个入口均为 551/551，订单 ID 双向差集 0/0；省略日期报告 `2025-06-15`。
+- 显式 `2025-06-16`：两个入口均为 548/548。
+- `no_rewrite`：两个入口均正常结束，`benchmark=null`。
+- 无效输出：两个入口均在建议校验阶段拒绝，未计时。
+- 受控错误候选：计数仍为 551/551，但双向 ID 差集 1/1，两个入口均拒绝并跳过计时。
+- 原日期场景回归：两个入口均为 825/825；非法日期仍在调用模型前停止。
+
+### 两份真实千问基准（复用既有报告）
+
+| 场景 / 目标日期 | 报告 | 实际结果 | 自然计划变化 | 原查询/候选中位数 |
+| --- | --- | --- | --- | --- |
+| 日期过滤 / 2025-06-16 | `reports/qwen_date_2025_06_16_live.json` | 823/823，完整多重集一致 | Parallel Seq Scan → Index Scan | 8.416 / 0.085 ms |
+| 有明细订单计数 / 2025-06-15 | `reports/order_items_qwen_live.json` | 551/551，ID 双向差集 0/0 | Inner Nested Loop＋Sort → Semi Nested Loop | 0.493 / 0.394 ms |
+
+两次均为实际 `qwen3.7-plus`、各 1 次请求，真实建议及全部 14 个样本、自然计划和缓冲区指标保留在对应报告。本次接口验收复用它们，未再次发出真实请求；验收报告记录了两份文件的 SHA-256，确认复用期间未变化。
+
+测试环境：Mac 上 Python 3.12.13，Docker Compose `postgres:16`，实际 PostgreSQL 16.15（aarch64），`127.0.0.1:5434/sql_optimization`，应用账号 `sql_optimization_reader`；300005 条合成订单、400008 条合成明细。比较及计时使用 REPEATABLE READ 只读快照；各预热一次，再交替采样各 7 次，不强制计划。本地热缓存小样本的性能收益不代表其他数据或负载。
+
+最终全量本地验收：84 项 pytest 测试通过（另含 11 个子测试），`pip check` 与 `git diff --check` 通过。CI 仍使用可控模型和数据库边界替身，不需要百炼密钥或本地数据库；真实 HTTP/stdio 及 PostgreSQL 的补充验收与 CI 测试来源在报告中分别标注。

@@ -88,10 +88,11 @@ def test_invalid_items_date_stops_before_database(monkeypatch):
     run.assert_not_called()
 
 
-def test_http_mcp_default_service_keeps_existing_scope(monkeypatch):
-    run=Mock()
-    monkeypatch.setattr('sql_optimization_agent.service.run_items',run)
+def test_http_mcp_default_service_opens_items_with_server_mode(monkeypatch):
+    run=Mock(return_value={'status':'no_rewrite'})
+    monkeypatch.setattr('sql_optimization_agent.service.run_items_qwen',run)
     service=configured_service()
-    assert service.enabled_scenarios==(ORDERS_DATE_SCENARIO,)
-    assert service.optimize(ORDER_ITEMS_SCENARIO)['status']=='unsupported_scenario'
-    run.assert_not_called()
+    assert service.enabled_scenarios==(ORDERS_DATE_SCENARIO,ORDER_ITEMS_SCENARIO)
+    assert service.items_mode=='qwen'
+    assert service.optimize(ORDER_ITEMS_SCENARIO)['status']=='no_rewrite'
+    run.assert_called_once()

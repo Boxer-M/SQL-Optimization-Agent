@@ -12,6 +12,7 @@ from sql_optimization_agent.tools.sql_benchmark import json_value
 from sql_optimization_agent.tools.order_items_benchmark import SCENARIO as ORDER_ITEMS_SCENARIO, FIXTURES as ITEM_FIXTURES, run as run_items
 from sql_optimization_agent.tools.sql_benchmark import BenchmarkValidationError
 from sql_optimization_agent.db import DatabaseConfigurationError, DatabaseConnectionError
+from sql_optimization_agent.order_items_qwen import MODEL_FIXTURES, run as run_items_qwen
 
 
 ORDERS_DATE_SCENARIO = "orders_date_filter_2025_06_15"
@@ -19,15 +20,18 @@ DEFAULT_ORDER_DATE = "2025-06-15"
 
 
 class OptimizationService:
-    def __init__(self, config=None, *, fixture=None, enabled_scenarios=None):
+    def __init__(self, config=None, *, fixture=None, enabled_scenarios=None,
+                 items_mode='controlled', items_fixture=None):
         if config is None:
             root = Path(__file__).resolve().parents[2]
             config = {**dotenv_values(root / ".env", interpolate=False), **os.environ}
         self.config = dict(config)
         self.fixture = fixture
+        self.items_mode = items_mode
+        self.items_fixture = items_fixture
         self.enabled_scenarios = (ORDERS_DATE_SCENARIO,ORDER_ITEMS_SCENARIO) if enabled_scenarios is None else enabled_scenarios
 
-    def optimize(self, scenario: str, *, date: str | None = None) -> dict:
+    def optimize(self, scenario: str, *, date: str | None = None, use_qwen: bool | None = None) -> dict:
         if scenario not in self.enabled_scenarios:
             return {"status": "unsupported_scenario", "reason": "Unknown scenario; use " + ", ".join(self.enabled_scenarios),
                     "benchmark": None}
@@ -36,14 +40,24 @@ class OptimizationService:
         except ValueError as error:
             return {"status": "invalid_date", "stage": "configuration", "reason": str(error),
                     "model_requests": 0, "benchmark": None}
-        supported_fixtures = ITEM_FIXTURES if scenario == ORDER_ITEMS_SCENARIO else FIXTURES
-        if self.fixture is not None and self.fixture not in supported_fixtures:
+        if use_qwen is None:
+            if scenario == ORDER_ITEMS_SCENARIO and self.items_mode not in ('controlled','qwen'):
+                return {'status':'invalid_config','stage':'configuration','reason':'Invalid server-side items mode',
+                        'model_requests':0,'benchmark':None}
+            use_qwen = scenario == ORDER_ITEMS_SCENARIO and self.items_mode == 'qwen'
+        if use_qwen and scenario != ORDER_ITEMS_SCENARIO:
+            return {'status':'unsupported_mode','stage':'configuration','reason':'Explicit --qwen mode is for orders_with_items_count',
+                    'model_requests':0,'benchmark':None}
+        supported_fixtures = (MODEL_FIXTURES if use_qwen else ITEM_FIXTURES) if scenario == ORDER_ITEMS_SCENARIO else FIXTURES
+        fixture = self.items_fixture if scenario == ORDER_ITEMS_SCENARIO and self.items_fixture is not None else self.fixture
+        if fixture is not None and fixture not in supported_fixtures:
             return {"status": "invalid_fixture", "reason": "Unknown server-side model fixture", "benchmark": None}
         try:
             if scenario == ORDER_ITEMS_SCENARIO:
-                report = run_items(self.config,date_context,fixture=self.fixture or 'normal')
+                report = (run_items_qwen(self.config,date_context,fixture=fixture) if use_qwen
+                          else run_items(self.config,date_context,fixture=fixture or 'normal'))
             else:
-                report = run_workflow(self.config, date_context=date_context, fixture=self.fixture)
+                report = run_workflow(self.config, date_context=date_context, fixture=fixture)
         except (DatabaseConfigurationError,DatabaseConnectionError,BenchmarkValidationError) as error:
             report = {"status":"validation_error","stage":"result_validation","reason":str(error),
                       "scenario":scenario,"target_date":date_context.target.isoformat(),"model_requests":0,"benchmark":None}
@@ -55,6 +69,7 @@ class OptimizationService:
 
 def configured_service() -> OptimizationService:
     """Fixtures are selected by the local server operator, never by request bodies."""
-    # New items scenario is enabled only for the public service/CLI in this iteration.
+    # Mode and per-scenario fixtures are local operator settings, not request fields.
     return OptimizationService(fixture=os.environ.get("SQL_OPTIMIZATION_MODEL_FIXTURE") or None,
-                               enabled_scenarios=(ORDERS_DATE_SCENARIO,))
+                               items_mode=os.environ.get('SQL_OPTIMIZATION_ITEMS_MODE','qwen'),
+                               items_fixture=os.environ.get('SQL_OPTIMIZATION_ITEMS_FIXTURE') or None)

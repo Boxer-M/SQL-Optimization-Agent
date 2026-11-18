@@ -17,9 +17,20 @@ DAY_FILTER = "o.created_at >= %s::timestamp AND o.created_at < %s::timestamp"
 JOIN_FROM = "FROM public.orders AS o JOIN public.order_items AS i ON i.order_id = o.order_id"
 EXISTS_FILTER = "EXISTS (SELECT 1 FROM public.order_items AS i WHERE i.order_id = o.order_id)"
 JOIN_COUNT = f"SELECT COUNT(DISTINCT o.order_id) AS order_count\n{JOIN_FROM}\nWHERE {DAY_FILTER}"
-EXISTS_COUNT = f"SELECT COUNT(*) AS order_count\nFROM public.orders AS o\nWHERE {DAY_FILTER} AND {EXISTS_FILTER}"
+EXISTS_FROM = f"FROM public.orders AS o\nWHERE {DAY_FILTER} AND {EXISTS_FILTER}"
+EXISTS_COUNT = f"SELECT COUNT(*) AS order_count\n{EXISTS_FROM}"
 JOIN_IDS = f"SELECT DISTINCT o.order_id\n{JOIN_FROM}\nWHERE {DAY_FILTER}"
-EXISTS_IDS = f"SELECT o.order_id\nFROM public.orders AS o\nWHERE {DAY_FILTER} AND {EXISTS_FILTER}"
+EXISTS_IDS = f"SELECT o.order_id\n{EXISTS_FROM}"
+
+
+def run_action(config, context: OrderDateContext, action: str):
+    """Model-facing executor: only two actions, never SQL or fixture names."""
+    if action == 'no_rewrite':
+        return {'status':'no_rewrite','stage':'complete','reason':'Model did not recommend a rewrite',
+                'target_date':context.target.isoformat(),'benchmark':None}
+    if action != 'exists':
+        raise BenchmarkValidationError('Only exists and no_rewrite actions are executable')
+    return run(config,context,fixture='normal')
 
 # Negative control: remove one eligible ID, insert one no-item ID on the same day.
 # These are application-owned SQL templates, not user/model-supplied SQL.

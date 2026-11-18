@@ -32,7 +32,7 @@ If no safe improvement is available return {"action":"no_suggestion","reason":"w
 """
 
 
-def request_suggestion(context: dict, config: Mapping, *, transport=None) -> ModelReply:
+def request_suggestion(context: dict, config: Mapping, *, transport=None, system_prompt: str = SYSTEM_PROMPT) -> ModelReply:
     names = ("QWEN_API_KEY", "QWEN_BASE_URL", "QWEN_MODEL")
     missing = [name for name in names if not isinstance(config.get(name), str)
                or not config[name].strip() or "<" in config[name]]
@@ -52,7 +52,7 @@ def request_suggestion(context: dict, config: Mapping, *, transport=None) -> Mod
         raise QwenFailure("invalid_config", "Invalid QWEN_BASE_URL: use a Bailian HTTPS compatible-mode/v1 endpoint")
     payload = {
         "model": config["QWEN_MODEL"],
-        "messages": [{"role": "system", "content": SYSTEM_PROMPT + "\nTarget date context: "
+        "messages": [{"role": "system", "content": system_prompt + "\nTarget date context: "
                        + json.dumps(context.get("date_context"), ensure_ascii=False)},
                      {"role": "user", "content": json.dumps(context, ensure_ascii=False)}],
         "response_format": {"type": "json_object"},
