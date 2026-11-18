@@ -224,3 +224,30 @@ POSTGRES_READER_PASSWORD= .venv/bin/python scripts/check_db_connection.py
 
 可复用入口为 `sql_optimization_agent.db.readonly_connection`，可接收配置映射，默认读取进程环境。调用方使用 `with readonly_connection(config) as connection:`，在其中使用游标执行查询。连接启动时设置默认只读事务，后续事务也使用只读模式；数据库账号权限仍是访问控制边界。退出 `with` 时事务成功则提交，异常则回滚，连接始终关闭。
 
+## 单表 Schema Inspector
+
+`sql_optimization_agent.tools.schema_inspector.inspect_table(schema_name, table_name, config)`
+复用应用只读连接，返回可直接 JSON 序列化的字典：`schema`、`table`、`columns`、`primary_key`、`indexes`。字段按表定义顺序、主键字段按主键定义顺序返回；索引按名称排序，定义包含主键索引。字段类型保留精度（如 `numeric(12,2)`），可空性使用布尔值。
+
+在项目根目录、已安装项目且数据库运行时执行：
+
+```sh
+.venv/bin/python - <<'PY'
+import json
+import os
+from dotenv import dotenv_values
+from sql_optimization_agent.tools.schema_inspector import inspect_table, TableNotFoundError
+
+config = {**dotenv_values('.env', interpolate=False), **os.environ}
+print(json.dumps(inspect_table('public', 'orders', config), ensure_ascii=False, indent=2))
+try:
+    inspect_table('public', 'orders_does_not_exist', config)
+except TableNotFoundError as error:
+    print(error)
+else:
+    raise AssertionError('Expected TableNotFoundError')
+PY
+```
+
+schema 和表名必须显式传入，按数据库中真实名称精确匹配，不受 `search_path` 影响；通过参数绑定查询系统目录，不将输入拼接进 SQL。不存在的目标抛出带 schema、表名的 `TableNotFoundError`。支持普通表、分区表和外部表；本入口不将视图视为表，不读取业务行或统计信息。
+
