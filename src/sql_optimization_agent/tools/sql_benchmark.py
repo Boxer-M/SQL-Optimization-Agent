@@ -162,18 +162,19 @@ def run_benchmark(
         }
 
 
-def measure_pair(connection, candidate_sql: str, candidate_params=None) -> dict:
+def measure_pair(connection, candidate_sql: str, candidate_params=None, *,
+                 original_sql: str = ORIGINAL, original_params=None) -> dict:
     """Measure an already validated candidate; callers must compare results first."""
     # Each query is warmed once, then strictly alternate original / rewritten.
-    _explain(connection, ORIGINAL)
+    _explain(connection, original_sql, original_params)
     _explain(connection, candidate_sql, candidate_params)
     samples = {"original": [], "rewritten": []}
     execution_order = []
-    queries = {"original": ORIGINAL, "rewritten": candidate_sql}
+    queries = {"original": original_sql, "rewritten": candidate_sql}
     for _ in range(7):
         for name in ("original", "rewritten"):
             execution_order.append(name)
-            samples[name].append(_explain(connection, queries[name], candidate_params if name == "rewritten" else None))
+            samples[name].append(_explain(connection, queries[name], candidate_params if name == "rewritten" else original_params))
     times = {name: [sample["execution_ms"] for sample in values]
              for name, values in samples.items()}
     medians = {name: median(values) for name, values in times.items()}

@@ -11,9 +11,10 @@ from sql_optimization_agent.db import (
     DatabaseConfigurationError, DatabaseConnectionError, readonly_connection,
 )
 from sql_optimization_agent.qwen_client import ModelReply, QwenFailure, request_suggestion
+from sql_optimization_agent.order_date import ORDER_DATE_SQL, OrderDateContext
 from sql_optimization_agent.tools.schema_inspector import inspect_table, TableNotFoundError
 from sql_optimization_agent.tools.sql_benchmark import (
-    ORIGINAL, BenchmarkValidationError, _compare, _fetch, _timeout_errors, measure_pair,
+    BenchmarkValidationError, _compare, _fetch, _timeout_errors, measure_pair,
 )
 
 
@@ -23,7 +24,7 @@ class Candidate:
     params: tuple[datetime, datetime]
 
 
-def parse_suggestion(content: str) -> tuple[dict, Candidate | None]:
+def parse_suggestion(content: str, date_context: OrderDateContext) -> tuple[dict, Candidate | None]:
     def unique_object(pairs):
         result = {}
         for key, value in pairs:
@@ -45,11 +46,10 @@ def parse_suggestion(content: str) -> tuple[dict, Candidate | None]:
     keys = {"action", "start", "end", "start_inclusive", "end_inclusive", "reason"}
     if set(value) != keys or value.get("action") != "date_range":
         raise QwenFailure("invalid_suggestion", "Only date_range fields or no_suggestion are supported; SQL is not accepted")
-    if (value["start"] != "2025-06-15 00:00:00" or value["end"] != "2025-06-16 00:00:00"
+    if (value["start"] != date_context.start.isoformat(sep=" ") or value["end"] != date_context.end.isoformat(sep=" ")
             or type(value["start_inclusive"]) is not bool or type(value["end_inclusive"]) is not bool):
         raise QwenFailure("invalid_suggestion", "Unsupported date range or non-boolean boundary flags")
-    start = datetime.strptime(value["start"], "%Y-%m-%d %H:%M:%S")
-    end = datetime.strptime(value["end"], "%Y-%m-%d %H:%M:%S")
+    start, end = date_context.start, date_context.end
     # Only these operators are selected by application code; model text is never SQL.
     lower = ">=" if value["start_inclusive"] else ">"
     upper = "<=" if value["end_inclusive"] else "<"
@@ -68,7 +68,7 @@ def _estimated_nodes(node):
     return result
 
 
-def diagnostic_context(config: Mapping) -> dict:
+def diagnostic_context(config: Mapping, date_context: OrderDateContext) -> dict:
     schema = inspect_table("public", "orders", config)
     expected = {"customer_id": "integer", "created_at": "timestamp without time zone",
                 "status": "text", "amount": "numeric(12,2)"}
@@ -77,8 +77,9 @@ def diagnostic_context(config: Mapping) -> dict:
         raise QwenFailure("unsupported_schema", "Orders schema does not match the supported date-filter scenario")
     with readonly_connection(config) as connection, _timeout_errors():
         connection.execute("SET LOCAL statement_timeout = '5s'")
-        plan = connection.execute("EXPLAIN (FORMAT JSON) " + ORIGINAL).fetchone()[0][0]
-    return {"scenario": "orders_date_filter_2025_06_15", "original_sql": ORIGINAL,
+        plan = connection.execute("EXPLAIN (FORMAT JSON) " + ORDER_DATE_SQL, date_context.original_params).fetchone()[0][0]
+    return {"scenario": "orders_date_filter_2025_06_15", "original_sql": ORDER_DATE_SQL,
+            "original_parameters": [date_context.target.isoformat()], "date_context": date_context.as_dict(),
             "table": schema, "estimated_plan": _estimated_nodes(plan["Plan"])}
 
 
@@ -96,19 +97,20 @@ def _redact(value, config):
     return value
 
 
-def run_workflow(config: Mapping, *, fixture: str | None = None) -> dict:
+def run_workflow(config: Mapping, *, date_context: OrderDateContext, fixture: str | None = None) -> dict:
     report = {"source": "controlled_model_response" if fixture else "live_qwen",
               "fixture": fixture, "requested_model": config.get("QWEN_MODEL"),
               "measured_at_utc": datetime.now(timezone.utc).isoformat(), "model_requests": 0,
-              "benchmark": None, "stage": "diagnosis"}
+              "benchmark": None, "stage": "diagnosis", "target_date": date_context.target.isoformat(),
+              "date_context": date_context.as_dict()}
     try:
-        context = diagnostic_context(config)
+        context = diagnostic_context(config, date_context)
         report["diagnostic_context"] = context
         report["stage"] = "model_request"
         if fixture:
             if fixture not in FIXTURES:
                 raise QwenFailure("invalid_fixture", "Unknown controlled response fixture")
-            reply = ModelReply("controlled-fixture-not-a-real-model", FIXTURES[fixture])
+            reply = ModelReply("controlled-fixture-not-a-real-model", fixture_content(fixture, date_context))
         else:
             # Configuration failures happen before any network request.
             try:
@@ -120,7 +122,7 @@ def run_workflow(config: Mapping, *, fixture: str | None = None) -> dict:
         report["model_id"] = reply.model
         report["received_content"] = reply.content
         report["stage"] = "suggestion_validation"
-        suggestion, candidate = parse_suggestion(reply.content)
+        suggestion, candidate = parse_suggestion(reply.content, date_context)
         report["suggestion"] = suggestion
         if candidate is None:
             report.update(status="no_suggestion", stage="complete", reason="Model returned no suggestion")
@@ -137,13 +139,14 @@ def run_workflow(config: Mapping, *, fixture: str | None = None) -> dict:
                     "current_setting('transaction_isolation'), version()"
                 ).fetchone()
                 report["connection"] = dict(zip(("database", "user", "read_only", "isolation", "version"), identity))
-                original = _fetch(connection, ORIGINAL, 10000, 16 * 1024 * 1024)
+                original = _fetch(connection, ORDER_DATE_SQL, 10000, 16 * 1024 * 1024, date_context.original_params)
                 proposed = _fetch(connection, candidate.sql, 10000, 16 * 1024 * 1024, candidate.params)
                 comparison = _compare(original, proposed)
                 report["comparison"] = comparison
                 if comparison["equivalent"]:
                     report["stage"] = "benchmark"
-                    report["benchmark"] = measure_pair(connection, candidate.sql, candidate.params)
+                    report["benchmark"] = measure_pair(connection, candidate.sql, candidate.params,
+                                                       original_sql=ORDER_DATE_SQL, original_params=date_context.original_params)
                     report.update(status="completed", stage="complete", reason="在本次测试数据上结果一致")
                 else:
                     report.update(status="result_mismatch", reason="Full results differ; candidate benchmark skipped")
@@ -154,12 +157,18 @@ def run_workflow(config: Mapping, *, fixture: str | None = None) -> dict:
     return _redact(report, config)
 
 
-_GOOD = {"action": "date_range", "start": "2025-06-15 00:00:00", "end": "2025-06-16 00:00:00",
-         "start_inclusive": True, "end_inclusive": False,
-         "reason": "Use the original timestamp B-tree with an inclusive start and exclusive end; preserve duplicates and exclude NULL."}
-FIXTURES = {
-    "normal": json.dumps(_GOOD),
-    "malformed": '{"action": "date_range", "sql": "not executable model text"}',
-    "wrong-upper": json.dumps({**_GOOD, "end_inclusive": True, "reason": "Deliberately incorrect inclusive upper bound for validation."}),
-    "no-suggestion": json.dumps({"action": "no_suggestion", "reason": "Controlled no-suggestion path."}),
-}
+FIXTURES = ("normal", "malformed", "wrong-upper", "no-suggestion")
+
+
+def fixture_content(name: str, date_context: OrderDateContext) -> str:
+    if name == "malformed":
+        return '{"action": "date_range", "sql": "not executable model text"}'
+    if name == "no-suggestion":
+        return json.dumps({"action": "no_suggestion", "reason": "Controlled no-suggestion path."})
+    if name not in ("normal", "wrong-upper"):
+        raise QwenFailure("invalid_fixture", "Unknown controlled response fixture")
+    return json.dumps({"action": "date_range", "start": date_context.start.isoformat(sep=" "),
+                       "end": date_context.end.isoformat(sep=" "), "start_inclusive": True,
+                       "end_inclusive": name == "wrong-upper",
+                       "reason": "Controlled date-window suggestion; wrong-upper deliberately includes next midnight."
+                       if name == "wrong-upper" else "Use the timestamp B-tree with inclusive start and exclusive end."})

@@ -7,10 +7,12 @@ from pathlib import Path
 from dotenv import dotenv_values
 
 from sql_optimization_agent.qwen_workflow import FIXTURES, run_workflow
+from sql_optimization_agent.order_date import OrderDateContext
 from sql_optimization_agent.tools.sql_benchmark import json_value
 
 
 ORDERS_DATE_SCENARIO = "orders_date_filter_2025_06_15"
+DEFAULT_ORDER_DATE = "2025-06-15"
 
 
 class OptimizationService:
@@ -21,14 +23,19 @@ class OptimizationService:
         self.config = dict(config)
         self.fixture = fixture
 
-    def optimize(self, scenario: str) -> dict:
+    def optimize(self, scenario: str, *, date: str | None = None) -> dict:
         if scenario != ORDERS_DATE_SCENARIO:
             return {"status": "unsupported_scenario", "reason": "Unknown scenario; use " + ORDERS_DATE_SCENARIO,
                     "benchmark": None}
+        try:
+            date_context = OrderDateContext.parse(DEFAULT_ORDER_DATE if date is None else date)
+        except ValueError as error:
+            return {"status": "invalid_date", "stage": "configuration", "reason": str(error),
+                    "model_requests": 0, "benchmark": None}
         if self.fixture is not None and self.fixture not in FIXTURES:
             return {"status": "invalid_fixture", "reason": "Unknown server-side model fixture", "benchmark": None}
         try:
-            report = run_workflow(self.config, fixture=self.fixture)
+            report = run_workflow(self.config, date_context=date_context, fixture=self.fixture)
         except OSError:
             report = {"status": "service_error", "reason": "Unable to access local configuration or services", "benchmark": None}
         # Preserve typed mismatch values consistently instead of HTTP's Decimal→float conversion.

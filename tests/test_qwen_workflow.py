@@ -7,7 +7,12 @@ from unittest.mock import patch
 import httpx
 
 from sql_optimization_agent.qwen_client import ModelReply, QwenFailure, request_suggestion
-from sql_optimization_agent.qwen_workflow import FIXTURES, parse_suggestion, run_workflow
+from sql_optimization_agent.qwen_workflow import FIXTURES as FIXTURE_NAMES, fixture_content, parse_suggestion, run_workflow
+from sql_optimization_agent.order_date import OrderDateContext
+from sql_optimization_agent.service import DEFAULT_ORDER_DATE
+
+DATE_CONTEXT = OrderDateContext.parse(DEFAULT_ORDER_DATE)
+FIXTURES = {name: fixture_content(name, DATE_CONTEXT) for name in FIXTURE_NAMES}
 
 
 CONFIG = {"QWEN_API_KEY": "unit-test-secret-not-real", "QWEN_BASE_URL": "https://dashscope.aliyuncs.com/compatible-mode/v1",
@@ -16,11 +21,11 @@ CONFIG = {"QWEN_API_KEY": "unit-test-secret-not-real", "QWEN_BASE_URL": "https:/
 
 class QwenTests(unittest.TestCase):
     def test_candidate_is_template_and_bound_values(self):
-        value, candidate = parse_suggestion(FIXTURES['normal'])
+        value, candidate = parse_suggestion(FIXTURES['normal'], DATE_CONTEXT)
         self.assertEqual(candidate.sql.count('%s'), 2)
         self.assertNotIn(value['start'], candidate.sql)
         self.assertEqual(candidate.params[1].isoformat(), '2025-06-16T00:00:00')
-        _, wrong = parse_suggestion(FIXTURES['wrong-upper'])
+        _, wrong = parse_suggestion(FIXTURES['wrong-upper'], DATE_CONTEXT)
         self.assertIn('<= %s', wrong.sql)
 
     def test_rejects_extra_sql_wrong_types_ranges_and_duplicate_keys(self):
@@ -33,10 +38,10 @@ class QwenTests(unittest.TestCase):
                  '{"action":"date_range","action":"no_suggestion","reason":"x"}']
         for content in cases:
             with self.subTest(content=content), self.assertRaises(QwenFailure):
-                parse_suggestion(content)
+                parse_suggestion(content, DATE_CONTEXT)
 
     def test_no_suggestion_has_no_candidate(self):
-        self.assertIsNone(parse_suggestion(FIXTURES['no-suggestion'])[1])
+        self.assertIsNone(parse_suggestion(FIXTURES['no-suggestion'], DATE_CONTEXT)[1])
 
     def test_one_request_json_contract_and_no_secrets_in_prompt(self):
         requests = []
@@ -92,7 +97,7 @@ class QwenTests(unittest.TestCase):
         with patch('sql_optimization_agent.qwen_workflow.diagnostic_context', return_value={}), \
              patch('sql_optimization_agent.qwen_workflow._fetch') as fetch, \
              patch('sql_optimization_agent.qwen_workflow.measure_pair') as measure:
-            report = run_workflow(CONFIG, fixture='malformed')
+            report = run_workflow(CONFIG, date_context=DATE_CONTEXT, fixture='malformed')
             self.assertEqual(report['status'], 'invalid_suggestion')
             self.assertIsNone(report['benchmark'])
             fetch.assert_not_called()
@@ -102,7 +107,7 @@ class QwenTests(unittest.TestCase):
         with patch('sql_optimization_agent.qwen_workflow.diagnostic_context', return_value={}), \
              patch('sql_optimization_agent.qwen_workflow.request_suggestion',
                    return_value=ModelReply('unit-model', CONFIG['QWEN_API_KEY'])):
-            report = run_workflow(CONFIG)
+            report = run_workflow(CONFIG, date_context=DATE_CONTEXT)
             self.assertNotIn(CONFIG['QWEN_API_KEY'], json.dumps(report))
 
 
