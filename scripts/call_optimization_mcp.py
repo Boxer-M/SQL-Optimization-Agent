@@ -1,6 +1,7 @@
 """Discover and call the local stdio MCP tool using the official client."""
 
 import asyncio
+import argparse
 from datetime import timedelta
 import json
 import os
@@ -12,7 +13,7 @@ from mcp.client.stdio import stdio_client
 from sql_optimization_agent.service import ORDERS_DATE_SCENARIO
 
 
-async def call():
+async def call(date: str | None = None):
     parameters = StdioServerParameters(command=sys.executable,
                                       args=["-m", "sql_optimization_agent.mcp_server"],
                                       env={key: value for key, value in os.environ.items()
@@ -24,10 +25,15 @@ async def call():
             await session.initialize()
             tools = await session.list_tools()
             print("Discovered tools: " + ", ".join(tool.name for tool in tools.tools), file=sys.stderr)
-            result = await session.call_tool("optimize_orders_date", {"scenario": ORDERS_DATE_SCENARIO})
+            arguments = {"scenario": ORDERS_DATE_SCENARIO}
+            if date is not None:
+                arguments["date"] = date
+            result = await session.call_tool("optimize_orders_date", arguments)
             print(json.dumps(result.structuredContent, ensure_ascii=False, indent=2))
             return 1 if result.isError else 0
 
 
 if __name__ == "__main__":
-    raise SystemExit(asyncio.run(call()))
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--date", metavar="YYYY-MM-DD", help="Optional date forwarded to the MCP tool; service defines the default")
+    raise SystemExit(asyncio.run(call(parser.parse_args().date)))

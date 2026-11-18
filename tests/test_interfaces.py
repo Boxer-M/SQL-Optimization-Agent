@@ -77,7 +77,6 @@ def test_http_rejects_unknown_scenario_and_external_sql(offline):
         assert response.status_code == 400
         assert response.json()['status'] == 'unsupported_scenario'
         assert client.post('/optimize', json={'scenario': ORDERS_DATE_SCENARIO, 'sql': 'SELECT 1'}).status_code == 422
-        assert client.post('/optimize', json={'scenario': ORDERS_DATE_SCENARIO, 'date': '2025-06-16'}).status_code == 422
         assert client.post('/optimize', json={}).status_code == 422
     context.assert_not_called()
     measure.assert_not_called()
@@ -91,7 +90,7 @@ async def test_mcp_discovery_and_call_over_protocol(offline, fixture, status):
     async with create_connected_server_and_client_session(server) as session:
         tools = await session.list_tools()
         assert [tool.name for tool in tools.tools] == ['optimize_orders_date']
-        assert set(tools.tools[0].inputSchema['properties']) == {'scenario'}
+        assert set(tools.tools[0].inputSchema['properties']) == {'scenario', 'date'}
         result = await session.call_tool('optimize_orders_date', {'scenario': ORDERS_DATE_SCENARIO})
         assert result.structuredContent['status'] == status
         assert result.isError == (fixture != 'normal')
@@ -105,6 +104,65 @@ async def test_mcp_unknown_scenario_does_not_run_workflow(offline):
         result = await session.call_tool('optimize_orders_date', {'scenario': 'unknown'})
         assert result.isError
         assert result.structuredContent['status'] == 'unsupported_scenario'
+    context.assert_not_called()
+    measure.assert_not_called()
+
+
+@pytest.mark.parametrize('target,expected', [(None,'2025-06-15'), ('2025-06-16','2025-06-16')])
+def test_http_date_forwarding(offline, target, expected):
+    factory, measure, context = offline
+    payload = {'scenario':ORDERS_DATE_SCENARIO}
+    if target is not None:
+        payload['date'] = target
+    with TestClient(create_app(factory())) as client:
+        response = client.post('/optimize',json=payload)
+    assert response.status_code == 200
+    report = response.json()
+    assert report['target_date'] == expected
+    assert report['comparison']['equivalent']
+    assert context.call_args.args[1].target.isoformat() == expected
+    assert measure.call_args.kwargs['original_params'][0].isoformat() == expected
+
+
+def test_http_invalid_date_is_input_error_before_model(offline):
+    factory, measure, context = offline
+    with TestClient(create_app(factory())) as client:
+        response = client.post('/optimize',json={'scenario':ORDERS_DATE_SCENARIO,'date':'2025-02-29'})
+        assert client.post('/optimize',json={'scenario':ORDERS_DATE_SCENARIO,'date':123}).status_code == 422
+    assert response.status_code == 400
+    assert response.json()['status'] == 'invalid_date'
+    assert response.json()['model_requests'] == 0
+    context.assert_not_called()
+    measure.assert_not_called()
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize('target,expected', [(None,'2025-06-15'), ('2025-06-16','2025-06-16')])
+async def test_mcp_date_forwarding(offline, target, expected):
+    factory, measure, context = offline
+    args = {'scenario':ORDERS_DATE_SCENARIO}
+    if target is not None:
+        args['date'] = target
+    async with create_connected_server_and_client_session(create_server(factory())) as session:
+        tools = await session.list_tools()
+        assert 'YYYY-MM-DD' in tools.tools[0].inputSchema['properties']['date']['description']
+        result = await session.call_tool('optimize_orders_date',args)
+    assert not result.isError
+    assert result.structuredContent['target_date'] == expected
+    assert result.structuredContent['comparison']['equivalent']
+    assert context.call_args.args[1].target.isoformat() == expected
+    assert measure.call_args.kwargs['original_params'][0].isoformat() == expected
+
+
+@pytest.mark.anyio
+async def test_mcp_invalid_date_is_tool_argument_error_before_model(offline):
+    factory, measure, context = offline
+    async with create_connected_server_and_client_session(create_server(factory())) as session:
+        result = await session.call_tool('optimize_orders_date',{'scenario':ORDERS_DATE_SCENARIO,'date':'2025-02-29'})
+    assert result.isError
+    assert result.structuredContent['status'] == 'invalid_date'
+    assert result.structuredContent['error'] == {'type':'invalid_tool_argument','parameter':'date'}
+    assert result.structuredContent['model_requests'] == 0
     context.assert_not_called()
     measure.assert_not_called()
 
