@@ -193,3 +193,34 @@ SQL
 
 预期数据库为 `sql_optimization`、用户为 `sql_optimization_reader`、订单数为 `300005`；CONNECT、USAGE、SELECT 为真，schema CREATE 和表写入等其他授权为假；角色管理属性均为假、角色成员关系为 0、表所有者仍为初始化账号。UPDATE 必须返回 `permission denied for table orders`，不能仅依赖事务只读设置或 `WHERE FALSE`。若 UPDATE 意外成功，停止使用该账号，核查实际授权并修正后重新验收。
 
+## Python 只读数据库连接
+
+在已有 Python 3.12 虚拟环境中安装 psycopg 3（二进制发行版，无需本机 libpq）及 python-dotenv，然后执行固定连接检查：
+
+```sh
+.venv/bin/python -m pip install -e .
+.venv/bin/python -m pip check
+.venv/bin/python scripts/check_db_connection.py
+```
+
+脚本始终读取项目根目录的 `.env`，环境变量优先（包括显式空值），不修改 `.env`。沿用 `POSTGRES_READER_USER`、`POSTGRES_READER_PASSWORD` 和 `POSTGRES_PORT`（默认 `5434`）；只接受应用账号 `sql_optimization_reader`，目标固定为 `127.0.0.1` 上的 `sql_optimization`，连接超时为 5 秒，不读取初始化密码 `POSTGRES_PASSWORD`。本轮脚本不接受 SQL 或其他命令行参数，只执行内置验证查询。
+
+成功输出：
+
+```text
+database=sql_optimization
+user=sql_optimization_reader
+transaction_read_only=on
+orders_count=300005
+```
+
+验证空密码在连接前被拒绝（该命令预期退出码为 1，不会修改 `.env`）：
+
+```sh
+POSTGRES_READER_PASSWORD= .venv/bin/python scripts/check_db_connection.py
+```
+
+预期错误：`Missing required configuration: POSTGRES_READER_PASSWORD`。连接及查询失败时只输出脱敏提示，不输出原始数据库异常、密码或连接串。
+
+可复用入口为 `sql_optimization_agent.db.readonly_connection`，可接收配置映射，默认读取进程环境。调用方使用 `with readonly_connection(config) as connection:`，在其中使用游标执行查询。连接启动时设置默认只读事务，后续事务也使用只读模式；数据库账号权限仍是访问控制边界。退出 `with` 时事务成功则提交，异常则回滚，连接始终关闭。
+

@@ -8,7 +8,10 @@ version = "0.1.0"
 description = "An agent for SQL analysis and optimization."
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
-dependencies = []
+dependencies = [
+    "psycopg[binary]>=3.2,<4",
+    "python-dotenv>=1.0,<2",
+]
 
 [tool.setuptools]
 package-dir = {"" = "src"}
