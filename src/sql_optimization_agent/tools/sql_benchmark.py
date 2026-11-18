@@ -102,7 +102,8 @@ def _compare(left: QueryResult, right: QueryResult) -> dict:
 
 
 def _plan_nodes(node: dict) -> list[dict]:
-    fields = ("Node Type", "Relation Name", "Index Name", "Scan Direction",
+    fields = ("Node Type", "Relation Name", "Index Name", "Scan Direction", "Join Type", "Inner Unique",
+              "Heap Fetches", "Sort Key", "Sort Method", "Sort Space Used", "Sort Space Type",
               "Filter", "Index Cond", "Recheck Cond", "Rows Removed by Filter",
               "Actual Rows", "Actual Loops", "Parallel Aware")
     result = [{key: value for key, value in node.items()
