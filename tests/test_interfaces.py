@@ -77,6 +77,7 @@ def test_http_rejects_unknown_scenario_and_external_sql(offline):
         assert response.status_code == 400
         assert response.json()['status'] == 'unsupported_scenario'
         assert client.post('/optimize', json={'scenario': ORDERS_DATE_SCENARIO, 'sql': 'SELECT 1'}).status_code == 422
+        assert client.post('/optimize', json={'scenario': ORDERS_DATE_SCENARIO, 'date': '2025-06-16'}).status_code == 422
         assert client.post('/optimize', json={}).status_code == 422
     context.assert_not_called()
     measure.assert_not_called()

@@ -298,7 +298,7 @@ WHERE created_at >= TIMESTAMP '2025-06-15 00:00:00'
 
 ## 千问优化与命令行编排
 
-本模块仅支持现有订单日期过滤场景，原 SQL 固定为前述 `created_at::date = DATE '2025-06-15'`。流程为：Schema Inspector 读取字段及索引 → 获取原 SQL 的估算计划（不执行 ANALYZE）→ 一次模型请求 → 校验结构化范围建议 → 应用构造绑定参数的候选 → 同一只读快照完整结果比较 → 仅对一致候选预热和交替采样。
+本模块仅支持现有订单日期过滤场景。公共服务统一定义默认日期 `2025-06-15`，CLI 可用 `--date YYYY-MM-DD` 指定其他日期；原 SQL 为参数化的 `created_at::date = %s::date`。流程为：Schema Inspector 读取字段及索引 → 获取原 SQL 的估算计划（不执行 ANALYZE）→ 一次模型请求 → 校验结构化范围建议 → 应用构造绑定参数的候选 → 同一只读快照完整结果比较 → 仅对一致候选预热和交替采样。
 
 ### 本地模型配置
 
@@ -331,7 +331,7 @@ QWEN_MODEL=<百炼中已开通的模型ID>
 
 成功或无建议退出码为 0；配置阻塞、格式错误和结果不一致退出码为 1，同时仍输出有原因的 JSON 报告。原有 `scripts/benchmark_orders.py` 入口保持可运行，不调用模型。
 
-建议格式仅允许 `action=date_range`、`start`、`end`、两个包含性布尔值及 `reason`；也允许仅含 `action=no_suggestion` 与 `reason` 的对象。当前只接受 2025-06-15 零点至 2025-06-16 零点的无时区时间边界，拒绝额外字段、原始 SQL、未知操作、重复 JSON 键、非布尔标记和不支持的范围。包含性标记仅用于在应用预定义的比较操作符之间选择；即使结构合法，也必须通过数据库结果验证。候选固定使用 `public.orders` 和四个投影列，时间值通过 psycopg 参数绑定：
+建议格式仅允许 `action=date_range`、`start`、`end`、两个包含性布尔值及 `reason`；也允许仅含 `action=no_suggestion` 与 `reason` 的对象。只接受目标日零点至次日零点的无时区时间边界，拒绝额外字段、原始 SQL、未知操作、重复 JSON 键、非布尔标记和不支持的范围。包含性标记仅用于在应用预定义的比较操作符之间选择；即使结构合法，也必须通过数据库结果验证。候选固定使用 `public.orders` 和四个投影列，时间值通过 psycopg 参数绑定：
 
 ```sql
 SELECT customer_id, created_at, status, amount
@@ -340,7 +340,7 @@ WHERE created_at >= %s::timestamp without time zone
   AND created_at < %s::timestamp without time zone
 ```
 
-绑定参数为 `2025-06-15 00:00:00`、`2025-06-16 00:00:00`，不会执行模型返回的文本。比较沿用 10000 行/16 MiB 取数预算、5 秒语句超时、30 秒取数时间预算；性能测量沿用各预热一次、交替各 7 次的自然计划方法。报告包含来源、实际模型 ID、收到的原始内容和结构化建议、候选模板与参数、比较结果、扫描条件、14 个原始样本、缓冲区指标及中位数。诊断连接在模型等待期间关闭；结果比较和性能测试另在同一个 REPEATABLE READ 只读事务内执行。
+绑定参数由同一个日期上下文生成；默认日期时为 `2025-06-15 00:00:00`、`2025-06-16 00:00:00`，不会执行模型返回的文本。比较沿用 10000 行/16 MiB 取数预算、5 秒语句超时、30 秒取数时间预算；性能测量沿用各预热一次、交替各 7 次的自然计划方法。报告包含目标日期、来源、实际模型 ID、收到的原始内容和结构化建议、候选模板与参数、比较结果、扫描条件、14 个原始样本、缓冲区指标及中位数。诊断连接在模型等待期间关闭；结果比较和性能测试另在同一个 REPEATABLE READ 只读事务内执行。
 
 ### 本轮实测来源
 
@@ -373,7 +373,20 @@ WHERE created_at >= %s::timestamp without time zone
 .venv/bin/python scripts/optimize_orders.py --scenario orders_date_filter_2025_06_15
 # 可控模型建议 + 真实 PostgreSQL，不消耗模型额度
 .venv/bin/python scripts/optimize_orders.py --fixture normal
+# 显式默认日期或其他日期，均不调用真实模型
+.venv/bin/python scripts/optimize_orders.py --fixture normal --date 2025-06-15
+.venv/bin/python scripts/optimize_orders.py --fixture normal --date 2025-06-16
+# 负向边界用例，预期退出码 1，stage=result_validation，跳过计时
+.venv/bin/python scripts/optimize_orders.py --fixture wrong-upper --date 2025-06-15
+# 非法日期，模型及数据库调用前返回 invalid_date，预期退出码 1
+.venv/bin/python scripts/optimize_orders.py --date 2025-02-29
 ```
+
+日期必须为严格的 `YYYY-MM-DD`，且能计算次日。默认值只在公共服务 `DEFAULT_ORDER_DATE` 定义；旧场景标识保持兼容，不再从标识中提取日期。`orders.created_at` 已确认是允许 NULL 的 `timestamp without time zone`，因此按无时区日历日生成 `[当天零点, 次日零点)`，不使用 UTC 或本机时区转换。提示词、可控响应、候选校验和报告共用此上下文；诊断、结果比较、原查询预热及全部计时使用同一份 SQL 模板与日期参数。旧的固定基准入口仍保留原日期回归用例。
+
+本轮只给 CLI 增加日期输入；HTTP 请求模型和 MCP 工具参数不变，省略日期仍由公共服务选择原默认值。报告以 `target_date` 和 `date_context` 记录实际日期。错误 `<=` 上界结构上允许进入验证，但在包含次日零点记录时由完整结果比较拒绝，并跳过计时。
+
+日期参数化的真实千问验收记录位于 `reports/qwen_date_2025_06_16_live.json`：以 `--date 2025-06-16` 请求 `qwen3.7-plus` 一次，候选边界为 `[2025-06-16 00:00:00, 2025-06-17 00:00:00)`，原查询和候选均为 823 行，在本次测试数据上结果一致。自然计划由 Parallel Seq Scan 变为 `orders_created_at_idx` Index Scan，中位数 `8.416 → 0.085 ms`；原查询样本波动较大，完整原始计时及缓冲区指标保留在报告中。该验收没有运行独立连通性探测或重试。
 
 ### FastAPI
 
