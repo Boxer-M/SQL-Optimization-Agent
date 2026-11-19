@@ -1,0 +1,19 @@
+name: sql-agent-review
+services:
+  review-db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: review_store
+      POSTGRES_PASSWORD: ${REVIEW_ADMIN_PASSWORD:?Set REVIEW_ADMIN_PASSWORD}
+    ports:
+      - "127.0.0.1:${REVIEW_DB_PORT:-5545}:5432"
+    volumes:
+      - review_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d review_store"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+volumes:
+  review_data:
+    name: sql-agent-review-data
