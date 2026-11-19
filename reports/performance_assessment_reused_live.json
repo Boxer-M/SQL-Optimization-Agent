@@ -1,0 +1,1086 @@
+{
+  "source": "recomputed_from_existing_live_samples_no_model_or_database_rerun",
+  "source_commit": "99c00c1354b9ad3b227d9ca2c74aca8038ec5cc1",
+  "source_path": "reports/qwen_evaluation_live.json",
+  "source_sha256": "9371c10f80193cb236a437750620d36ddcfa7d1dca0082f406c188574bddd91a",
+  "assessment_summary": {
+    "improved": 10,
+    "inconclusive": 2
+  },
+  "cases": [
+    {
+      "scenario": "orders_date_filter_2025_06_15",
+      "date": "2025-06-15",
+      "repeat": 1,
+      "original_status": "completed",
+      "action": "date_range",
+      "validation": {
+        "status": "passed",
+        "comparison": {
+          "original_rows": 825,
+          "candidate_rows": 825,
+          "columns_equal": true,
+          "rows_and_multiplicities_equal": true,
+          "equivalent": true,
+          "reason": "在本次测试数据上结果一致",
+          "missing_from_candidate": [],
+          "extra_in_candidate": [],
+          "columns": [
+            [
+              "customer_id",
+              23,
+              4,
+              null,
+              null
+            ],
+            [
+              "created_at",
+              1114,
+              8,
+              null,
+              null
+            ],
+            [
+              "status",
+              25,
+              null,
+              null,
+              null
+            ],
+            [
+              "amount",
+              1700,
+              null,
+              12,
+              2
+            ]
+          ]
+        },
+        "counts": null
+      },
+      "execution_ms": {
+        "original": [
+          8.922,
+          7.874,
+          7.469,
+          6.71,
+          6.75,
+          6.272,
+          6.12
+        ],
+        "rewritten": [
+          0.083,
+          0.083,
+          0.072,
+          0.067,
+          0.073,
+          0.066,
+          0.063
+        ]
+      },
+      "performance_assessment": {
+        "verdict": "improved",
+        "rule": "strict_sample_interval_separation",
+        "original_range_ms": {
+          "min": 6.12,
+          "max": 8.922
+        },
+        "candidate_range_ms": {
+          "min": 0.063,
+          "max": 0.083
+        },
+        "median_ms": {
+          "original": 6.75,
+          "rewritten": 0.072
+        },
+        "median_difference_ms": -6.678,
+        "median_change_percent": -98.93333333333332,
+        "sample_counts": {
+          "original": 7,
+          "rewritten": 7
+        },
+        "scope": "This sampling run only; not a general performance guarantee"
+      },
+      "skipped": null
+    },
+    {
+      "scenario": "orders_date_filter_2025_06_15",
+      "date": "2025-06-15",
+      "repeat": 2,
+      "original_status": "completed",
+      "action": "date_range",
+      "validation": {
+        "status": "passed",
+        "comparison": {
+          "original_rows": 825,
+          "candidate_rows": 825,
+          "columns_equal": true,
+          "rows_and_multiplicities_equal": true,
+          "equivalent": true,
+          "reason": "在本次测试数据上结果一致",
+          "missing_from_candidate": [],
+          "extra_in_candidate": [],
+          "columns": [
+            [
+              "customer_id",
+              23,
+              4,
+              null,
+              null
+            ],
+            [
+              "created_at",
+              1114,
+              8,
+              null,
+              null
+            ],
+            [
+              "status",
+              25,
+              null,
+              null,
+              null
+            ],
+            [
+              "amount",
+              1700,
+              null,
+              12,
+              2
+            ]
+          ]
+        },
+        "counts": null
+      },
+      "execution_ms": {
+        "original": [
+          8.969,
+          7.983,
+          7.517,
+          7.858,
+          6.689,
+          6.534,
+          6.465
+        ],
+        "rewritten": [
+          0.089,
+          0.08,
+          0.073,
+          0.08,
+          0.066,
+          0.061,
+          0.077
+        ]
+      },
+      "performance_assessment": {
+        "verdict": "improved",
+        "rule": "strict_sample_interval_separation",
+        "original_range_ms": {
+          "min": 6.465,
+          "max": 8.969
+        },
+        "candidate_range_ms": {
+          "min": 0.061,
+          "max": 0.089
+        },
+        "median_ms": {
+          "original": 7.517,
+          "rewritten": 0.077
+        },
+        "median_difference_ms": -7.44,
+        "median_change_percent": -98.9756551815884,
+        "sample_counts": {
+          "original": 7,
+          "rewritten": 7
+        },
+        "scope": "This sampling run only; not a general performance guarantee"
+      },
+      "skipped": null
+    },
+    {
+      "scenario": "orders_date_filter_2025_06_15",
+      "date": "2025-06-16",
+      "repeat": 1,
+      "original_status": "completed",
+      "action": "date_range",
+      "validation": {
+        "status": "passed",
+        "comparison": {
+          "original_rows": 823,
+          "candidate_rows": 823,
+          "columns_equal": true,
+          "rows_and_multiplicities_equal": true,
+          "equivalent": true,
+          "reason": "在本次测试数据上结果一致",
+          "missing_from_candidate": [],
+          "extra_in_candidate": [],
+          "columns": [
+            [
+              "customer_id",
+              23,
+              4,
+              null,
+              null
+            ],
+            [
+              "created_at",
+              1114,
+              8,
+              null,
+              null
+            ],
+            [
+              "status",
+              25,
+              null,
+              null,
+              null
+            ],
+            [
+              "amount",
+              1700,
+              null,
+              12,
+              2
+            ]
+          ]
+        },
+        "counts": null
+      },
+      "execution_ms": {
+        "original": [
+          8.424,
+          7.452,
+          6.946,
+          6.701,
+          6.488,
+          6.286,
+          6.011
+        ],
+        "rewritten": [
+          0.079,
+          0.086,
+          0.067,
+          0.065,
+          0.064,
+          0.063,
+          0.057
+        ]
+      },
+      "performance_assessment": {
+        "verdict": "improved",
+        "rule": "strict_sample_interval_separation",
+        "original_range_ms": {
+          "min": 6.011,
+          "max": 8.424
+        },
+        "candidate_range_ms": {
+          "min": 0.057,
+          "max": 0.086
+        },
+        "median_ms": {
+          "original": 6.701,
+          "rewritten": 0.065
+        },
+        "median_difference_ms": -6.636,
+        "median_change_percent": -99.02999552305626,
+        "sample_counts": {
+          "original": 7,
+          "rewritten": 7
+        },
+        "scope": "This sampling run only; not a general performance guarantee"
+      },
+      "skipped": null
+    },
+    {
+      "scenario": "orders_date_filter_2025_06_15",
+      "date": "2025-06-16",
+      "repeat": 2,
+      "original_status": "completed",
+      "action": "date_range",
+      "validation": {
+        "status": "passed",
+        "comparison": {
+          "original_rows": 823,
+          "candidate_rows": 823,
+          "columns_equal": true,
+          "rows_and_multiplicities_equal": true,
+          "equivalent": true,
+          "reason": "在本次测试数据上结果一致",
+          "missing_from_candidate": [],
+          "extra_in_candidate": [],
+          "columns": [
+            [
+              "customer_id",
+              23,
+              4,
+              null,
+              null
+            ],
+            [
+              "created_at",
+              1114,
+              8,
+              null,
+              null
+            ],
+            [
+              "status",
+              25,
+              null,
+              null,
+              null
+            ],
+            [
+              "amount",
+              1700,
+              null,
+              12,
+              2
+            ]
+          ]
+        },
+        "counts": null
+      },
+      "execution_ms": {
+        "original": [
+          8.342,
+          7.61,
+          7.155,
+          6.823,
+          6.404,
+          6.042,
+          6.088
+        ],
+        "rewritten": [
+          0.082,
+          0.079,
+          0.074,
+          0.072,
+          0.066,
+          0.06,
+          0.064
+        ]
+      },
+      "performance_assessment": {
+        "verdict": "improved",
+        "rule": "strict_sample_interval_separation",
+        "original_range_ms": {
+          "min": 6.042,
+          "max": 8.342
+        },
+        "candidate_range_ms": {
+          "min": 0.06,
+          "max": 0.082
+        },
+        "median_ms": {
+          "original": 6.823,
+          "rewritten": 0.072
+        },
+        "median_difference_ms": -6.751,
+        "median_change_percent": -98.94474571302946,
+        "sample_counts": {
+          "original": 7,
+          "rewritten": 7
+        },
+        "scope": "This sampling run only; not a general performance guarantee"
+      },
+      "skipped": null
+    },
+    {
+      "scenario": "orders_date_filter_2025_06_15",
+      "date": "2026-01-01",
+      "repeat": 1,
+      "original_status": "completed",
+      "action": "date_range",
+      "validation": {
+        "status": "passed",
+        "comparison": {
+          "original_rows": 0,
+          "candidate_rows": 0,
+          "columns_equal": true,
+          "rows_and_multiplicities_equal": true,
+          "equivalent": true,
+          "reason": "在本次测试数据上结果一致",
+          "missing_from_candidate": [],
+          "extra_in_candidate": [],
+          "columns": [
+            [
+              "customer_id",
+              23,
+              4,
+              null,
+              null
+            ],
+            [
+              "created_at",
+              1114,
+              8,
+              null,
+              null
+            ],
+            [
+              "status",
+              25,
+              null,
+              null,
+              null
+            ],
+            [
+              "amount",
+              1700,
+              null,
+              12,
+              2
+            ]
+          ]
+        },
+        "counts": null
+      },
+      "execution_ms": {
+        "original": [
+          8.751,
+          7.858,
+          7.235,
+          6.84,
+          6.575,
+          6.109,
+          6.012
+        ],
+        "rewritten": [
+          0.006,
+          0.005,
+          0.005,
+          0.004,
+          0.003,
+          0.003,
+          0.003
+        ]
+      },
+      "performance_assessment": {
+        "verdict": "improved",
+        "rule": "strict_sample_interval_separation",
+        "original_range_ms": {
+          "min": 6.012,
+          "max": 8.751
+        },
+        "candidate_range_ms": {
+          "min": 0.003,
+          "max": 0.006
+        },
+        "median_ms": {
+          "original": 6.84,
+          "rewritten": 0.004
+        },
+        "median_difference_ms": -6.836,
+        "median_change_percent": -99.94152046783626,
+        "sample_counts": {
+          "original": 7,
+          "rewritten": 7
+        },
+        "scope": "This sampling run only; not a general performance guarantee"
+      },
+      "skipped": null
+    },
+    {
+      "scenario": "orders_date_filter_2025_06_15",
+      "date": "2026-01-01",
+      "repeat": 2,
+      "original_status": "completed",
+      "action": "date_range",
+      "validation": {
+        "status": "passed",
+        "comparison": {
+          "original_rows": 0,
+          "candidate_rows": 0,
+          "columns_equal": true,
+          "rows_and_multiplicities_equal": true,
+          "equivalent": true,
+          "reason": "在本次测试数据上结果一致",
+          "missing_from_candidate": [],
+          "extra_in_candidate": [],
+          "columns": [
+            [
+              "customer_id",
+              23,
+              4,
+              null,
+              null
+            ],
+            [
+              "created_at",
+              1114,
+              8,
+              null,
+              null
+            ],
+            [
+              "status",
+              25,
+              null,
+              null,
+              null
+            ],
+            [
+              "amount",
+              1700,
+              null,
+              12,
+              2
+            ]
+          ]
+        },
+        "counts": null
+      },
+      "execution_ms": {
+        "original": [
+          9.173,
+          7.602,
+          7.078,
+          6.834,
+          6.509,
+          6.938,
+          6.068
+        ],
+        "rewritten": [
+          0.007,
+          0.004,
+          0.004,
+          0.003,
+          0.004,
+          0.003,
+          0.003
+        ]
+      },
+      "performance_assessment": {
+        "verdict": "improved",
+        "rule": "strict_sample_interval_separation",
+        "original_range_ms": {
+          "min": 6.068,
+          "max": 9.173
+        },
+        "candidate_range_ms": {
+          "min": 0.003,
+          "max": 0.007
+        },
+        "median_ms": {
+          "original": 6.938,
+          "rewritten": 0.004
+        },
+        "median_difference_ms": -6.934,
+        "median_change_percent": -99.94234649754972,
+        "sample_counts": {
+          "original": 7,
+          "rewritten": 7
+        },
+        "scope": "This sampling run only; not a general performance guarantee"
+      },
+      "skipped": null
+    },
+    {
+      "scenario": "orders_with_items_count",
+      "date": "2025-06-15",
+      "repeat": 1,
+      "original_status": "completed",
+      "action": "exists",
+      "validation": {
+        "status": "passed",
+        "comparison": null,
+        "counts": {
+          "join_count_distinct": 551,
+          "candidate_count": 551
+        },
+        "membership": {
+          "comparison": {
+            "original_rows": 551,
+            "candidate_rows": 551,
+            "columns_equal": true,
+            "rows_and_multiplicities_equal": true,
+            "equivalent": true,
+            "reason": "在本次测试数据上结果一致",
+            "missing_from_candidate": [],
+            "extra_in_candidate": [],
+            "columns": [
+              [
+                "order_id",
+                20,
+                8,
+                null,
+                null
+              ]
+            ]
+          },
+          "join_minus_candidate": [],
+          "candidate_minus_join": [],
+          "join_minus_candidate_count": 0,
+          "candidate_minus_join_count": 0
+        }
+      },
+      "execution_ms": {
+        "original": [
+          0.685,
+          0.688,
+          0.675,
+          0.659,
+          0.622,
+          0.61,
+          0.607
+        ],
+        "rewritten": [
+          0.548,
+          0.541,
+          0.543,
+          0.514,
+          0.501,
+          0.511,
+          0.498
+        ]
+      },
+      "performance_assessment": {
+        "verdict": "improved",
+        "rule": "strict_sample_interval_separation",
+        "original_range_ms": {
+          "min": 0.607,
+          "max": 0.688
+        },
+        "candidate_range_ms": {
+          "min": 0.498,
+          "max": 0.548
+        },
+        "median_ms": {
+          "original": 0.659,
+          "rewritten": 0.514
+        },
+        "median_difference_ms": -0.145,
+        "median_change_percent": -22.0030349013657,
+        "sample_counts": {
+          "original": 7,
+          "rewritten": 7
+        },
+        "scope": "This sampling run only; not a general performance guarantee"
+      },
+      "skipped": null
+    },
+    {
+      "scenario": "orders_with_items_count",
+      "date": "2025-06-15",
+      "repeat": 2,
+      "original_status": "completed",
+      "action": "exists",
+      "validation": {
+        "status": "passed",
+        "comparison": null,
+        "counts": {
+          "join_count_distinct": 551,
+          "candidate_count": 551
+        },
+        "membership": {
+          "comparison": {
+            "original_rows": 551,
+            "candidate_rows": 551,
+            "columns_equal": true,
+            "rows_and_multiplicities_equal": true,
+            "equivalent": true,
+            "reason": "在本次测试数据上结果一致",
+            "missing_from_candidate": [],
+            "extra_in_candidate": [],
+            "columns": [
+              [
+                "order_id",
+                20,
+                8,
+                null,
+                null
+              ]
+            ]
+          },
+          "join_minus_candidate": [],
+          "candidate_minus_join": [],
+          "join_minus_candidate_count": 0,
+          "candidate_minus_join_count": 0
+        }
+      },
+      "execution_ms": {
+        "original": [
+          0.625,
+          0.637,
+          0.602,
+          0.633,
+          0.616,
+          0.627,
+          0.632
+        ],
+        "rewritten": [
+          0.499,
+          0.496,
+          0.501,
+          0.485,
+          0.506,
+          0.487,
+          0.485
+        ]
+      },
+      "performance_assessment": {
+        "verdict": "improved",
+        "rule": "strict_sample_interval_separation",
+        "original_range_ms": {
+          "min": 0.602,
+          "max": 0.637
+        },
+        "candidate_range_ms": {
+          "min": 0.485,
+          "max": 0.506
+        },
+        "median_ms": {
+          "original": 0.627,
+          "rewritten": 0.496
+        },
+        "median_difference_ms": -0.131,
+        "median_change_percent": -20.89314194577353,
+        "sample_counts": {
+          "original": 7,
+          "rewritten": 7
+        },
+        "scope": "This sampling run only; not a general performance guarantee"
+      },
+      "skipped": null
+    },
+    {
+      "scenario": "orders_with_items_count",
+      "date": "2025-06-16",
+      "repeat": 1,
+      "original_status": "completed",
+      "action": "exists",
+      "validation": {
+        "status": "passed",
+        "comparison": null,
+        "counts": {
+          "join_count_distinct": 548,
+          "candidate_count": 548
+        },
+        "membership": {
+          "comparison": {
+            "original_rows": 548,
+            "candidate_rows": 548,
+            "columns_equal": true,
+            "rows_and_multiplicities_equal": true,
+            "equivalent": true,
+            "reason": "在本次测试数据上结果一致",
+            "missing_from_candidate": [],
+            "extra_in_candidate": [],
+            "columns": [
+              [
+                "order_id",
+                20,
+                8,
+                null,
+                null
+              ]
+            ]
+          },
+          "join_minus_candidate": [],
+          "candidate_minus_join": [],
+          "join_minus_candidate_count": 0,
+          "candidate_minus_join_count": 0
+        }
+      },
+      "execution_ms": {
+        "original": [
+          0.604,
+          0.587,
+          0.596,
+          0.619,
+          0.64,
+          0.581,
+          0.6
+        ],
+        "rewritten": [
+          0.484,
+          0.489,
+          0.497,
+          0.492,
+          0.491,
+          0.479,
+          0.505
+        ]
+      },
+      "performance_assessment": {
+        "verdict": "improved",
+        "rule": "strict_sample_interval_separation",
+        "original_range_ms": {
+          "min": 0.581,
+          "max": 0.64
+        },
+        "candidate_range_ms": {
+          "min": 0.479,
+          "max": 0.505
+        },
+        "median_ms": {
+          "original": 0.6,
+          "rewritten": 0.491
+        },
+        "median_difference_ms": -0.109,
+        "median_change_percent": -18.166666666666664,
+        "sample_counts": {
+          "original": 7,
+          "rewritten": 7
+        },
+        "scope": "This sampling run only; not a general performance guarantee"
+      },
+      "skipped": null
+    },
+    {
+      "scenario": "orders_with_items_count",
+      "date": "2025-06-16",
+      "repeat": 2,
+      "original_status": "completed",
+      "action": "exists",
+      "validation": {
+        "status": "passed",
+        "comparison": null,
+        "counts": {
+          "join_count_distinct": 548,
+          "candidate_count": 548
+        },
+        "membership": {
+          "comparison": {
+            "original_rows": 548,
+            "candidate_rows": 548,
+            "columns_equal": true,
+            "rows_and_multiplicities_equal": true,
+            "equivalent": true,
+            "reason": "在本次测试数据上结果一致",
+            "missing_from_candidate": [],
+            "extra_in_candidate": [],
+            "columns": [
+              [
+                "order_id",
+                20,
+                8,
+                null,
+                null
+              ]
+            ]
+          },
+          "join_minus_candidate": [],
+          "candidate_minus_join": [],
+          "join_minus_candidate_count": 0,
+          "candidate_minus_join_count": 0
+        }
+      },
+      "execution_ms": {
+        "original": [
+          0.559,
+          0.546,
+          0.561,
+          0.543,
+          0.552,
+          0.505,
+          0.518
+        ],
+        "rewritten": [
+          0.453,
+          0.446,
+          0.448,
+          0.456,
+          0.42,
+          0.42,
+          0.423
+        ]
+      },
+      "performance_assessment": {
+        "verdict": "improved",
+        "rule": "strict_sample_interval_separation",
+        "original_range_ms": {
+          "min": 0.505,
+          "max": 0.561
+        },
+        "candidate_range_ms": {
+          "min": 0.42,
+          "max": 0.456
+        },
+        "median_ms": {
+          "original": 0.546,
+          "rewritten": 0.446
+        },
+        "median_difference_ms": -0.1,
+        "median_change_percent": -18.315018315018317,
+        "sample_counts": {
+          "original": 7,
+          "rewritten": 7
+        },
+        "scope": "This sampling run only; not a general performance guarantee"
+      },
+      "skipped": null
+    },
+    {
+      "scenario": "orders_with_items_count",
+      "date": "2026-01-01",
+      "repeat": 1,
+      "original_status": "completed",
+      "action": "exists",
+      "validation": {
+        "status": "passed",
+        "comparison": null,
+        "counts": {
+          "join_count_distinct": 0,
+          "candidate_count": 0
+        },
+        "membership": {
+          "comparison": {
+            "original_rows": 0,
+            "candidate_rows": 0,
+            "columns_equal": true,
+            "rows_and_multiplicities_equal": true,
+            "equivalent": true,
+            "reason": "在本次测试数据上结果一致",
+            "missing_from_candidate": [],
+            "extra_in_candidate": [],
+            "columns": [
+              [
+                "order_id",
+                20,
+                8,
+                null,
+                null
+              ]
+            ]
+          },
+          "join_minus_candidate": [],
+          "candidate_minus_join": [],
+          "join_minus_candidate_count": 0,
+          "candidate_minus_join_count": 0
+        }
+      },
+      "execution_ms": {
+        "original": [
+          0.015,
+          0.013,
+          0.008,
+          0.009,
+          0.007,
+          0.005,
+          0.007
+        ],
+        "rewritten": [
+          0.01,
+          0.007,
+          0.007,
+          0.005,
+          0.006,
+          0.004,
+          0.004
+        ]
+      },
+      "performance_assessment": {
+        "verdict": "inconclusive",
+        "rule": "strict_sample_interval_separation",
+        "original_range_ms": {
+          "min": 0.005,
+          "max": 0.015
+        },
+        "candidate_range_ms": {
+          "min": 0.004,
+          "max": 0.01
+        },
+        "median_ms": {
+          "original": 0.008,
+          "rewritten": 0.006
+        },
+        "median_difference_ms": -0.002,
+        "median_change_percent": -25.0,
+        "sample_counts": {
+          "original": 7,
+          "rewritten": 7
+        },
+        "scope": "This sampling run only; not a general performance guarantee"
+      },
+      "skipped": null
+    },
+    {
+      "scenario": "orders_with_items_count",
+      "date": "2026-01-01",
+      "repeat": 2,
+      "original_status": "completed",
+      "action": "exists",
+      "validation": {
+        "status": "passed",
+        "comparison": null,
+        "counts": {
+          "join_count_distinct": 0,
+          "candidate_count": 0
+        },
+        "membership": {
+          "comparison": {
+            "original_rows": 0,
+            "candidate_rows": 0,
+            "columns_equal": true,
+            "rows_and_multiplicities_equal": true,
+            "equivalent": true,
+            "reason": "在本次测试数据上结果一致",
+            "missing_from_candidate": [],
+            "extra_in_candidate": [],
+            "columns": [
+              [
+                "order_id",
+                20,
+                8,
+                null,
+                null
+              ]
+            ]
+          },
+          "join_minus_candidate": [],
+          "candidate_minus_join": [],
+          "join_minus_candidate_count": 0,
+          "candidate_minus_join_count": 0
+        }
+      },
+      "execution_ms": {
+        "original": [
+          0.013,
+          0.01,
+          0.011,
+          0.009,
+          0.009,
+          0.008,
+          0.016
+        ],
+        "rewritten": [
+          0.01,
+          0.009,
+          0.008,
+          0.008,
+          0.007,
+          0.007,
+          0.007
+        ]
+      },
+      "performance_assessment": {
+        "verdict": "inconclusive",
+        "rule": "strict_sample_interval_separation",
+        "original_range_ms": {
+          "min": 0.008,
+          "max": 0.016
+        },
+        "candidate_range_ms": {
+          "min": 0.007,
+          "max": 0.01
+        },
+        "median_ms": {
+          "original": 0.01,
+          "rewritten": 0.008
+        },
+        "median_difference_ms": -0.002,
+        "median_change_percent": -19.999999999999996,
+        "sample_counts": {
+          "original": 7,
+          "rewritten": 7
+        },
+        "scope": "This sampling run only; not a general performance guarantee"
+      },
+      "skipped": null
+    }
+  ]
+}
