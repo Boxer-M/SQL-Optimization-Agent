@@ -1206,3 +1206,30 @@ SQL_OPTIMIZATION_ITEMS_MODE=qwen SQL_OPTIMIZATION_ITEMS_FIXTURE=items-exists \
 ```
 
 真实本地 PostgreSQL、实际 HTTP 服务及 stdio MCP 的模拟响应验收保存在 `reports/sql_rewrite_diff_acceptance.json`。同场景、日期与候选的三个入口 diff 逐字相同：日期过滤展示日期转换谓词变为半开区间，明细计数展示 JOIN + COUNT(DISTINCT) 变为 EXISTS + COUNT(*)。报告保留完整校验和各入口独立采样结果。本轮新增真实千问请求为 0。
+
+## v2 日期区间确定性改写与发布验收
+
+CLI `--sql-file` 支持第三种完整 AST 形态，投影及表与单日日期过滤相同，唯一 WHERE 条件为：
+
+```sql
+SELECT customer_id, created_at, status, amount
+FROM public.orders
+WHERE created_at::date BETWEEN DATE '2025-06-15' AND DATE '2025-06-16';
+```
+
+两个端点均包含；日期必须有效、起点不晚于终点，结束日的次日必须可表示。同日起止、跨月、跨年和闰日可用。额外谓词、投影或表变化及多语句沿用 `unsupported_query_shape`；非法日期、反向区间和结束日溢出返回 `invalid_date`，均在连接数据库或请求模型前拒绝。
+
+该规则不使用模型，也不做修复请求。原查询使用仓库参数化 `created_at::date BETWEEN %s::date AND %s::date`，候选使用 `created_at >= %s::timestamp without time zone AND created_at < %s::timestamp without time zone`，绑定起始日零点及结束日次日零点。复用原有只读 REPEATABLE READ 快照、整行多重集比较、10000 行/16 MiB 预算、5 秒语句超时、交替各 7 次采样、SQL Diff 和推荐规则。区间过大时可能超出预算，届时停止而不计时。
+
+```bash
+# 三种文件入口，前两种使用模拟模型，第三种完全确定性
+.venv/bin/python scripts/optimize_orders.py --sql-file sql/examples/orders_date_2025_06_15.sql --fixture normal
+.venv/bin/python scripts/optimize_orders.py --sql-file sql/examples/orders_with_items_2025_06_15.sql --qwen --fixture items-exists
+.venv/bin/python scripts/optimize_orders.py --sql-file sql/examples/orders_date_interval.sql
+```
+
+区间入口不与显式 `--scenario`、`--date` 组合，也不支持 `--qwen` 或 `--repair-on-mismatch`。HTTP/MCP 继续支持两个既有场景标识及可选单日 `date` 字符串；本轮不扩展其输入为 SQL 文件或日期区间。其模拟启动与调用命令见“已验证改写的 SQL Diff”和“HTTP 与 MCP 的日期定向修复”。
+
+v2 脱敏验收报告：`reports/v2_release_acceptance.json`。本地 PostgreSQL 的区间结果为 1648/1648，等于 825 与 823 两个单日完整结果的多重集合并，重复行未去重。现存数据的边界探针及额外只读 VALUES 探针覆盖起始零点、结束日最后一微秒、次日零点、NULL 和重复行，没有写入测试数据。自然计划与每组 7 个原始计时样本保留在报告中；本次中位数 7.890 → 0.122 ms，判定 `improved / use_candidate`，性能提升不是验收通过条件。
+
+两个旧场景已通过真实 CLI、HTTP 和 stdio MCP 回归，报告字段与 SQL Diff 通过核对。本轮新增真实千问请求为 0；真实千问历史证据沿用 `reports/date_repair_live_evaluation.json`。推荐仍以本次实际样本判定为准：区间重叠或性能退化时保留原查询，但展示已验证候选的 SQL Diff。

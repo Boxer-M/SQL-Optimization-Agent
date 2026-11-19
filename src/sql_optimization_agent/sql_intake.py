@@ -88,6 +88,24 @@ def recognize_query(sql):
     statements = _parse(sql)
     if len(statements) != 1 or not isinstance(statements[0], exp.Select):
         raise SQLIntakeError('unsupported_query_shape', 'Expected one supported SELECT')
+    condition=statements[0].args.get('where')
+    predicate=condition.this if isinstance(condition,exp.Where) else None
+    if isinstance(predicate,exp.Between):
+        from sql_optimization_agent.date_interval import ORIGINAL as INTERVAL_SQL, bounds
+        baseline=_parse(INTERVAL_SQL.replace('%s', "'2000-01-01'",1).replace('%s', "'2000-01-02'",1))[0]
+        query=statements[0].copy(); between=query.args['where'].this
+        values=[]
+        for key in ('low','high'):
+            rhs=between.args[key]
+            if not (isinstance(rhs,exp.Cast) and isinstance(rhs.this,exp.Literal) and rhs.this.is_string):
+                raise SQLIntakeError('unsupported_query_shape','Expected DATE literal interval boundaries')
+            values.append(rhs.this.this)
+            rhs.this.set('this',baseline.args['where'].this.args[key].this.this)
+        if query!=baseline:
+            raise SQLIntakeError('unsupported_query_shape','Only interval dates may change')
+        try:bounds(*values)
+        except ValueError as error:raise SQLIntakeError('invalid_date',str(error)) from None
+        return 'orders_date_interval', values
     # Render only application-owned placeholders into AST sentinels, never execute them.
     template = JOIN_COUNT.replace('%s', "'2000-01-01 00:00:00'", 1).replace('%s', "'2000-01-02 00:00:00'", 1)
     baseline = _parse(template)[0]
