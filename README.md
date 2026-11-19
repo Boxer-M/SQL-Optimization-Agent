@@ -1017,3 +1017,31 @@ PY
 | 错误上界 → 仍然错误 | 825 / 826，多出 1 个整行副本 | 825 / 826，多出 1 个整行副本 | 两次均跳过计时，`keep_original / candidate_rejected` |
 
 完整脱敏报告：`reports/date_candidate_repair_success.json`、`reports/date_candidate_repair_failure.json`。报告含完整样本及计划，本次热缓存采样不代表其他数据和负载。验收拦截了真实模型与 HTTP 调用，计数均为 0；并在计时调用处确认完整比较顺序为 `[false, true]`，失败链路计时调用为 0。离线测试使用 MockTransport 验证真实模式调用路径最多两个 POST、未开启时最多一个，并覆盖修复返回无建议、格式错误、服务失败和性能不确定/退化时的最终推荐。
+
+## 固定首轮候选、真实千问修复评测
+
+独立入口 `scripts/evaluate_date_repair.py` 复用已合并的日期修复流程、候选解析、只读完整结果比较、性能判定和最终推荐。原 `scripts/optimize_orders.py` 的默认行为不变。评测固定 `2025-06-15`，顺序执行 3 个独立用例；每例首轮由程序提供 `<= 次日零点` 的错误候选，**不请求模型**。只有确认本地数据库产生 825/826 且完整结果不一致后，才进入第二轮。首轮不计时，预期行数不满足时停止评测并记录 `evaluation_precondition_failed`。
+
+```bash
+# 默认第二轮也使用模拟响应，实际连接本地只读 PostgreSQL，真实请求为 0
+.venv/bin/python scripts/evaluate_date_repair.py \
+  --output reports/date_repair_simulated_evaluation.json
+
+# 显式真实评测：每例第二轮最多一次 POST，全轮最多三次
+.venv/bin/python scripts/evaluate_date_repair.py --live \
+  --output reports/date_repair_live_evaluation.json
+```
+
+已有输出文件不会覆盖；复跑时请使用新的 `--output` 路径。真实模式固定模型为 `qwen3.7-plus`，API Key 和 Base URL 沿用项目 `.env` / 环境变量，不写入报告。没有独立连通性测试或自动重试。每次修复收到目标日期、首轮边界及差异汇总，不发送业务行。收到的建议重新经过结构校验和同一只读快照内的完整结果比较；一致后才预热并各采样 7 次，推荐继续遵循现有规则，不能将结果一致直接等同于推荐。
+
+报告逐例标注「首轮固定候选、第二轮真实千问」（默认模式则标注第二轮模拟响应），保留两次尝试、实际模型 ID、原始结构化建议、边界、行数、请求耗时、执行计划、SQL 样本和最终推荐。`was_timed` 表明是否完成计时；`summary.passed_cases` 统计完成完整结果校验及计时的修复候选，不代表一定推荐。鉴权、额度/限流、缺失或非法配置时停止；每例完成后立即保存，停止或中断时保留已完成结果。
+
+本轮实际验收：Mac、Python 3.12、PostgreSQL 16.15，本地合成订单数据，应用只读账号；先运行默认模拟矩阵，再运行一次真实矩阵。真实请求共 **3 次**，实际模型均为 `qwen3.7-plus`，通过 **3/3**。三次都返回 `date_range`、起点包含 `2025-06-15 00:00:00`、终点不包含 `2025-06-16 00:00:00`；首轮均 825/826，修复后均 825/825，在本次测试数据上结果一致。
+
+| 用例 | 模型请求耗时 ms | 原查询中位数 ms | 修复候选中位数 ms | 计时 | 判定 / 推荐 |
+|---|---:|---:|---:|---|---|
+| 1 | 4790.457 | 7.257 | 0.074 | 仅修复后 | improved / use_candidate |
+| 2 | 5876.952 | 6.505 | 0.067 | 仅修复后 | improved / use_candidate |
+| 3 | 4516.042 | 7.325 | 0.073 | 仅修复后 | improved / use_candidate |
+
+三例自然计划均由原查询的并行顺序扫描变为候选的 `orders_created_at_idx` 索引扫描。这是本机、本次数据与采样的结果，不是其他数据和负载下的性能保证。真实建议理由各自保存在报告中，未用模拟回复替代。完整报告分别为 `reports/date_repair_live_evaluation.json` 和 `reports/date_repair_simulated_evaluation.json`。
