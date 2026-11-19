@@ -78,7 +78,7 @@ def run(config, context: OrderDateContext, *, fixture=None):
     source='controlled_model_response_order_items' if fixture else 'live_qwen_order_items'
     report={'source':source,'scenario':SCENARIO,'target_date':context.target.isoformat(),
             'date_context':context.as_dict(),'requested_model':config.get('QWEN_MODEL'),
-            'model_requests':0,'fixture':fixture,'stage':'diagnosis','benchmark':None,
+            'model_requests':0,'model_request_ms':0.0,'fixture':fixture,'stage':'diagnosis','benchmark':None,
             'measured_at_utc':datetime.now(timezone.utc).isoformat()}
     try:
         context_data=diagnostic_context(config,context)
@@ -97,6 +97,7 @@ def run(config, context: OrderDateContext, *, fixture=None):
                 raise
         report['model_id']=reply.model
         report['received_content']=reply.content
+        report['model_request_ms']=reply.request_elapsed_ms or 0.0
         report['stage']='suggestion_validation'
         advice=parse_advice(reply.content)
         report['suggestion']=advice
@@ -106,6 +107,7 @@ def run(config, context: OrderDateContext, *, fixture=None):
         report.update({key:value for key,value in execution.items()
                        if key not in ('source','model_requests','fixture','measured_at_utc')})
     except QwenFailure as error:
+        report['model_request_ms']=error.request_elapsed_ms or 0.0
         report.update(status=error.status,reason=str(error))
     except (DatabaseConfigurationError,DatabaseConnectionError,BenchmarkValidationError,TableNotFoundError) as error:
         report.update(status='validation_error',reason=str(error))
