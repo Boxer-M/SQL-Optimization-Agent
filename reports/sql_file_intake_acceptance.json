@@ -1,0 +1,2520 @@
+{
+  "source": "Actual CLI, controlled model responses, real local synthetic PostgreSQL data",
+  "accepted": [
+    {
+      "date": "2025-06-15",
+      "matching_validation_fields": true,
+      "sql_file": {
+        "source": "controlled_model_response",
+        "fixture": "normal",
+        "requested_model": "qwen3.7-plus",
+        "measured_at_utc": "2026-11-19T01:44:32.928737+00:00",
+        "model_requests": 0,
+        "benchmark": {
+          "warmups_per_query": 1,
+          "samples_per_query": 7,
+          "execution_order": [
+            "original",
+            "rewritten",
+            "original",
+            "rewritten",
+            "original",
+            "rewritten",
+            "original",
+            "rewritten",
+            "original",
+            "rewritten",
+            "original",
+            "rewritten",
+            "original",
+            "rewritten"
+          ],
+          "execution_ms": {
+            "original": [
+              7.388,
+              7.137,
+              6.793,
+              6.762,
+              6.778,
+              7.324,
+              6.829
+            ],
+            "rewritten": [
+              0.064,
+              0.064,
+              0.061,
+              0.069,
+              0.066,
+              0.063,
+              0.068
+            ]
+          },
+          "median_ms": {
+            "original": 6.829,
+            "rewritten": 0.064
+          },
+          "rewritten_time_change_percent": -99.0628203250842,
+          "spread_range_over_median": {
+            "original": 0.09166788695270177,
+            "rewritten": 0.1250000000000001
+          },
+          "variability_note": "本次两组极差均不超过中位数的 50%",
+          "method": "Natural planner settings; warm-cache EXPLAIN server execution time, not client transfer time",
+          "plan_variants": {
+            "original": [
+              {
+                "nodes": [
+                  {
+                    "Node Type": "Gather",
+                    "Parallel Aware": false,
+                    "Startup Cost": 1000.0,
+                    "Total Cost": 6510.1,
+                    "Plan Rows": 1500,
+                    "Plan Width": 27,
+                    "Actual Rows": 825,
+                    "Actual Loops": 1,
+                    "Workers Planned": 1,
+                    "Workers Launched": 1,
+                    "Shared Hit Blocks": 2713,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0
+                  },
+                  {
+                    "Node Type": "Seq Scan",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": true,
+                    "Relation Name": "orders",
+                    "Alias": "orders",
+                    "Startup Cost": 0.0,
+                    "Total Cost": 5360.1,
+                    "Plan Rows": 882,
+                    "Plan Width": 27,
+                    "Actual Rows": 412,
+                    "Actual Loops": 2,
+                    "Filter": "((created_at)::date = '2025-06-15'::date)",
+                    "Rows Removed by Filter": 149590,
+                    "Shared Hit Blocks": 2713,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0
+                  }
+                ],
+                "sample_numbers": [
+                  1,
+                  2,
+                  3,
+                  4,
+                  5,
+                  6,
+                  7
+                ]
+              }
+            ],
+            "rewritten": [
+              {
+                "nodes": [
+                  {
+                    "Node Type": "Index Scan",
+                    "Parallel Aware": false,
+                    "Scan Direction": "Forward",
+                    "Index Name": "orders_created_at_idx",
+                    "Relation Name": "orders",
+                    "Alias": "orders",
+                    "Startup Cost": 0.42,
+                    "Total Cost": 39.5,
+                    "Plan Rows": 804,
+                    "Plan Width": 27,
+                    "Actual Rows": 825,
+                    "Actual Loops": 1,
+                    "Index Cond": "((created_at >= '2025-06-15 00:00:00'::timestamp without time zone) AND (created_at < '2025-06-16 00:00:00'::timestamp without time zone))",
+                    "Shared Hit Blocks": 16,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0
+                  }
+                ],
+                "sample_numbers": [
+                  1,
+                  2,
+                  3,
+                  4,
+                  5,
+                  6,
+                  7
+                ]
+              }
+            ]
+          }
+        },
+        "model_request_ms": 0.0,
+        "stage": "complete",
+        "target_date": "2025-06-15",
+        "date_context": {
+          "target_date": "2025-06-15",
+          "start": "2025-06-15 00:00:00",
+          "end": "2025-06-16 00:00:00",
+          "timestamp_type": "timestamp without time zone"
+        },
+        "repair_on_mismatch": false,
+        "max_model_requests": 1,
+        "attempts": [
+          {
+            "attempt": 1,
+            "kind": "initial",
+            "stage": "complete",
+            "benchmark": {
+              "warmups_per_query": 1,
+              "samples_per_query": 7,
+              "execution_order": [
+                "original",
+                "rewritten",
+                "original",
+                "rewritten",
+                "original",
+                "rewritten",
+                "original",
+                "rewritten",
+                "original",
+                "rewritten",
+                "original",
+                "rewritten",
+                "original",
+                "rewritten"
+              ],
+              "execution_ms": {
+                "original": [
+                  7.388,
+                  7.137,
+                  6.793,
+                  6.762,
+                  6.778,
+                  7.324,
+                  6.829
+                ],
+                "rewritten": [
+                  0.064,
+                  0.064,
+                  0.061,
+                  0.069,
+                  0.066,
+                  0.063,
+                  0.068
+                ]
+              },
+              "median_ms": {
+                "original": 6.829,
+                "rewritten": 0.064
+              },
+              "rewritten_time_change_percent": -99.0628203250842,
+              "spread_range_over_median": {
+                "original": 0.09166788695270177,
+                "rewritten": 0.1250000000000001
+              },
+              "variability_note": "本次两组极差均不超过中位数的 50%",
+              "method": "Natural planner settings; warm-cache EXPLAIN server execution time, not client transfer time",
+              "plan_variants": {
+                "original": [
+                  {
+                    "nodes": [
+                      {
+                        "Node Type": "Gather",
+                        "Parallel Aware": false,
+                        "Startup Cost": 1000.0,
+                        "Total Cost": 6510.1,
+                        "Plan Rows": 1500,
+                        "Plan Width": 27,
+                        "Actual Rows": 825,
+                        "Actual Loops": 1,
+                        "Workers Planned": 1,
+                        "Workers Launched": 1,
+                        "Shared Hit Blocks": 2713,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0
+                      },
+                      {
+                        "Node Type": "Seq Scan",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": true,
+                        "Relation Name": "orders",
+                        "Alias": "orders",
+                        "Startup Cost": 0.0,
+                        "Total Cost": 5360.1,
+                        "Plan Rows": 882,
+                        "Plan Width": 27,
+                        "Actual Rows": 412,
+                        "Actual Loops": 2,
+                        "Filter": "((created_at)::date = '2025-06-15'::date)",
+                        "Rows Removed by Filter": 149590,
+                        "Shared Hit Blocks": 2713,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0
+                      }
+                    ],
+                    "sample_numbers": [
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  }
+                ],
+                "rewritten": [
+                  {
+                    "nodes": [
+                      {
+                        "Node Type": "Index Scan",
+                        "Parallel Aware": false,
+                        "Scan Direction": "Forward",
+                        "Index Name": "orders_created_at_idx",
+                        "Relation Name": "orders",
+                        "Alias": "orders",
+                        "Startup Cost": 0.42,
+                        "Total Cost": 39.5,
+                        "Plan Rows": 804,
+                        "Plan Width": 27,
+                        "Actual Rows": 825,
+                        "Actual Loops": 1,
+                        "Index Cond": "((created_at >= '2025-06-15 00:00:00'::timestamp without time zone) AND (created_at < '2025-06-16 00:00:00'::timestamp without time zone))",
+                        "Shared Hit Blocks": 16,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0
+                      }
+                    ],
+                    "sample_numbers": [
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  }
+                ]
+              }
+            },
+            "model_requests": 0,
+            "source": "controlled_model_response",
+            "model_id": "controlled-fixture-not-a-real-model",
+            "received_content": "{\"action\": \"date_range\", \"start\": \"2025-06-15 00:00:00\", \"end\": \"2025-06-16 00:00:00\", \"start_inclusive\": true, \"end_inclusive\": false, \"reason\": \"Use the timestamp B-tree with inclusive start and exclusive end.\"}",
+            "model_request_ms": 0.0,
+            "suggestion": {
+              "action": "date_range",
+              "start": "2025-06-15 00:00:00",
+              "end": "2025-06-16 00:00:00",
+              "start_inclusive": true,
+              "end_inclusive": false,
+              "reason": "Use the timestamp B-tree with inclusive start and exclusive end."
+            },
+            "candidate": {
+              "sql": "SELECT customer_id, created_at, status, amount\nFROM public.orders\nWHERE created_at >= %s::timestamp without time zone\n  AND created_at < %s::timestamp without time zone",
+              "parameters": [
+                "2025-06-15 00:00:00",
+                "2025-06-16 00:00:00"
+              ]
+            },
+            "connection": {
+              "database": "sql_optimization",
+              "user": "sql_optimization_reader",
+              "read_only": "on",
+              "isolation": "repeatable read",
+              "version": "PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit"
+            },
+            "comparison": {
+              "original_rows": 825,
+              "candidate_rows": 825,
+              "columns_equal": true,
+              "rows_and_multiplicities_equal": true,
+              "equivalent": true,
+              "reason": "在本次测试数据上结果一致",
+              "missing_from_candidate": [],
+              "extra_in_candidate": [],
+              "columns": [
+                [
+                  "customer_id",
+                  23,
+                  4,
+                  null,
+                  null
+                ],
+                [
+                  "created_at",
+                  1114,
+                  8,
+                  null,
+                  null
+                ],
+                [
+                  "status",
+                  25,
+                  null,
+                  null,
+                  null
+                ],
+                [
+                  "amount",
+                  1700,
+                  null,
+                  12,
+                  2
+                ]
+              ]
+            },
+            "difference_summary": {
+              "original_rows": 825,
+              "candidate_rows": 825,
+              "missing_row_copies": 0,
+              "extra_row_copies": 0,
+              "columns_equal": true,
+              "equivalent": true
+            },
+            "status": "completed",
+            "reason": "在本次测试数据上结果一致"
+          }
+        ],
+        "diagnostic_context": {
+          "scenario": "orders_date_filter_2025_06_15",
+          "original_sql": "SELECT customer_id, created_at, status, amount\nFROM public.orders\nWHERE created_at::date = %s::date",
+          "original_parameters": [
+            "2025-06-15"
+          ],
+          "date_context": {
+            "target_date": "2025-06-15",
+            "start": "2025-06-15 00:00:00",
+            "end": "2025-06-16 00:00:00",
+            "timestamp_type": "timestamp without time zone"
+          },
+          "table": {
+            "schema": "public",
+            "table": "orders",
+            "columns": [
+              {
+                "name": "order_id",
+                "data_type": "bigint",
+                "nullable": false
+              },
+              {
+                "name": "customer_id",
+                "data_type": "integer",
+                "nullable": false
+              },
+              {
+                "name": "created_at",
+                "data_type": "timestamp without time zone",
+                "nullable": true
+              },
+              {
+                "name": "status",
+                "data_type": "text",
+                "nullable": false
+              },
+              {
+                "name": "amount",
+                "data_type": "numeric(12,2)",
+                "nullable": false
+              }
+            ],
+            "primary_key": [
+              "order_id"
+            ],
+            "indexes": [
+              {
+                "name": "orders_created_at_idx",
+                "definition": "CREATE INDEX orders_created_at_idx ON public.orders USING btree (created_at)"
+              },
+              {
+                "name": "orders_pkey",
+                "definition": "CREATE UNIQUE INDEX orders_pkey ON public.orders USING btree (order_id)"
+              }
+            ]
+          },
+          "estimated_plan": [
+            {
+              "Node Type": "Gather",
+              "Parallel Aware": false,
+              "Startup Cost": 1000.0,
+              "Total Cost": 6510.1,
+              "Plan Rows": 1500,
+              "Plan Width": 27
+            },
+            {
+              "Node Type": "Seq Scan",
+              "Parallel Aware": true,
+              "Relation Name": "orders",
+              "Startup Cost": 0.0,
+              "Total Cost": 5360.1,
+              "Plan Rows": 882,
+              "Plan Width": 27,
+              "Filter": "((created_at)::date = '2025-06-15'::date)"
+            }
+          ]
+        },
+        "model_id": "controlled-fixture-not-a-real-model",
+        "received_content": "{\"action\": \"date_range\", \"start\": \"2025-06-15 00:00:00\", \"end\": \"2025-06-16 00:00:00\", \"start_inclusive\": true, \"end_inclusive\": false, \"reason\": \"Use the timestamp B-tree with inclusive start and exclusive end.\"}",
+        "suggestion": {
+          "action": "date_range",
+          "start": "2025-06-15 00:00:00",
+          "end": "2025-06-16 00:00:00",
+          "start_inclusive": true,
+          "end_inclusive": false,
+          "reason": "Use the timestamp B-tree with inclusive start and exclusive end."
+        },
+        "candidate": {
+          "sql": "SELECT customer_id, created_at, status, amount\nFROM public.orders\nWHERE created_at >= %s::timestamp without time zone\n  AND created_at < %s::timestamp without time zone",
+          "parameters": [
+            "2025-06-15 00:00:00",
+            "2025-06-16 00:00:00"
+          ]
+        },
+        "connection": {
+          "database": "sql_optimization",
+          "user": "sql_optimization_reader",
+          "read_only": "on",
+          "isolation": "repeatable read",
+          "version": "PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit"
+        },
+        "comparison": {
+          "original_rows": 825,
+          "candidate_rows": 825,
+          "columns_equal": true,
+          "rows_and_multiplicities_equal": true,
+          "equivalent": true,
+          "reason": "在本次测试数据上结果一致",
+          "missing_from_candidate": [],
+          "extra_in_candidate": [],
+          "columns": [
+            [
+              "customer_id",
+              23,
+              4,
+              null,
+              null
+            ],
+            [
+              "created_at",
+              1114,
+              8,
+              null,
+              null
+            ],
+            [
+              "status",
+              25,
+              null,
+              null,
+              null
+            ],
+            [
+              "amount",
+              1700,
+              null,
+              12,
+              2
+            ]
+          ]
+        },
+        "difference_summary": {
+          "original_rows": 825,
+          "candidate_rows": 825,
+          "missing_row_copies": 0,
+          "extra_row_copies": 0,
+          "columns_equal": true,
+          "equivalent": true
+        },
+        "status": "completed",
+        "reason": "在本次测试数据上结果一致",
+        "performance_assessment": {
+          "verdict": "improved",
+          "rule": "strict_sample_interval_separation",
+          "original_range_ms": {
+            "min": 6.762,
+            "max": 7.388
+          },
+          "candidate_range_ms": {
+            "min": 0.061,
+            "max": 0.069
+          },
+          "median_ms": {
+            "original": 6.829,
+            "rewritten": 0.064
+          },
+          "median_difference_ms": -6.765,
+          "median_change_percent": -99.0628203250842,
+          "sample_counts": {
+            "original": 7,
+            "rewritten": 7
+          },
+          "scope": "This sampling run only; not a general performance guarantee"
+        },
+        "recommendation": {
+          "decision": "use_candidate",
+          "reason_code": "validated_and_improved",
+          "advisory_only": true
+        },
+        "sql_intake": {
+          "source": "sql_file",
+          "dialect": "postgres",
+          "recognized_scenario": "orders_date_filter_2025_06_15",
+          "extracted_date": "2025-06-15",
+          "execution": "repository_parameterized_template"
+        }
+      },
+      "scenario_date": {
+        "source": "controlled_model_response",
+        "fixture": "normal",
+        "requested_model": "qwen3.7-plus",
+        "measured_at_utc": "2026-11-19T01:44:33.107306+00:00",
+        "model_requests": 0,
+        "benchmark": {
+          "warmups_per_query": 1,
+          "samples_per_query": 7,
+          "execution_order": [
+            "original",
+            "rewritten",
+            "original",
+            "rewritten",
+            "original",
+            "rewritten",
+            "original",
+            "rewritten",
+            "original",
+            "rewritten",
+            "original",
+            "rewritten",
+            "original",
+            "rewritten"
+          ],
+          "execution_ms": {
+            "original": [
+              6.218,
+              6.228,
+              6.189,
+              6.428,
+              6.548,
+              6.268,
+              6.333
+            ],
+            "rewritten": [
+              0.056,
+              0.072,
+              0.055,
+              0.058,
+              0.062,
+              0.06,
+              0.058
+            ]
+          },
+          "median_ms": {
+            "original": 6.268,
+            "rewritten": 0.058
+          },
+          "rewritten_time_change_percent": -99.07466496490109,
+          "spread_range_over_median": {
+            "original": 0.05727504786215699,
+            "rewritten": 0.29310344827586193
+          },
+          "variability_note": "本次两组极差均不超过中位数的 50%",
+          "method": "Natural planner settings; warm-cache EXPLAIN server execution time, not client transfer time",
+          "plan_variants": {
+            "original": [
+              {
+                "nodes": [
+                  {
+                    "Node Type": "Gather",
+                    "Parallel Aware": false,
+                    "Startup Cost": 1000.0,
+                    "Total Cost": 6510.1,
+                    "Plan Rows": 1500,
+                    "Plan Width": 27,
+                    "Actual Rows": 825,
+                    "Actual Loops": 1,
+                    "Workers Planned": 1,
+                    "Workers Launched": 1,
+                    "Shared Hit Blocks": 2713,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0
+                  },
+                  {
+                    "Node Type": "Seq Scan",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": true,
+                    "Relation Name": "orders",
+                    "Alias": "orders",
+                    "Startup Cost": 0.0,
+                    "Total Cost": 5360.1,
+                    "Plan Rows": 882,
+                    "Plan Width": 27,
+                    "Actual Rows": 412,
+                    "Actual Loops": 2,
+                    "Filter": "((created_at)::date = '2025-06-15'::date)",
+                    "Rows Removed by Filter": 149590,
+                    "Shared Hit Blocks": 2713,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0
+                  }
+                ],
+                "sample_numbers": [
+                  1,
+                  2,
+                  3,
+                  4,
+                  5,
+                  6,
+                  7
+                ]
+              }
+            ],
+            "rewritten": [
+              {
+                "nodes": [
+                  {
+                    "Node Type": "Index Scan",
+                    "Parallel Aware": false,
+                    "Scan Direction": "Forward",
+                    "Index Name": "orders_created_at_idx",
+                    "Relation Name": "orders",
+                    "Alias": "orders",
+                    "Startup Cost": 0.42,
+                    "Total Cost": 39.5,
+                    "Plan Rows": 804,
+                    "Plan Width": 27,
+                    "Actual Rows": 825,
+                    "Actual Loops": 1,
+                    "Index Cond": "((created_at >= '2025-06-15 00:00:00'::timestamp without time zone) AND (created_at < '2025-06-16 00:00:00'::timestamp without time zone))",
+                    "Shared Hit Blocks": 16,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0
+                  }
+                ],
+                "sample_numbers": [
+                  1,
+                  2,
+                  3,
+                  4,
+                  5,
+                  6,
+                  7
+                ]
+              }
+            ]
+          }
+        },
+        "model_request_ms": 0.0,
+        "stage": "complete",
+        "target_date": "2025-06-15",
+        "date_context": {
+          "target_date": "2025-06-15",
+          "start": "2025-06-15 00:00:00",
+          "end": "2025-06-16 00:00:00",
+          "timestamp_type": "timestamp without time zone"
+        },
+        "repair_on_mismatch": false,
+        "max_model_requests": 1,
+        "attempts": [
+          {
+            "attempt": 1,
+            "kind": "initial",
+            "stage": "complete",
+            "benchmark": {
+              "warmups_per_query": 1,
+              "samples_per_query": 7,
+              "execution_order": [
+                "original",
+                "rewritten",
+                "original",
+                "rewritten",
+                "original",
+                "rewritten",
+                "original",
+                "rewritten",
+                "original",
+                "rewritten",
+                "original",
+                "rewritten",
+                "original",
+                "rewritten"
+              ],
+              "execution_ms": {
+                "original": [
+                  6.218,
+                  6.228,
+                  6.189,
+                  6.428,
+                  6.548,
+                  6.268,
+                  6.333
+                ],
+                "rewritten": [
+                  0.056,
+                  0.072,
+                  0.055,
+                  0.058,
+                  0.062,
+                  0.06,
+                  0.058
+                ]
+              },
+              "median_ms": {
+                "original": 6.268,
+                "rewritten": 0.058
+              },
+              "rewritten_time_change_percent": -99.07466496490109,
+              "spread_range_over_median": {
+                "original": 0.05727504786215699,
+                "rewritten": 0.29310344827586193
+              },
+              "variability_note": "本次两组极差均不超过中位数的 50%",
+              "method": "Natural planner settings; warm-cache EXPLAIN server execution time, not client transfer time",
+              "plan_variants": {
+                "original": [
+                  {
+                    "nodes": [
+                      {
+                        "Node Type": "Gather",
+                        "Parallel Aware": false,
+                        "Startup Cost": 1000.0,
+                        "Total Cost": 6510.1,
+                        "Plan Rows": 1500,
+                        "Plan Width": 27,
+                        "Actual Rows": 825,
+                        "Actual Loops": 1,
+                        "Workers Planned": 1,
+                        "Workers Launched": 1,
+                        "Shared Hit Blocks": 2713,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0
+                      },
+                      {
+                        "Node Type": "Seq Scan",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": true,
+                        "Relation Name": "orders",
+                        "Alias": "orders",
+                        "Startup Cost": 0.0,
+                        "Total Cost": 5360.1,
+                        "Plan Rows": 882,
+                        "Plan Width": 27,
+                        "Actual Rows": 412,
+                        "Actual Loops": 2,
+                        "Filter": "((created_at)::date = '2025-06-15'::date)",
+                        "Rows Removed by Filter": 149590,
+                        "Shared Hit Blocks": 2713,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0
+                      }
+                    ],
+                    "sample_numbers": [
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  }
+                ],
+                "rewritten": [
+                  {
+                    "nodes": [
+                      {
+                        "Node Type": "Index Scan",
+                        "Parallel Aware": false,
+                        "Scan Direction": "Forward",
+                        "Index Name": "orders_created_at_idx",
+                        "Relation Name": "orders",
+                        "Alias": "orders",
+                        "Startup Cost": 0.42,
+                        "Total Cost": 39.5,
+                        "Plan Rows": 804,
+                        "Plan Width": 27,
+                        "Actual Rows": 825,
+                        "Actual Loops": 1,
+                        "Index Cond": "((created_at >= '2025-06-15 00:00:00'::timestamp without time zone) AND (created_at < '2025-06-16 00:00:00'::timestamp without time zone))",
+                        "Shared Hit Blocks": 16,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0
+                      }
+                    ],
+                    "sample_numbers": [
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  }
+                ]
+              }
+            },
+            "model_requests": 0,
+            "source": "controlled_model_response",
+            "model_id": "controlled-fixture-not-a-real-model",
+            "received_content": "{\"action\": \"date_range\", \"start\": \"2025-06-15 00:00:00\", \"end\": \"2025-06-16 00:00:00\", \"start_inclusive\": true, \"end_inclusive\": false, \"reason\": \"Use the timestamp B-tree with inclusive start and exclusive end.\"}",
+            "model_request_ms": 0.0,
+            "suggestion": {
+              "action": "date_range",
+              "start": "2025-06-15 00:00:00",
+              "end": "2025-06-16 00:00:00",
+              "start_inclusive": true,
+              "end_inclusive": false,
+              "reason": "Use the timestamp B-tree with inclusive start and exclusive end."
+            },
+            "candidate": {
+              "sql": "SELECT customer_id, created_at, status, amount\nFROM public.orders\nWHERE created_at >= %s::timestamp without time zone\n  AND created_at < %s::timestamp without time zone",
+              "parameters": [
+                "2025-06-15 00:00:00",
+                "2025-06-16 00:00:00"
+              ]
+            },
+            "connection": {
+              "database": "sql_optimization",
+              "user": "sql_optimization_reader",
+              "read_only": "on",
+              "isolation": "repeatable read",
+              "version": "PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit"
+            },
+            "comparison": {
+              "original_rows": 825,
+              "candidate_rows": 825,
+              "columns_equal": true,
+              "rows_and_multiplicities_equal": true,
+              "equivalent": true,
+              "reason": "在本次测试数据上结果一致",
+              "missing_from_candidate": [],
+              "extra_in_candidate": [],
+              "columns": [
+                [
+                  "customer_id",
+                  23,
+                  4,
+                  null,
+                  null
+                ],
+                [
+                  "created_at",
+                  1114,
+                  8,
+                  null,
+                  null
+                ],
+                [
+                  "status",
+                  25,
+                  null,
+                  null,
+                  null
+                ],
+                [
+                  "amount",
+                  1700,
+                  null,
+                  12,
+                  2
+                ]
+              ]
+            },
+            "difference_summary": {
+              "original_rows": 825,
+              "candidate_rows": 825,
+              "missing_row_copies": 0,
+              "extra_row_copies": 0,
+              "columns_equal": true,
+              "equivalent": true
+            },
+            "status": "completed",
+            "reason": "在本次测试数据上结果一致"
+          }
+        ],
+        "diagnostic_context": {
+          "scenario": "orders_date_filter_2025_06_15",
+          "original_sql": "SELECT customer_id, created_at, status, amount\nFROM public.orders\nWHERE created_at::date = %s::date",
+          "original_parameters": [
+            "2025-06-15"
+          ],
+          "date_context": {
+            "target_date": "2025-06-15",
+            "start": "2025-06-15 00:00:00",
+            "end": "2025-06-16 00:00:00",
+            "timestamp_type": "timestamp without time zone"
+          },
+          "table": {
+            "schema": "public",
+            "table": "orders",
+            "columns": [
+              {
+                "name": "order_id",
+                "data_type": "bigint",
+                "nullable": false
+              },
+              {
+                "name": "customer_id",
+                "data_type": "integer",
+                "nullable": false
+              },
+              {
+                "name": "created_at",
+                "data_type": "timestamp without time zone",
+                "nullable": true
+              },
+              {
+                "name": "status",
+                "data_type": "text",
+                "nullable": false
+              },
+              {
+                "name": "amount",
+                "data_type": "numeric(12,2)",
+                "nullable": false
+              }
+            ],
+            "primary_key": [
+              "order_id"
+            ],
+            "indexes": [
+              {
+                "name": "orders_created_at_idx",
+                "definition": "CREATE INDEX orders_created_at_idx ON public.orders USING btree (created_at)"
+              },
+              {
+                "name": "orders_pkey",
+                "definition": "CREATE UNIQUE INDEX orders_pkey ON public.orders USING btree (order_id)"
+              }
+            ]
+          },
+          "estimated_plan": [
+            {
+              "Node Type": "Gather",
+              "Parallel Aware": false,
+              "Startup Cost": 1000.0,
+              "Total Cost": 6510.1,
+              "Plan Rows": 1500,
+              "Plan Width": 27
+            },
+            {
+              "Node Type": "Seq Scan",
+              "Parallel Aware": true,
+              "Relation Name": "orders",
+              "Startup Cost": 0.0,
+              "Total Cost": 5360.1,
+              "Plan Rows": 882,
+              "Plan Width": 27,
+              "Filter": "((created_at)::date = '2025-06-15'::date)"
+            }
+          ]
+        },
+        "model_id": "controlled-fixture-not-a-real-model",
+        "received_content": "{\"action\": \"date_range\", \"start\": \"2025-06-15 00:00:00\", \"end\": \"2025-06-16 00:00:00\", \"start_inclusive\": true, \"end_inclusive\": false, \"reason\": \"Use the timestamp B-tree with inclusive start and exclusive end.\"}",
+        "suggestion": {
+          "action": "date_range",
+          "start": "2025-06-15 00:00:00",
+          "end": "2025-06-16 00:00:00",
+          "start_inclusive": true,
+          "end_inclusive": false,
+          "reason": "Use the timestamp B-tree with inclusive start and exclusive end."
+        },
+        "candidate": {
+          "sql": "SELECT customer_id, created_at, status, amount\nFROM public.orders\nWHERE created_at >= %s::timestamp without time zone\n  AND created_at < %s::timestamp without time zone",
+          "parameters": [
+            "2025-06-15 00:00:00",
+            "2025-06-16 00:00:00"
+          ]
+        },
+        "connection": {
+          "database": "sql_optimization",
+          "user": "sql_optimization_reader",
+          "read_only": "on",
+          "isolation": "repeatable read",
+          "version": "PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit"
+        },
+        "comparison": {
+          "original_rows": 825,
+          "candidate_rows": 825,
+          "columns_equal": true,
+          "rows_and_multiplicities_equal": true,
+          "equivalent": true,
+          "reason": "在本次测试数据上结果一致",
+          "missing_from_candidate": [],
+          "extra_in_candidate": [],
+          "columns": [
+            [
+              "customer_id",
+              23,
+              4,
+              null,
+              null
+            ],
+            [
+              "created_at",
+              1114,
+              8,
+              null,
+              null
+            ],
+            [
+              "status",
+              25,
+              null,
+              null,
+              null
+            ],
+            [
+              "amount",
+              1700,
+              null,
+              12,
+              2
+            ]
+          ]
+        },
+        "difference_summary": {
+          "original_rows": 825,
+          "candidate_rows": 825,
+          "missing_row_copies": 0,
+          "extra_row_copies": 0,
+          "columns_equal": true,
+          "equivalent": true
+        },
+        "status": "completed",
+        "reason": "在本次测试数据上结果一致",
+        "performance_assessment": {
+          "verdict": "improved",
+          "rule": "strict_sample_interval_separation",
+          "original_range_ms": {
+            "min": 6.189,
+            "max": 6.548
+          },
+          "candidate_range_ms": {
+            "min": 0.055,
+            "max": 0.072
+          },
+          "median_ms": {
+            "original": 6.268,
+            "rewritten": 0.058
+          },
+          "median_difference_ms": -6.21,
+          "median_change_percent": -99.07466496490109,
+          "sample_counts": {
+            "original": 7,
+            "rewritten": 7
+          },
+          "scope": "This sampling run only; not a general performance guarantee"
+        },
+        "recommendation": {
+          "decision": "use_candidate",
+          "reason_code": "validated_and_improved",
+          "advisory_only": true
+        }
+      }
+    },
+    {
+      "date": "2025-06-16",
+      "matching_validation_fields": true,
+      "sql_file": {
+        "source": "controlled_model_response",
+        "fixture": "normal",
+        "requested_model": "qwen3.7-plus",
+        "measured_at_utc": "2026-11-19T01:44:33.207280+00:00",
+        "model_requests": 0,
+        "benchmark": {
+          "warmups_per_query": 1,
+          "samples_per_query": 7,
+          "execution_order": [
+            "original",
+            "rewritten",
+            "original",
+            "rewritten",
+            "original",
+            "rewritten",
+            "original",
+            "rewritten",
+            "original",
+            "rewritten",
+            "original",
+            "rewritten",
+            "original",
+            "rewritten"
+          ],
+          "execution_ms": {
+            "original": [
+              7.411,
+              6.357,
+              6.517,
+              6.139,
+              6.536,
+              6.106,
+              6.294
+            ],
+            "rewritten": [
+              0.071,
+              0.059,
+              0.059,
+              0.058,
+              0.058,
+              0.056,
+              0.085
+            ]
+          },
+          "median_ms": {
+            "original": 6.357,
+            "rewritten": 0.059
+          },
+          "rewritten_time_change_percent": -99.07188925593834,
+          "spread_range_over_median": {
+            "original": 0.20528551203397824,
+            "rewritten": 0.4915254237288137
+          },
+          "variability_note": "本次两组极差均不超过中位数的 50%",
+          "method": "Natural planner settings; warm-cache EXPLAIN server execution time, not client transfer time",
+          "plan_variants": {
+            "original": [
+              {
+                "nodes": [
+                  {
+                    "Node Type": "Gather",
+                    "Parallel Aware": false,
+                    "Startup Cost": 1000.0,
+                    "Total Cost": 6510.1,
+                    "Plan Rows": 1500,
+                    "Plan Width": 27,
+                    "Actual Rows": 823,
+                    "Actual Loops": 1,
+                    "Workers Planned": 1,
+                    "Workers Launched": 1,
+                    "Shared Hit Blocks": 2713,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0
+                  },
+                  {
+                    "Node Type": "Seq Scan",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": true,
+                    "Relation Name": "orders",
+                    "Alias": "orders",
+                    "Startup Cost": 0.0,
+                    "Total Cost": 5360.1,
+                    "Plan Rows": 882,
+                    "Plan Width": 27,
+                    "Actual Rows": 412,
+                    "Actual Loops": 2,
+                    "Filter": "((created_at)::date = '2025-06-16'::date)",
+                    "Rows Removed by Filter": 149591,
+                    "Shared Hit Blocks": 2713,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0
+                  }
+                ],
+                "sample_numbers": [
+                  1,
+                  2,
+                  3,
+                  4,
+                  5,
+                  6,
+                  7
+                ]
+              }
+            ],
+            "rewritten": [
+              {
+                "nodes": [
+                  {
+                    "Node Type": "Index Scan",
+                    "Parallel Aware": false,
+                    "Scan Direction": "Forward",
+                    "Index Name": "orders_created_at_idx",
+                    "Relation Name": "orders",
+                    "Alias": "orders",
+                    "Startup Cost": 0.42,
+                    "Total Cost": 39.86,
+                    "Plan Rows": 822,
+                    "Plan Width": 27,
+                    "Actual Rows": 823,
+                    "Actual Loops": 1,
+                    "Index Cond": "((created_at >= '2025-06-16 00:00:00'::timestamp without time zone) AND (created_at < '2025-06-17 00:00:00'::timestamp without time zone))",
+                    "Shared Hit Blocks": 15,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0
+                  }
+                ],
+                "sample_numbers": [
+                  1,
+                  2,
+                  3,
+                  4,
+                  5,
+                  6,
+                  7
+                ]
+              }
+            ]
+          }
+        },
+        "model_request_ms": 0.0,
+        "stage": "complete",
+        "target_date": "2025-06-16",
+        "date_context": {
+          "target_date": "2025-06-16",
+          "start": "2025-06-16 00:00:00",
+          "end": "2025-06-17 00:00:00",
+          "timestamp_type": "timestamp without time zone"
+        },
+        "repair_on_mismatch": false,
+        "max_model_requests": 1,
+        "attempts": [
+          {
+            "attempt": 1,
+            "kind": "initial",
+            "stage": "complete",
+            "benchmark": {
+              "warmups_per_query": 1,
+              "samples_per_query": 7,
+              "execution_order": [
+                "original",
+                "rewritten",
+                "original",
+                "rewritten",
+                "original",
+                "rewritten",
+                "original",
+                "rewritten",
+                "original",
+                "rewritten",
+                "original",
+                "rewritten",
+                "original",
+                "rewritten"
+              ],
+              "execution_ms": {
+                "original": [
+                  7.411,
+                  6.357,
+                  6.517,
+                  6.139,
+                  6.536,
+                  6.106,
+                  6.294
+                ],
+                "rewritten": [
+                  0.071,
+                  0.059,
+                  0.059,
+                  0.058,
+                  0.058,
+                  0.056,
+                  0.085
+                ]
+              },
+              "median_ms": {
+                "original": 6.357,
+                "rewritten": 0.059
+              },
+              "rewritten_time_change_percent": -99.07188925593834,
+              "spread_range_over_median": {
+                "original": 0.20528551203397824,
+                "rewritten": 0.4915254237288137
+              },
+              "variability_note": "本次两组极差均不超过中位数的 50%",
+              "method": "Natural planner settings; warm-cache EXPLAIN server execution time, not client transfer time",
+              "plan_variants": {
+                "original": [
+                  {
+                    "nodes": [
+                      {
+                        "Node Type": "Gather",
+                        "Parallel Aware": false,
+                        "Startup Cost": 1000.0,
+                        "Total Cost": 6510.1,
+                        "Plan Rows": 1500,
+                        "Plan Width": 27,
+                        "Actual Rows": 823,
+                        "Actual Loops": 1,
+                        "Workers Planned": 1,
+                        "Workers Launched": 1,
+                        "Shared Hit Blocks": 2713,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0
+                      },
+                      {
+                        "Node Type": "Seq Scan",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": true,
+                        "Relation Name": "orders",
+                        "Alias": "orders",
+                        "Startup Cost": 0.0,
+                        "Total Cost": 5360.1,
+                        "Plan Rows": 882,
+                        "Plan Width": 27,
+                        "Actual Rows": 412,
+                        "Actual Loops": 2,
+                        "Filter": "((created_at)::date = '2025-06-16'::date)",
+                        "Rows Removed by Filter": 149591,
+                        "Shared Hit Blocks": 2713,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0
+                      }
+                    ],
+                    "sample_numbers": [
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  }
+                ],
+                "rewritten": [
+                  {
+                    "nodes": [
+                      {
+                        "Node Type": "Index Scan",
+                        "Parallel Aware": false,
+                        "Scan Direction": "Forward",
+                        "Index Name": "orders_created_at_idx",
+                        "Relation Name": "orders",
+                        "Alias": "orders",
+                        "Startup Cost": 0.42,
+                        "Total Cost": 39.86,
+                        "Plan Rows": 822,
+                        "Plan Width": 27,
+                        "Actual Rows": 823,
+                        "Actual Loops": 1,
+                        "Index Cond": "((created_at >= '2025-06-16 00:00:00'::timestamp without time zone) AND (created_at < '2025-06-17 00:00:00'::timestamp without time zone))",
+                        "Shared Hit Blocks": 15,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0
+                      }
+                    ],
+                    "sample_numbers": [
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  }
+                ]
+              }
+            },
+            "model_requests": 0,
+            "source": "controlled_model_response",
+            "model_id": "controlled-fixture-not-a-real-model",
+            "received_content": "{\"action\": \"date_range\", \"start\": \"2025-06-16 00:00:00\", \"end\": \"2025-06-17 00:00:00\", \"start_inclusive\": true, \"end_inclusive\": false, \"reason\": \"Use the timestamp B-tree with inclusive start and exclusive end.\"}",
+            "model_request_ms": 0.0,
+            "suggestion": {
+              "action": "date_range",
+              "start": "2025-06-16 00:00:00",
+              "end": "2025-06-17 00:00:00",
+              "start_inclusive": true,
+              "end_inclusive": false,
+              "reason": "Use the timestamp B-tree with inclusive start and exclusive end."
+            },
+            "candidate": {
+              "sql": "SELECT customer_id, created_at, status, amount\nFROM public.orders\nWHERE created_at >= %s::timestamp without time zone\n  AND created_at < %s::timestamp without time zone",
+              "parameters": [
+                "2025-06-16 00:00:00",
+                "2025-06-17 00:00:00"
+              ]
+            },
+            "connection": {
+              "database": "sql_optimization",
+              "user": "sql_optimization_reader",
+              "read_only": "on",
+              "isolation": "repeatable read",
+              "version": "PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit"
+            },
+            "comparison": {
+              "original_rows": 823,
+              "candidate_rows": 823,
+              "columns_equal": true,
+              "rows_and_multiplicities_equal": true,
+              "equivalent": true,
+              "reason": "在本次测试数据上结果一致",
+              "missing_from_candidate": [],
+              "extra_in_candidate": [],
+              "columns": [
+                [
+                  "customer_id",
+                  23,
+                  4,
+                  null,
+                  null
+                ],
+                [
+                  "created_at",
+                  1114,
+                  8,
+                  null,
+                  null
+                ],
+                [
+                  "status",
+                  25,
+                  null,
+                  null,
+                  null
+                ],
+                [
+                  "amount",
+                  1700,
+                  null,
+                  12,
+                  2
+                ]
+              ]
+            },
+            "difference_summary": {
+              "original_rows": 823,
+              "candidate_rows": 823,
+              "missing_row_copies": 0,
+              "extra_row_copies": 0,
+              "columns_equal": true,
+              "equivalent": true
+            },
+            "status": "completed",
+            "reason": "在本次测试数据上结果一致"
+          }
+        ],
+        "diagnostic_context": {
+          "scenario": "orders_date_filter_2025_06_15",
+          "original_sql": "SELECT customer_id, created_at, status, amount\nFROM public.orders\nWHERE created_at::date = %s::date",
+          "original_parameters": [
+            "2025-06-16"
+          ],
+          "date_context": {
+            "target_date": "2025-06-16",
+            "start": "2025-06-16 00:00:00",
+            "end": "2025-06-17 00:00:00",
+            "timestamp_type": "timestamp without time zone"
+          },
+          "table": {
+            "schema": "public",
+            "table": "orders",
+            "columns": [
+              {
+                "name": "order_id",
+                "data_type": "bigint",
+                "nullable": false
+              },
+              {
+                "name": "customer_id",
+                "data_type": "integer",
+                "nullable": false
+              },
+              {
+                "name": "created_at",
+                "data_type": "timestamp without time zone",
+                "nullable": true
+              },
+              {
+                "name": "status",
+                "data_type": "text",
+                "nullable": false
+              },
+              {
+                "name": "amount",
+                "data_type": "numeric(12,2)",
+                "nullable": false
+              }
+            ],
+            "primary_key": [
+              "order_id"
+            ],
+            "indexes": [
+              {
+                "name": "orders_created_at_idx",
+                "definition": "CREATE INDEX orders_created_at_idx ON public.orders USING btree (created_at)"
+              },
+              {
+                "name": "orders_pkey",
+                "definition": "CREATE UNIQUE INDEX orders_pkey ON public.orders USING btree (order_id)"
+              }
+            ]
+          },
+          "estimated_plan": [
+            {
+              "Node Type": "Gather",
+              "Parallel Aware": false,
+              "Startup Cost": 1000.0,
+              "Total Cost": 6510.1,
+              "Plan Rows": 1500,
+              "Plan Width": 27
+            },
+            {
+              "Node Type": "Seq Scan",
+              "Parallel Aware": true,
+              "Relation Name": "orders",
+              "Startup Cost": 0.0,
+              "Total Cost": 5360.1,
+              "Plan Rows": 882,
+              "Plan Width": 27,
+              "Filter": "((created_at)::date = '2025-06-16'::date)"
+            }
+          ]
+        },
+        "model_id": "controlled-fixture-not-a-real-model",
+        "received_content": "{\"action\": \"date_range\", \"start\": \"2025-06-16 00:00:00\", \"end\": \"2025-06-17 00:00:00\", \"start_inclusive\": true, \"end_inclusive\": false, \"reason\": \"Use the timestamp B-tree with inclusive start and exclusive end.\"}",
+        "suggestion": {
+          "action": "date_range",
+          "start": "2025-06-16 00:00:00",
+          "end": "2025-06-17 00:00:00",
+          "start_inclusive": true,
+          "end_inclusive": false,
+          "reason": "Use the timestamp B-tree with inclusive start and exclusive end."
+        },
+        "candidate": {
+          "sql": "SELECT customer_id, created_at, status, amount\nFROM public.orders\nWHERE created_at >= %s::timestamp without time zone\n  AND created_at < %s::timestamp without time zone",
+          "parameters": [
+            "2025-06-16 00:00:00",
+            "2025-06-17 00:00:00"
+          ]
+        },
+        "connection": {
+          "database": "sql_optimization",
+          "user": "sql_optimization_reader",
+          "read_only": "on",
+          "isolation": "repeatable read",
+          "version": "PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit"
+        },
+        "comparison": {
+          "original_rows": 823,
+          "candidate_rows": 823,
+          "columns_equal": true,
+          "rows_and_multiplicities_equal": true,
+          "equivalent": true,
+          "reason": "在本次测试数据上结果一致",
+          "missing_from_candidate": [],
+          "extra_in_candidate": [],
+          "columns": [
+            [
+              "customer_id",
+              23,
+              4,
+              null,
+              null
+            ],
+            [
+              "created_at",
+              1114,
+              8,
+              null,
+              null
+            ],
+            [
+              "status",
+              25,
+              null,
+              null,
+              null
+            ],
+            [
+              "amount",
+              1700,
+              null,
+              12,
+              2
+            ]
+          ]
+        },
+        "difference_summary": {
+          "original_rows": 823,
+          "candidate_rows": 823,
+          "missing_row_copies": 0,
+          "extra_row_copies": 0,
+          "columns_equal": true,
+          "equivalent": true
+        },
+        "status": "completed",
+        "reason": "在本次测试数据上结果一致",
+        "performance_assessment": {
+          "verdict": "improved",
+          "rule": "strict_sample_interval_separation",
+          "original_range_ms": {
+            "min": 6.106,
+            "max": 7.411
+          },
+          "candidate_range_ms": {
+            "min": 0.056,
+            "max": 0.085
+          },
+          "median_ms": {
+            "original": 6.357,
+            "rewritten": 0.059
+          },
+          "median_difference_ms": -6.298,
+          "median_change_percent": -99.07188925593834,
+          "sample_counts": {
+            "original": 7,
+            "rewritten": 7
+          },
+          "scope": "This sampling run only; not a general performance guarantee"
+        },
+        "recommendation": {
+          "decision": "use_candidate",
+          "reason_code": "validated_and_improved",
+          "advisory_only": true
+        },
+        "sql_intake": {
+          "source": "sql_file",
+          "dialect": "postgres",
+          "recognized_scenario": "orders_date_filter_2025_06_15",
+          "extracted_date": "2025-06-16",
+          "execution": "repository_parameterized_template"
+        }
+      },
+      "scenario_date": {
+        "source": "controlled_model_response",
+        "fixture": "normal",
+        "requested_model": "qwen3.7-plus",
+        "measured_at_utc": "2026-11-19T01:44:33.305070+00:00",
+        "model_requests": 0,
+        "benchmark": {
+          "warmups_per_query": 1,
+          "samples_per_query": 7,
+          "execution_order": [
+            "original",
+            "rewritten",
+            "original",
+            "rewritten",
+            "original",
+            "rewritten",
+            "original",
+            "rewritten",
+            "original",
+            "rewritten",
+            "original",
+            "rewritten",
+            "original",
+            "rewritten"
+          ],
+          "execution_ms": {
+            "original": [
+              6.466,
+              6.186,
+              6.042,
+              6.11,
+              6.123,
+              5.975,
+              6.231
+            ],
+            "rewritten": [
+              0.058,
+              0.056,
+              0.054,
+              0.061,
+              0.057,
+              0.056,
+              0.053
+            ]
+          },
+          "median_ms": {
+            "original": 6.123,
+            "rewritten": 0.056
+          },
+          "rewritten_time_change_percent": -99.0854156459252,
+          "spread_range_over_median": {
+            "original": 0.0801894496162013,
+            "rewritten": 0.14285714285714285
+          },
+          "variability_note": "本次两组极差均不超过中位数的 50%",
+          "method": "Natural planner settings; warm-cache EXPLAIN server execution time, not client transfer time",
+          "plan_variants": {
+            "original": [
+              {
+                "nodes": [
+                  {
+                    "Node Type": "Gather",
+                    "Parallel Aware": false,
+                    "Startup Cost": 1000.0,
+                    "Total Cost": 6510.1,
+                    "Plan Rows": 1500,
+                    "Plan Width": 27,
+                    "Actual Rows": 823,
+                    "Actual Loops": 1,
+                    "Workers Planned": 1,
+                    "Workers Launched": 1,
+                    "Shared Hit Blocks": 2713,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0
+                  },
+                  {
+                    "Node Type": "Seq Scan",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": true,
+                    "Relation Name": "orders",
+                    "Alias": "orders",
+                    "Startup Cost": 0.0,
+                    "Total Cost": 5360.1,
+                    "Plan Rows": 882,
+                    "Plan Width": 27,
+                    "Actual Rows": 412,
+                    "Actual Loops": 2,
+                    "Filter": "((created_at)::date = '2025-06-16'::date)",
+                    "Rows Removed by Filter": 149591,
+                    "Shared Hit Blocks": 2713,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0
+                  }
+                ],
+                "sample_numbers": [
+                  1,
+                  2,
+                  3,
+                  4,
+                  5,
+                  6,
+                  7
+                ]
+              }
+            ],
+            "rewritten": [
+              {
+                "nodes": [
+                  {
+                    "Node Type": "Index Scan",
+                    "Parallel Aware": false,
+                    "Scan Direction": "Forward",
+                    "Index Name": "orders_created_at_idx",
+                    "Relation Name": "orders",
+                    "Alias": "orders",
+                    "Startup Cost": 0.42,
+                    "Total Cost": 39.86,
+                    "Plan Rows": 822,
+                    "Plan Width": 27,
+                    "Actual Rows": 823,
+                    "Actual Loops": 1,
+                    "Index Cond": "((created_at >= '2025-06-16 00:00:00'::timestamp without time zone) AND (created_at < '2025-06-17 00:00:00'::timestamp without time zone))",
+                    "Shared Hit Blocks": 15,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0
+                  }
+                ],
+                "sample_numbers": [
+                  1,
+                  2,
+                  3,
+                  4,
+                  5,
+                  6,
+                  7
+                ]
+              }
+            ]
+          }
+        },
+        "model_request_ms": 0.0,
+        "stage": "complete",
+        "target_date": "2025-06-16",
+        "date_context": {
+          "target_date": "2025-06-16",
+          "start": "2025-06-16 00:00:00",
+          "end": "2025-06-17 00:00:00",
+          "timestamp_type": "timestamp without time zone"
+        },
+        "repair_on_mismatch": false,
+        "max_model_requests": 1,
+        "attempts": [
+          {
+            "attempt": 1,
+            "kind": "initial",
+            "stage": "complete",
+            "benchmark": {
+              "warmups_per_query": 1,
+              "samples_per_query": 7,
+              "execution_order": [
+                "original",
+                "rewritten",
+                "original",
+                "rewritten",
+                "original",
+                "rewritten",
+                "original",
+                "rewritten",
+                "original",
+                "rewritten",
+                "original",
+                "rewritten",
+                "original",
+                "rewritten"
+              ],
+              "execution_ms": {
+                "original": [
+                  6.466,
+                  6.186,
+                  6.042,
+                  6.11,
+                  6.123,
+                  5.975,
+                  6.231
+                ],
+                "rewritten": [
+                  0.058,
+                  0.056,
+                  0.054,
+                  0.061,
+                  0.057,
+                  0.056,
+                  0.053
+                ]
+              },
+              "median_ms": {
+                "original": 6.123,
+                "rewritten": 0.056
+              },
+              "rewritten_time_change_percent": -99.0854156459252,
+              "spread_range_over_median": {
+                "original": 0.0801894496162013,
+                "rewritten": 0.14285714285714285
+              },
+              "variability_note": "本次两组极差均不超过中位数的 50%",
+              "method": "Natural planner settings; warm-cache EXPLAIN server execution time, not client transfer time",
+              "plan_variants": {
+                "original": [
+                  {
+                    "nodes": [
+                      {
+                        "Node Type": "Gather",
+                        "Parallel Aware": false,
+                        "Startup Cost": 1000.0,
+                        "Total Cost": 6510.1,
+                        "Plan Rows": 1500,
+                        "Plan Width": 27,
+                        "Actual Rows": 823,
+                        "Actual Loops": 1,
+                        "Workers Planned": 1,
+                        "Workers Launched": 1,
+                        "Shared Hit Blocks": 2713,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0
+                      },
+                      {
+                        "Node Type": "Seq Scan",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": true,
+                        "Relation Name": "orders",
+                        "Alias": "orders",
+                        "Startup Cost": 0.0,
+                        "Total Cost": 5360.1,
+                        "Plan Rows": 882,
+                        "Plan Width": 27,
+                        "Actual Rows": 412,
+                        "Actual Loops": 2,
+                        "Filter": "((created_at)::date = '2025-06-16'::date)",
+                        "Rows Removed by Filter": 149591,
+                        "Shared Hit Blocks": 2713,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0
+                      }
+                    ],
+                    "sample_numbers": [
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  }
+                ],
+                "rewritten": [
+                  {
+                    "nodes": [
+                      {
+                        "Node Type": "Index Scan",
+                        "Parallel Aware": false,
+                        "Scan Direction": "Forward",
+                        "Index Name": "orders_created_at_idx",
+                        "Relation Name": "orders",
+                        "Alias": "orders",
+                        "Startup Cost": 0.42,
+                        "Total Cost": 39.86,
+                        "Plan Rows": 822,
+                        "Plan Width": 27,
+                        "Actual Rows": 823,
+                        "Actual Loops": 1,
+                        "Index Cond": "((created_at >= '2025-06-16 00:00:00'::timestamp without time zone) AND (created_at < '2025-06-17 00:00:00'::timestamp without time zone))",
+                        "Shared Hit Blocks": 15,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0
+                      }
+                    ],
+                    "sample_numbers": [
+                      1,
+                      2,
+                      3,
+                      4,
+                      5,
+                      6,
+                      7
+                    ]
+                  }
+                ]
+              }
+            },
+            "model_requests": 0,
+            "source": "controlled_model_response",
+            "model_id": "controlled-fixture-not-a-real-model",
+            "received_content": "{\"action\": \"date_range\", \"start\": \"2025-06-16 00:00:00\", \"end\": \"2025-06-17 00:00:00\", \"start_inclusive\": true, \"end_inclusive\": false, \"reason\": \"Use the timestamp B-tree with inclusive start and exclusive end.\"}",
+            "model_request_ms": 0.0,
+            "suggestion": {
+              "action": "date_range",
+              "start": "2025-06-16 00:00:00",
+              "end": "2025-06-17 00:00:00",
+              "start_inclusive": true,
+              "end_inclusive": false,
+              "reason": "Use the timestamp B-tree with inclusive start and exclusive end."
+            },
+            "candidate": {
+              "sql": "SELECT customer_id, created_at, status, amount\nFROM public.orders\nWHERE created_at >= %s::timestamp without time zone\n  AND created_at < %s::timestamp without time zone",
+              "parameters": [
+                "2025-06-16 00:00:00",
+                "2025-06-17 00:00:00"
+              ]
+            },
+            "connection": {
+              "database": "sql_optimization",
+              "user": "sql_optimization_reader",
+              "read_only": "on",
+              "isolation": "repeatable read",
+              "version": "PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit"
+            },
+            "comparison": {
+              "original_rows": 823,
+              "candidate_rows": 823,
+              "columns_equal": true,
+              "rows_and_multiplicities_equal": true,
+              "equivalent": true,
+              "reason": "在本次测试数据上结果一致",
+              "missing_from_candidate": [],
+              "extra_in_candidate": [],
+              "columns": [
+                [
+                  "customer_id",
+                  23,
+                  4,
+                  null,
+                  null
+                ],
+                [
+                  "created_at",
+                  1114,
+                  8,
+                  null,
+                  null
+                ],
+                [
+                  "status",
+                  25,
+                  null,
+                  null,
+                  null
+                ],
+                [
+                  "amount",
+                  1700,
+                  null,
+                  12,
+                  2
+                ]
+              ]
+            },
+            "difference_summary": {
+              "original_rows": 823,
+              "candidate_rows": 823,
+              "missing_row_copies": 0,
+              "extra_row_copies": 0,
+              "columns_equal": true,
+              "equivalent": true
+            },
+            "status": "completed",
+            "reason": "在本次测试数据上结果一致"
+          }
+        ],
+        "diagnostic_context": {
+          "scenario": "orders_date_filter_2025_06_15",
+          "original_sql": "SELECT customer_id, created_at, status, amount\nFROM public.orders\nWHERE created_at::date = %s::date",
+          "original_parameters": [
+            "2025-06-16"
+          ],
+          "date_context": {
+            "target_date": "2025-06-16",
+            "start": "2025-06-16 00:00:00",
+            "end": "2025-06-17 00:00:00",
+            "timestamp_type": "timestamp without time zone"
+          },
+          "table": {
+            "schema": "public",
+            "table": "orders",
+            "columns": [
+              {
+                "name": "order_id",
+                "data_type": "bigint",
+                "nullable": false
+              },
+              {
+                "name": "customer_id",
+                "data_type": "integer",
+                "nullable": false
+              },
+              {
+                "name": "created_at",
+                "data_type": "timestamp without time zone",
+                "nullable": true
+              },
+              {
+                "name": "status",
+                "data_type": "text",
+                "nullable": false
+              },
+              {
+                "name": "amount",
+                "data_type": "numeric(12,2)",
+                "nullable": false
+              }
+            ],
+            "primary_key": [
+              "order_id"
+            ],
+            "indexes": [
+              {
+                "name": "orders_created_at_idx",
+                "definition": "CREATE INDEX orders_created_at_idx ON public.orders USING btree (created_at)"
+              },
+              {
+                "name": "orders_pkey",
+                "definition": "CREATE UNIQUE INDEX orders_pkey ON public.orders USING btree (order_id)"
+              }
+            ]
+          },
+          "estimated_plan": [
+            {
+              "Node Type": "Gather",
+              "Parallel Aware": false,
+              "Startup Cost": 1000.0,
+              "Total Cost": 6510.1,
+              "Plan Rows": 1500,
+              "Plan Width": 27
+            },
+            {
+              "Node Type": "Seq Scan",
+              "Parallel Aware": true,
+              "Relation Name": "orders",
+              "Startup Cost": 0.0,
+              "Total Cost": 5360.1,
+              "Plan Rows": 882,
+              "Plan Width": 27,
+              "Filter": "((created_at)::date = '2025-06-16'::date)"
+            }
+          ]
+        },
+        "model_id": "controlled-fixture-not-a-real-model",
+        "received_content": "{\"action\": \"date_range\", \"start\": \"2025-06-16 00:00:00\", \"end\": \"2025-06-17 00:00:00\", \"start_inclusive\": true, \"end_inclusive\": false, \"reason\": \"Use the timestamp B-tree with inclusive start and exclusive end.\"}",
+        "suggestion": {
+          "action": "date_range",
+          "start": "2025-06-16 00:00:00",
+          "end": "2025-06-17 00:00:00",
+          "start_inclusive": true,
+          "end_inclusive": false,
+          "reason": "Use the timestamp B-tree with inclusive start and exclusive end."
+        },
+        "candidate": {
+          "sql": "SELECT customer_id, created_at, status, amount\nFROM public.orders\nWHERE created_at >= %s::timestamp without time zone\n  AND created_at < %s::timestamp without time zone",
+          "parameters": [
+            "2025-06-16 00:00:00",
+            "2025-06-17 00:00:00"
+          ]
+        },
+        "connection": {
+          "database": "sql_optimization",
+          "user": "sql_optimization_reader",
+          "read_only": "on",
+          "isolation": "repeatable read",
+          "version": "PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit"
+        },
+        "comparison": {
+          "original_rows": 823,
+          "candidate_rows": 823,
+          "columns_equal": true,
+          "rows_and_multiplicities_equal": true,
+          "equivalent": true,
+          "reason": "在本次测试数据上结果一致",
+          "missing_from_candidate": [],
+          "extra_in_candidate": [],
+          "columns": [
+            [
+              "customer_id",
+              23,
+              4,
+              null,
+              null
+            ],
+            [
+              "created_at",
+              1114,
+              8,
+              null,
+              null
+            ],
+            [
+              "status",
+              25,
+              null,
+              null,
+              null
+            ],
+            [
+              "amount",
+              1700,
+              null,
+              12,
+              2
+            ]
+          ]
+        },
+        "difference_summary": {
+          "original_rows": 823,
+          "candidate_rows": 823,
+          "missing_row_copies": 0,
+          "extra_row_copies": 0,
+          "columns_equal": true,
+          "equivalent": true
+        },
+        "status": "completed",
+        "reason": "在本次测试数据上结果一致",
+        "performance_assessment": {
+          "verdict": "improved",
+          "rule": "strict_sample_interval_separation",
+          "original_range_ms": {
+            "min": 5.975,
+            "max": 6.466
+          },
+          "candidate_range_ms": {
+            "min": 0.053,
+            "max": 0.061
+          },
+          "median_ms": {
+            "original": 6.123,
+            "rewritten": 0.056
+          },
+          "median_difference_ms": -6.067,
+          "median_change_percent": -99.0854156459252,
+          "sample_counts": {
+            "original": 7,
+            "rewritten": 7
+          },
+          "scope": "This sampling run only; not a general performance guarantee"
+        },
+        "recommendation": {
+          "decision": "use_candidate",
+          "reason_code": "validated_and_improved",
+          "advisory_only": true
+        }
+      }
+    }
+  ],
+  "rejected": [
+    {
+      "case": "multiple",
+      "exit_code": 1,
+      "report": {
+        "status": "unsupported_query_shape",
+        "stage": "sql_intake",
+        "reason": "Expected one SELECT matching the orders date-filter baseline",
+        "model_requests": 0,
+        "benchmark": null,
+        "performance_assessment": null,
+        "performance_assessment_skipped": "result_not_verified_or_original_retained",
+        "recommendation": {
+          "decision": "not_evaluated",
+          "reason_code": "evaluation_error",
+          "advisory_only": true
+        }
+      }
+    },
+    {
+      "case": "non_select",
+      "exit_code": 1,
+      "report": {
+        "status": "unsupported_query_shape",
+        "stage": "sql_intake",
+        "reason": "Expected one SELECT matching the orders date-filter baseline",
+        "model_requests": 0,
+        "benchmark": null,
+        "performance_assessment": null,
+        "performance_assessment_skipped": "result_not_verified_or_original_retained",
+        "recommendation": {
+          "decision": "not_evaluated",
+          "reason_code": "evaluation_error",
+          "advisory_only": true
+        }
+      }
+    },
+    {
+      "case": "extra_filter",
+      "exit_code": 1,
+      "report": {
+        "status": "unsupported_query_shape",
+        "stage": "sql_intake",
+        "reason": "Expected the baseline date literal and complete query structure",
+        "model_requests": 0,
+        "benchmark": null,
+        "performance_assessment": null,
+        "performance_assessment_skipped": "result_not_verified_or_original_retained",
+        "recommendation": {
+          "decision": "not_evaluated",
+          "reason_code": "evaluation_error",
+          "advisory_only": true
+        }
+      }
+    },
+    {
+      "case": "projection",
+      "exit_code": 1,
+      "report": {
+        "status": "unsupported_query_shape",
+        "stage": "sql_intake",
+        "reason": "Only the baseline query date literal may change",
+        "model_requests": 0,
+        "benchmark": null,
+        "performance_assessment": null,
+        "performance_assessment_skipped": "result_not_verified_or_original_retained",
+        "recommendation": {
+          "decision": "not_evaluated",
+          "reason_code": "evaluation_error",
+          "advisory_only": true
+        }
+      }
+    },
+    {
+      "case": "invalid_date",
+      "exit_code": 1,
+      "report": {
+        "status": "invalid_date",
+        "stage": "sql_intake",
+        "reason": "Invalid date: expected YYYY-MM-DD with a representable next day",
+        "model_requests": 0,
+        "benchmark": null,
+        "performance_assessment": null,
+        "performance_assessment_skipped": "result_not_verified_or_original_retained",
+        "recommendation": {
+          "decision": "not_evaluated",
+          "reason_code": "evaluation_error",
+          "advisory_only": true
+        }
+      }
+    },
+    {
+      "case": "syntax",
+      "exit_code": 1,
+      "report": {
+        "status": "invalid_sql",
+        "stage": "sql_intake",
+        "reason": "Unable to parse PostgreSQL SQL; check syntax and quoting",
+        "model_requests": 0,
+        "benchmark": null,
+        "performance_assessment": null,
+        "performance_assessment_skipped": "result_not_verified_or_original_retained",
+        "recommendation": {
+          "decision": "not_evaluated",
+          "reason_code": "evaluation_error",
+          "advisory_only": true
+        }
+      }
+    },
+    {
+      "case": "conflict_--date",
+      "exit_code": 2,
+      "report": {
+        "argument_error": "optimize_orders.py: error: --sql-file conflicts with explicit --scenario or --date"
+      }
+    },
+    {
+      "case": "conflict_--scenario",
+      "exit_code": 2,
+      "report": {
+        "argument_error": "optimize_orders.py: error: --sql-file conflicts with explicit --scenario or --date"
+      }
+    }
+  ],
+  "rejection_calls": {
+    "database_connections": 0,
+    "model_calls": 0,
+    "http_requests": 0
+  }
+}

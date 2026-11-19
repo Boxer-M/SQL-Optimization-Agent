@@ -1092,3 +1092,56 @@ SQL_OPTIMIZATION_DATE_REPAIR=true SQL_OPTIMIZATION_MODEL_FIXTURE=repair-success 
 成功路径的实际中位数：HTTP `6.520 → 0.064 ms`，MCP `6.348 → 0.067 ms`。推荐来自各自实际样本的既有判定规则；两入口独立采样，不要求耗时相同。测试环境为本机 PostgreSQL 16.15、合成订单数据、应用只读账号。六次接口调用全部使用模拟模型回复，实际模型请求为 0；传输层测试通过 MockTransport 核对开启最多两次 POST、关闭最多一次，并经过两个适配器调用公共服务。
 
 本轮没有重新请求真实千问。上一轮真实修复报告复用自已推送提交 [`c0bd1e9` 的真实报告](https://github.com/Boxer-M/SQL-Optimization-Agent/blob/c0bd1e9d0dfd15b9a792f3269d1471e684d59b5d/reports/date_repair_live_evaluation.json)：3 次真实请求、3/3 修复通过。该报告现已随最新主分支合入，可在 `reports/date_repair_live_evaluation.json` 查看；固定提交链接保留用于追溯，不把它标记为本轮接口实测。
+
+## 从 SQL 文件识别订单日期场景
+
+CLI 可用 `--sql-file` 读取一份 UTF-8 SQL 文件（最多 64 KiB）。使用 SQLGlot 的 PostgreSQL 方言解析，完整比较仓库 `sql_benchmark.ORIGINAL` 的语法树：单条 SELECT，按顺序投影 `customer_id, created_at, status, amount`，表为 `public.orders`，唯一过滤条件为 `created_at::date = DATE 'YYYY-MM-DD'`。只有右侧日期字面量可以变化。空白、普通注释和被解析成相同语法树的 CAST 写法不影响识别；额外投影、过滤、表别名、连接、CTE、DISTINCT、排序、LIMIT 等均不在本轮支持范围。
+
+```sql
+SELECT customer_id, created_at, status, amount
+FROM public.orders
+WHERE created_at::date = DATE '2025-06-15';
+```
+
+```bash
+.venv/bin/python -m pip install -e '.[test]'
+
+# 两份可直接运行的示例：模拟模型响应，实际连接本地 PostgreSQL
+.venv/bin/python scripts/optimize_orders.py \
+  --sql-file sql/examples/orders_date_2025_06_15.sql --fixture normal
+.venv/bin/python scripts/optimize_orders.py \
+  --sql-file sql/examples/orders_date_2025_06_16.sql --fixture normal
+
+# 原 CLI 路径保留，可对照运行
+.venv/bin/python scripts/optimize_orders.py \
+  --scenario orders_date_filter_2025_06_15 --date 2025-06-16 --fixture normal
+
+# 如需使用已验收的修复开关，可以组合；仍仅在完整结果不一致时触发
+.venv/bin/python scripts/optimize_orders.py \
+  --sql-file sql/examples/orders_date_2025_06_15.sql --fixture repair-success --repair-on-mismatch
+```
+
+`--sql-file` 与显式 `--scenario` 或 `--date` 同用时，argparse 报参数冲突并以 2 退出，即使日期或场景相同也不例外。不使用文件参数时，原场景默认值、`--date` 和修复行为保持不变。
+
+识别模块仅提取日期并调用现有公共服务；执行端继续使用 `ORDER_DATE_SQL` 及绑定参数，文件中的 SQL 从不直接执行。诊断、模型上下文、完整比较和计时继续使用公共服务生成的日期上下文和受控模板。报告增加：
+
+```json
+{"sql_intake":{"source":"sql_file","dialect":"postgres","recognized_scenario":"orders_date_filter_2025_06_15","extracted_date":"2025-06-16","execution":"repository_parameterized_template"}}
+```
+
+合法但不支持的结构返回 `unsupported_query_shape`；无法解析、空文件或非 UTF-8 返回 `invalid_sql`，非法日期返回 `invalid_date`，读文件失败返回 `sql_file_error`，超出文件大小预算返回 `sql_input_too_large`。这些输入错误以 1 退出，报告阶段为 `sql_intake`，发生在服务构建、数据库连接和模型请求之前；错误输出不回显 SQL 文本。日期仍复用公共服务的严格日历校验及可计算次日的限制。
+
+实际验收报告为 `reports/sql_file_intake_acceptance.json`（SQLGlot 30.33.0、Python 3.12、本地 PostgreSQL 16.15、应用只读账号、合成数据）：
+
+| 日期 | SQL 文件原查询 / 候选行数 | 场景与日期参数路径 | 完整结果 |
+|---|---|---|---|
+| 2025-06-15 | 825 / 825 | 825 / 825 | 两条路径一致，均通过 |
+| 2025-06-16 | 823 / 823 | 823 / 823 | 两条路径一致，均通过 |
+
+已对照提取日期、日期上下文、列元数据、整行副本数比较、结构化建议、候选模板和绑定参数；耗时是各次独立采样，不要求相同。8 个拒绝用例覆盖多语句、非 SELECT、额外过滤、投影变化、非法日期、语法错误及两类参数冲突，数据库连接、模型调用和 HTTP 请求均为 0。全部成功路径也只使用模拟模型响应，无真实千问请求。
+
+可用以下命令复跑验收，输出文件必须不存在：
+
+```bash
+.venv/bin/python scripts/check_sql_file_intake.py --output reports/sql_file_intake_rerun.json
+```
