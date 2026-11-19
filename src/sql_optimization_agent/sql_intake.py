@@ -9,6 +9,7 @@ from sqlglot.errors import ParseError, TokenError
 
 from sql_optimization_agent.order_date import OrderDateContext
 from sql_optimization_agent.tools.sql_benchmark import ORIGINAL
+from sql_optimization_agent.tools.order_items_benchmark import JOIN_COUNT, SCENARIO as ITEMS_SCENARIO
 
 MAX_BYTES=64*1024
 
@@ -60,7 +61,7 @@ def recognize_date_query(sql):
     return context.target.isoformat()
 
 
-def read_date_query(path):
+def _read_sql(path):
     try:
         with Path(path).open('rb') as source:data=source.read(MAX_BYTES+1)
     except OSError:
@@ -71,4 +72,51 @@ def read_date_query(path):
         text=data.decode('utf-8')
     except UnicodeError:
         raise SQLIntakeError('invalid_sql','SQL file must be UTF-8 text') from None
-    return recognize_date_query(text)
+    return text
+
+
+def read_date_query(path):
+    return recognize_date_query(_read_sql(path))
+
+
+def recognize_query(sql):
+    try:
+        return "orders_date_filter_2025_06_15", recognize_date_query(sql)
+    except SQLIntakeError as error:
+        if error.status != 'unsupported_query_shape':
+            raise
+    statements = _parse(sql)
+    if len(statements) != 1 or not isinstance(statements[0], exp.Select):
+        raise SQLIntakeError('unsupported_query_shape', 'Expected one supported SELECT')
+    # Render only application-owned placeholders into AST sentinels, never execute them.
+    template = JOIN_COUNT.replace('%s', "'2000-01-01 00:00:00'", 1).replace('%s', "'2000-01-02 00:00:00'", 1)
+    baseline = _parse(template)[0]
+    query = statements[0].copy()
+    where = query.args.get('where')
+    condition = where.this if isinstance(where, exp.Where) else None
+    if not (isinstance(condition, exp.And) and isinstance(condition.this, exp.GTE)
+            and isinstance(condition.expression, exp.LT)):
+        raise SQLIntakeError('unsupported_query_shape', 'Expected the exact count JOIN baseline and half-open day bounds')
+    literals = []
+    for bound in (condition.this, condition.expression):
+        rhs = bound.expression
+        if not (isinstance(rhs, exp.Cast) and isinstance(rhs.this, exp.Literal) and rhs.this.is_string):
+            raise SQLIntakeError('unsupported_query_shape', 'Expected timestamp literal boundaries')
+        literals.append(rhs.this)
+    values = [literal.this for literal in literals]
+    expected = baseline.args['where'].this
+    for literal, bound in zip(literals, (expected.this, expected.expression)):
+        literal.set('this', bound.expression.this.this)
+    if query != baseline:
+        raise SQLIntakeError('unsupported_query_shape', 'Only the count JOIN baseline day boundaries may change')
+    try:
+        context = OrderDateContext.parse(values[0][:10])
+        if values != [context.start.isoformat(sep=' '), context.end.isoformat(sep=' ')]:
+            raise ValueError
+    except ValueError:
+        raise SQLIntakeError('invalid_date', 'Expected valid target-day midnight and exactly next-day midnight') from None
+    return ITEMS_SCENARIO, context.target.isoformat()
+
+
+def read_query(path):
+    return recognize_query(_read_sql(path))

@@ -7,7 +7,7 @@ import sys
 from sql_optimization_agent.qwen_workflow import FIXTURES
 from sql_optimization_agent.tools.order_items_benchmark import FIXTURES as ITEM_FIXTURES
 from sql_optimization_agent.order_items_qwen import MODEL_FIXTURES
-from sql_optimization_agent.sql_intake import SQLIntakeError, read_date_query
+from sql_optimization_agent.sql_intake import SQLIntakeError, read_query
 from sql_optimization_agent.performance import attach_assessment
 from sql_optimization_agent.recommendation import attach_recommendation
 from sql_optimization_agent.service import ORDERS_DATE_SCENARIO, OptimizationService
@@ -22,7 +22,7 @@ def main():
     parser.add_argument("--qwen", action="store_true", help="Explicit model-advice mode for orders_with_items_count")
     parser.add_argument("--repair-on-mismatch", action="store_true",
                         help="Date scenario only: allow one repair request after a database result mismatch")
-    parser.add_argument("--sql-file", help="Recognize the supported original date-filter SELECT from a local UTF-8 file")
+    parser.add_argument("--sql-file", help="Recognize the supported original orders SELECT from a local UTF-8 file")
     args = parser.parse_args()
     if args.sql_file is not None and (args.scenario is not None or args.date is not None):
         parser.error("--sql-file conflicts with explicit --scenario or --date")
@@ -30,7 +30,7 @@ def main():
     intake = None
     if args.sql_file is not None:
         try:
-            args.date = read_date_query(args.sql_file)
+            scenario, args.date = read_query(args.sql_file)
         except SQLIntakeError as error:
             report = attach_recommendation(attach_assessment({
                 "status":error.status,"stage":"sql_intake","reason":str(error),
