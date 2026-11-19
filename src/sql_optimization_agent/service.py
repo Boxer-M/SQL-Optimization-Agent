@@ -15,6 +15,7 @@ from sql_optimization_agent.db import DatabaseConfigurationError, DatabaseConnec
 from sql_optimization_agent.order_items_qwen import MODEL_FIXTURES, run as run_items_qwen
 from sql_optimization_agent.performance import attach_assessment
 from sql_optimization_agent.recommendation import attach_recommendation
+from sql_optimization_agent.sql_diff import attach_sql_diff
 
 
 ORDERS_DATE_SCENARIO = "orders_date_filter_2025_06_15"
@@ -37,12 +38,12 @@ class OptimizationService:
     def optimize(self, scenario: str, *, date: str | None = None, use_qwen: bool | None = None, repair_on_mismatch: bool = False) -> dict:
         if scenario == ORDERS_DATE_SCENARIO:
             if type(self.date_repair_enabled) is not bool:
-                return attach_recommendation(attach_assessment({
+                return attach_sql_diff(attach_recommendation(attach_assessment({
                     "status":"invalid_config","stage":"configuration",
                     "reason":"SQL_OPTIMIZATION_DATE_REPAIR must be true or false",
-                    "model_requests":0,"benchmark":None}))
+                    "model_requests":0,"benchmark":None})))
             repair_on_mismatch = repair_on_mismatch or self.date_repair_enabled
-        return attach_recommendation(attach_assessment(self._optimize(scenario,date=date,use_qwen=use_qwen,repair_on_mismatch=repair_on_mismatch)))
+        return attach_sql_diff(attach_recommendation(attach_assessment(self._optimize(scenario,date=date,use_qwen=use_qwen,repair_on_mismatch=repair_on_mismatch))))
 
     def _optimize(self, scenario: str, *, date: str | None = None, use_qwen: bool | None = None, repair_on_mismatch: bool = False) -> dict:
         if scenario not in self.enabled_scenarios:

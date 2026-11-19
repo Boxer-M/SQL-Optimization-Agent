@@ -1181,3 +1181,28 @@ docker compose up -d --wait
 这里 `--qwen --fixture items-exists` 使用模拟模型建议，不产生真实请求。识别器派发场景和日期，数据库执行始终使用仓库内的 JOIN/EXISTS 参数化模板。订单 ID 完整比较、双向差集与计数在同一只读快照中完成，均通过后才计时；推荐继续按实测性能规则决定。`--sql-file` 与显式 `--scenario`、`--date` 仍冲突，原日期过滤文件入口保持兼容。
 
 实测报告 `reports/order_items_sql_file_acceptance.json`：2025-06-15 为 551/551，2025-06-16 为 548/548，双向差集均为 0/0；文件与显式参数路径结果和候选日界一致。本次两组文件路径均为 `improved / use_candidate`，报告保留自然计划和原始样本，不代表其他采样必然提升。改动聚合、连接条件、增加过滤、非法日期、非零点/非次日日界及多语句均有测试，拒绝前未构建服务，数据库连接和模型调用计数均为 0。本轮新增真实千问请求为 0。
+
+## 已验证改写的 SQL Diff
+
+CLI、HTTP 和 stdio MCP 的公共优化报告增加 `sql_diff`，使用稳定文件标签 `original.sql` / `candidate.sql` 的 unified diff 文本，保留 `%s` 占位符。原日期场景从该次诊断上下文取实际原模板，明细场景从执行报告取实际 JOIN 计数模板；候选均取该次执行候选模板。不将时间或凭据插入 SQL。
+
+SQL 文件入口的 diff **以系统实际执行的参数化原查询模板为基线**，不是用户文件的字面文本。文件中的日期由既有识别器提取后绑定，因此文件格式、日期字面量与模板占位符之间的差异不属于优化改写。
+
+仅结果验证通过的候选提供 diff；无建议、无候选、拒绝或验证失败时 `sql_diff` 为 `null`。候选经验证但性能为 `inconclusive` 或 `regressed` 时，diff 仍展示，最终推荐仍为 `keep_original`。diff 不代表性能提升，也不改变退出码、错误或推荐语义；生成过程仅处理内存中的模板，无额外数据库查询或模型请求。
+
+```bash
+.venv/bin/python scripts/optimize_orders.py \
+  --sql-file sql/examples/orders_date_2025_06_15.sql --fixture normal
+.venv/bin/python scripts/optimize_orders.py \
+  --sql-file sql/examples/orders_with_items_2025_06_15.sql --qwen --fixture items-exists
+# HTTP 服务端使用模拟设置
+SQL_OPTIMIZATION_MODEL_FIXTURE=normal SQL_OPTIMIZATION_ITEMS_MODE=qwen SQL_OPTIMIZATION_ITEMS_FIXTURE=items-exists \
+  .venv/bin/python -m uvicorn sql_optimization_agent.api:app --host 127.0.0.1 --port 8000
+# 另一终端中，scenario 也可改为 orders_date_filter_2025_06_15
+curl -sS http://127.0.0.1:8000/optimize -H 'Content-Type: application/json' \
+  -d '{"scenario":"orders_with_items_count","date":"2025-06-15"}'
+SQL_OPTIMIZATION_ITEMS_MODE=qwen SQL_OPTIMIZATION_ITEMS_FIXTURE=items-exists \
+  .venv/bin/python scripts/call_optimization_mcp.py --scenario orders_with_items_count --date 2025-06-15
+```
+
+真实本地 PostgreSQL、实际 HTTP 服务及 stdio MCP 的模拟响应验收保存在 `reports/sql_rewrite_diff_acceptance.json`。同场景、日期与候选的三个入口 diff 逐字相同：日期过滤展示日期转换谓词变为半开区间，明细计数展示 JOIN + COUNT(DISTINCT) 变为 EXISTS + COUNT(*)。报告保留完整校验和各入口独立采样结果。本轮新增真实千问请求为 0。
