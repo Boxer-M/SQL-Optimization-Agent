@@ -4,6 +4,7 @@ import argparse
 import json
 import sys
 
+from sql_optimization_agent.batch_sql import run_batch
 from sql_optimization_agent.qwen_workflow import FIXTURES
 from sql_optimization_agent.tools.order_items_benchmark import FIXTURES as ITEM_FIXTURES
 from sql_optimization_agent.order_items_qwen import MODEL_FIXTURES
@@ -24,7 +25,15 @@ def main():
     parser.add_argument("--repair-on-mismatch", action="store_true",
                         help="Date scenario only: allow one repair request after a database result mismatch")
     parser.add_argument("--sql-file", help="Recognize the supported original orders SELECT from a local UTF-8 file")
+    parser.add_argument("--sql-files", nargs='+', help="Explicit SQL paths processed serially in input order")
     args = parser.parse_args()
+    if args.sql_files is not None:
+        if args.sql_file is not None or args.scenario is not None or args.date is not None:
+            parser.error("--sql-files conflicts with --sql-file, --scenario or --date")
+        report = run_batch(args.sql_files,service_factory=OptimizationService,fixture=args.fixture,
+                           use_qwen=args.qwen,repair_on_mismatch=args.repair_on_mismatch)
+        print(json.dumps(report,ensure_ascii=False,indent=2))
+        return 0 if report['status']=='completed' else 1
     if args.sql_file is not None and (args.scenario is not None or args.date is not None):
         parser.error("--sql-file conflicts with explicit --scenario or --date")
     scenario = ORDERS_DATE_SCENARIO if args.scenario is None else args.scenario
