@@ -1233,3 +1233,26 @@ WHERE created_at::date BETWEEN DATE '2025-06-15' AND DATE '2025-06-16';
 v2 脱敏验收报告：`reports/v2_release_acceptance.json`。本地 PostgreSQL 的区间结果为 1648/1648，等于 825 与 823 两个单日完整结果的多重集合并，重复行未去重。现存数据的边界探针及额外只读 VALUES 探针覆盖起始零点、结束日最后一微秒、次日零点、NULL 和重复行，没有写入测试数据。自然计划与每组 7 个原始计时样本保留在报告中；本次中位数 7.890 → 0.122 ms，判定 `improved / use_candidate`，性能提升不是验收通过条件。
 
 两个旧场景已通过真实 CLI、HTTP 和 stdio MCP 回归，报告字段与 SQL Diff 通过核对。本轮新增真实千问请求为 0；真实千问历史证据沿用 `reports/date_repair_live_evaluation.json`。推荐仍以本次实际样本判定为准：区间重叠或性能退化时保留原查询，但展示已验证候选的 SQL Diff。
+
+## 批量 SQL 文件诊断
+
+`--sql-files` 接收多个显式文件路径，按输入顺序串行处理，支持单日过滤、明细计数和多日区间三种现有 AST 形态。不会扫描目录、展开应用层通配符或直接执行文件 SQL。与 `--sql-file`、显式 `--scenario`、`--date` 冲突；单文件入口行为保持不变。
+
+```bash
+# 预期退出码 1：第一项不支持、第三项不存在，但后三种有效场景仍处理
+.venv/bin/python scripts/optimize_orders.py --sql-files \
+  sql/examples/unsupported_select.sql \
+  sql/examples/orders_date_2025_06_15.sql \
+  sql/examples/missing_batch_input.sql \
+  sql/examples/orders_with_items_2025_06_15.sql \
+  sql/examples/orders_date_interval.sql \
+  --fixture normal > batch-report.json
+```
+
+批量模式下 `--fixture normal` 为各场景选择正常模拟回复：日期为 `normal`，明细为 `items-exists` 并走模型建议解析链路；区间仍为确定性规则，不请求模型。单文件 `--fixture` 语义未改变。未选择模拟 fixture 时，日期场景沿用真实模型默认行为；`--qwen` 在批量模式只作用于明细场景，`--repair-on-mismatch` 只作用于单日日期场景，不向其他场景传入不支持的开关。
+
+输出一份 JSON：`summary.total/completed/rejected/failed` 及有序 `results`。每项含序号、输入文件路径、分类状态及完整 `detail`，成功项保留 SQL Diff、执行计划、原始样本、性能判定和推荐。`keep_original`、模型主动保留原查询均属于正常完成。AST/日期/文件读取拒绝记为 `rejected`，不构建服务；执行或结果校验失败记为 `failed`。单项执行异常会脱敏并继续，不泄露原始异常文本；无法确定其模型请求数时报告 `null`，不伪称为零。
+
+全部正常完成退出 0；任一项拒绝或失败时，处理完其余文件并打印完整报告后退出 1；参数冲突退出 2。每项单独复用现有只读快照、超时、结果预算及性能采样，不声称整批共享同一个快照。自然性能采样可能推荐保留原查询，不影响完成分类。
+
+实际本地 PostgreSQL 混合批次报告：`reports/batch_sql_diagnosis_acceptance.json`。5 项中完成 3、拒绝 2、失败 0；有效结果为 825/825、551/551（双向 ID 差集 0/0）、1648/1648。报告保存实际采样、推荐和每项识别阶段的零数据库/模型调用计数；错误项后仍继续执行。另有测试覆盖单条执行异常后继续，以及 `keep_original` 正常完成。本轮新增真实千问请求为 0。
