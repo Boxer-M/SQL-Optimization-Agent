@@ -66,7 +66,8 @@ def request_suggestion(context: dict, config: Mapping, *, transport=None, system
     }
     started = perf_counter()
     try:
-        # No automatic retries, redirects or repair requests: one optimization = at most one POST.
+        # No automatic retries or redirects: each call makes at most one POST.
+        # The date workflow may explicitly call again after a verified mismatch.
         with httpx.Client(timeout=httpx.Timeout(30, connect=5), follow_redirects=False,
                           trust_env=False, transport=transport) as client:
             with client.stream("POST", config["QWEN_BASE_URL"].rstrip("/") + "/chat/completions",

@@ -17,9 +17,12 @@ def main():
     parser.add_argument("--scenario", default=ORDERS_DATE_SCENARIO, help="Supported scenario identifier")
     parser.add_argument("--date", metavar="YYYY-MM-DD", help="Order calendar date; default is defined by the service")
     parser.add_argument("--qwen", action="store_true", help="Explicit model-advice mode for orders_with_items_count")
+    parser.add_argument("--repair-on-mismatch", action="store_true",
+                        help="Date scenario only: allow one repair request after a database result mismatch")
     args = parser.parse_args()
     try:
-        report = OptimizationService(fixture=args.fixture).optimize(args.scenario, date=args.date,use_qwen=args.qwen)
+        report = OptimizationService(fixture=args.fixture).optimize(args.scenario, date=args.date,use_qwen=args.qwen,
+                            **({"repair_on_mismatch": True} if args.repair_on_mismatch else {}))
         print(json.dumps(report, ensure_ascii=False, indent=2))
         return 0 if report["status"] in ("completed", "no_suggestion", "no_rewrite") else 1
     except OSError:

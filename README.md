@@ -312,7 +312,7 @@ QWEN_MODEL=<百炼中已开通的模型ID>
 
 建议先使用截图中可见的通用文本模型 `qwen3.7-plus`。北京业务空间专属 endpoint 如上，将 `<workspace-id>` 替换为业务空间 ID；北京旧地址 `https://dashscope.aliyuncs.com/compatible-mode/v1` 仍可使用。本轮已在本地 `.env` 预填该旧地址和建议模型，只保留 `QWEN_API_KEY` 为空。API Key 和 endpoint 必须属于同一地域，模型须在你的账号中可调用；免费额度与“用完即停”设置以控制台为准。参考[百炼 OpenAI 兼容接口文档](https://help.aliyun.com/zh/model-studio/compatibility-of-openai-with-dashscope)。
 
-千问只接收原 SQL、表字段/索引摘要、估算计划摘要，不接收数据库凭据或业务行。程序不输出 HTTP 响应原始错误、认证头或连接串，报告还会脱敏已知本地密钥。连接超时 5 秒，HTTP 读写等待超时 30 秒，响应上限 64 KiB；每次优化最多一次 HTTP POST，不自动重试、重定向或发起格式修复请求。报告明确区分缺配置、鉴权、额度/限流、超时、格式错误、无建议和结果不一致等状态。
+千问只接收原 SQL、表字段/索引摘要、估算计划摘要，不接收数据库凭据或业务行。程序不输出 HTTP 响应原始错误、认证头或连接串，报告还会脱敏已知本地密钥。连接超时 5 秒，HTTP 读写等待超时 30 秒，响应上限 64 KiB；默认每次优化最多一次 HTTP POST，不自动重试、重定向或发起格式修复请求。仅日期 CLI 显式开启 `--repair-on-mismatch` 后，完整结果不一致才允许一次额外修复请求，整次最多两次 POST（见下文）。报告明确区分缺配置、鉴权、额度/限流、超时、格式错误、无建议和结果不一致等状态。
 
 ### 运行与报告
 
@@ -982,3 +982,38 @@ PY
 - 全部对比离线完成，数据库连接、千问请求和 socket 连接计数均为 0；本轮未重新导出计划或调用模型。
 
 对比结论仅描述执行计划变化。SQL 结果等价性仍需结果验证，性能收益仍由现有多次采样流程判定，不能由计划节点变化直接推出。
+
+## 日期候选结果不一致时的显式修复
+
+仅为日期过滤 CLI 增加 `--repair-on-mismatch`，默认关闭；HTTP/MCP 没有新增修复请求参数，明细计数场景不支持该开关。未开启时仍最多一次模型 POST；开启后整次优化最多两次 POST，没有网络自动重试、独立连通性探测或第三次请求。
+
+```bash
+# 模拟第一次 <= 次日零点，第二次改为 < 次日零点；实际连接本地 PostgreSQL
+.venv/bin/python scripts/optimize_orders.py --date 2025-06-15 \
+  --fixture repair-success --repair-on-mismatch
+
+# 模拟两次均为错误的 <= 次日零点；预期退出码 1，保留原查询，不计时
+.venv/bin/python scripts/optimize_orders.py --date 2025-06-15 \
+  --fixture repair-failure --repair-on-mismatch
+
+# 不开启开关时，即使使用同一模拟序列，也只验证首次候选，不修复
+.venv/bin/python scripts/optimize_orders.py --fixture repair-success
+
+# 真实模式示例（本轮未运行）：使用本机 .env，最多两次模型请求
+.venv/bin/python scripts/optimize_orders.py --date 2025-06-15 --repair-on-mismatch
+```
+
+只有首次建议通过现有结构解析、构造成受控绑定参数 SQL，并且完整数据库结果比较得到 `result_mismatch`，才触发一次修复。结构解析仍允许测试错误的包含上界；是否等价由数据库完整结果比较决定。无建议、格式错误、日期错误、配置/服务失败、数据库错误、超时或取数预算超限均不触发修复。
+
+修复继续使用现有客户端、原日期上下文、原 SQL 和结构化建议契约。额外反馈仅包含目标日期、首次候选的起止边界及包含标记、原查询/候选行数、缺失/多出整行副本数、列一致性和结果一致性，不包含业务行或差异样例。第一次比较的只读事务关闭后才发送反馈；修复候选重新解析，并在新的 REPEATABLE READ 只读快照中与原查询比较。每次比较及随后的计时共享该次快照，两次尝试不声称共用快照。沿用每条语句 5 秒、取数 10000 行/16 MiB 及现有取数超时预算。
+
+报告 `attempts` 按顺序保存两次尝试的建议、候选、比较结果、状态、阶段、模型请求次数/耗时和计时结果；根字段描述最终尝试。`repair_feedback` 为发送的汇总反馈，`model_requests` 为实际 POST 尝试总数（模拟响应为 0），`model_request_ms` 为各次模型耗时之和，`max_model_requests` 为上限。修复后结果一致才预热并交替各采样 7 次；最终仍由既有 `performance_assessment` / `recommendation` 决定是否推荐候选。修复不一致或候选结构被拒绝时保留原查询；模型返回无建议时保留原查询；配置或服务错误沿用原状态并标记 `not_evaluated`。推荐仅供调用方决定是否采用。
+
+本轮验收使用模拟响应及本地 PostgreSQL 16.15、应用只读账号和合成订单数据，没有调用真实千问：
+
+| 链路 | 首次完整比较 | 修复完整比较 | 计时与推荐 |
+|---|---|---|---|
+| 错误上界 → 正确上界 | 825 / 826，多出 1 个整行副本 | 825 / 825，无缺失或多出 | 仅修复候选计时，中位数 6.341 → 0.060 ms，`improved`，`use_candidate` |
+| 错误上界 → 仍然错误 | 825 / 826，多出 1 个整行副本 | 825 / 826，多出 1 个整行副本 | 两次均跳过计时，`keep_original / candidate_rejected` |
+
+完整脱敏报告：`reports/date_candidate_repair_success.json`、`reports/date_candidate_repair_failure.json`。报告含完整样本及计划，本次热缓存采样不代表其他数据和负载。验收拦截了真实模型与 HTTP 调用，计数均为 0；并在计时调用处确认完整比较顺序为 `[false, true]`，失败链路计时调用为 0。离线测试使用 MockTransport 验证真实模式调用路径最多两个 POST、未开启时最多一个，并覆盖修复返回无建议、格式错误、服务失败和性能不确定/退化时的最终推荐。
