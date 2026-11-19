@@ -947,3 +947,38 @@ PY
 - 明细原查询：`Aggregate → Sort → Nested Loop (Inner)`，排序及连接节点 1,103 行；候选：`Aggregate → Nested Loop (Semi)`，半连接 551 行，无排序节点。两边均发现订单日期索引及明细订单 ID 索引。
 - 估算输入标记 `estimated_only`，不生成实际行数或循环次数；非法 JSON 和缺根节点分别返回 `invalid_json`、`missing_plan_root`。
 - 单独导出阶段使用 1 次数据库连接；诊断 CLI 验收阶段数据库连接、千问请求、socket 连接均为 0，通过调用拦截计数验证。测试还验证独立 CLI 不导入 psycopg、httpx 或 dotenv。
+
+### 离线对比原计划和候选计划
+
+第二个文件参数可选；提供时，第一个文件为原计划，第二个为候选计划。省略第二个参数时，单文件诊断输出保持不变。
+
+```bash
+# 日期过滤：并行顺序扫描与日期索引扫描
+.venv/bin/python scripts/diagnose_plan.py \
+  reports/explain_plans/date_original.json \
+  reports/explain_plans/date_candidate.json
+
+# 有明细订单计数：内连接加排序与半连接
+.venv/bin/python scripts/diagnose_plan.py \
+  reports/explain_plans/items_original.json \
+  reports/explain_plans/items_candidate.json
+
+# 同一计划、估算与实测混用也可对比
+.venv/bin/python scripts/diagnose_plan.py \
+  reports/explain_plans/date_original_estimated.json \
+  reports/explain_plans/date_original.json
+```
+
+双文件报告中，`original` 和 `candidate` 保留两侧完整诊断树；`feature_comparison` 分别列出 `scans`、`tables`、`indexes`、`joins`、`sorts` 的特征、两侧出现次数、`count_delta`（候选减原计划）和各侧节点路径。每个 occurrence 保留实际行数及循环次数；缺失值为 `null`，并由 `missing_runtime_fields` 列出。实际值为 0 与缺失值分别处理。
+
+特征在每侧所有计划根中汇总：扫描按方式、schema、表和索引分组，连接按节点类型和连接类型分组，排序按节点类型和排序键分组。不按节点位置配对，因此树重排不会产生虚构的一对一对应。`unchanged_count` 只表示该特征次数相同，不表示计划树完全相同或两条 SQL 结果等价；两侧树和路径可用于继续核对。`node_path` 使用现有诊断的节点 ID，首段为文档序号，后续为子节点序号。
+
+本次复用已提交的 PostgreSQL 16.15 真实计划，验收记录位于 `reports/explain_plan_comparison_acceptance.json`：
+
+- 日期过滤：`Parallel Seq Scan` 从 1 个变为 0 个（原路径 `0.0`）；`orders_created_at_idx` 的 `Index Scan` 从 0 个变为 1 个（候选路径 `0`）。
+- 明细计数：`Nested Loop / Inner` 从 1 个变为 0 个（原路径 `0.0.0`）；`Nested Loop / Semi` 从 0 个变为 1 个（候选路径 `0.0`）；`Sort` 从 1 个变为 0 个（原路径 `0.0`）。两侧订单和明细扫描节点的次数不变，仍分别保留各自路径。
+- 相同计划的所有特征次数不变；估算与实测混用时分别保留 `estimated_only` 和实际数据，不补造行数或循环次数。
+- 第二个文件非法时退出码为 1，错误保留 `invalid_json`，消息用 `candidate:` 标明输入侧，不输出半份成功报告。
+- 全部对比离线完成，数据库连接、千问请求和 socket 连接计数均为 0；本轮未重新导出计划或调用模型。
+
+对比结论仅描述执行计划变化。SQL 结果等价性仍需结果验证，性能收益仍由现有多次采样流程判定，不能由计划节点变化直接推出。
