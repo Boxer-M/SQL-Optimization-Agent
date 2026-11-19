@@ -8,6 +8,7 @@ from sql_optimization_agent.qwen_workflow import FIXTURES
 from sql_optimization_agent.tools.order_items_benchmark import FIXTURES as ITEM_FIXTURES
 from sql_optimization_agent.order_items_qwen import MODEL_FIXTURES
 from sql_optimization_agent.sql_intake import SQLIntakeError, read_query
+from sql_optimization_agent.sql_diff import attach_sql_diff
 from sql_optimization_agent.performance import attach_assessment
 from sql_optimization_agent.recommendation import attach_recommendation
 from sql_optimization_agent.service import ORDERS_DATE_SCENARIO, OptimizationService
@@ -32,9 +33,9 @@ def main():
         try:
             scenario, args.date = read_query(args.sql_file)
         except SQLIntakeError as error:
-            report = attach_recommendation(attach_assessment({
+            report = attach_sql_diff(attach_recommendation(attach_assessment({
                 "status":error.status,"stage":"sql_intake","reason":str(error),
-                "model_requests":0,"benchmark":None}))
+                "model_requests":0,"benchmark":None})))
             print(json.dumps(report,ensure_ascii=False,indent=2))
             return 1
         intake = {"source":"sql_file","dialect":"postgres","recognized_scenario":scenario,
