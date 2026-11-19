@@ -1288,3 +1288,57 @@ v2 脱敏验收报告：`reports/v2_release_acceptance.json`。本地 PostgreSQL
 所有命令成功退出 0，损坏报告、非法或不存在的批次/条目、禁止采纳和存储错误输出 JSON 错误并退出 1；参数错误退出 2。默认归档是本地文件而非签名证据或多人服务，不应手动修改；自定义存储路径应自行保护，归档保留原始内容并不会自动脱敏。不要把含敏感内容的原始报告提交到 Git。
 
 离线验收报告：`reports/batch_review_history_acceptance.json`。使用已有混合报告，导入两次后历史仅一条；完成项和拒绝项均可查看；条目 2 的 defer → accept 两条事件可追溯；条目 1 采纳被阻止；损坏报告及不存在的批次、条目均报错。原始字节保持不变，数据库连接和模型请求均为 0。
+
+## 单团队共享审核 API
+
+FastAPI 增加 `/reviews` 路由，复用本地报告校验、规范化批次 ID 和采纳规则。本地审核 CLI 继续使用自己的文件目录；共享 API 使用独立 `review_store` PostgreSQL 数据库和 `review_app` 应用账号，不读写优化目标库，不调用模型，不执行候选 SQL。采纳只记录决定。两种存储不自动同步。
+
+### 首次启动独立存储
+
+在服务端终端配置环境，密码与令牌不放入命令参数、Git 或请求正文中的身份字段：
+
+```bash
+export REVIEW_DB_HOST=127.0.0.1 REVIEW_DB_PORT=5545 REVIEW_DB_NAME=review_store REVIEW_DB_USER=review_app
+# 生成临时 shell 环境凭据；不要启用 set -x，不要提交保存下来的凭据
+export REVIEW_ADMIN_PASSWORD="$(.venv/bin/python -c 'import secrets; print(secrets.token_hex(32))')"
+export REVIEW_DB_PASSWORD="$(.venv/bin/python -c 'import secrets; print(secrets.token_hex(32))')"
+docker compose -f compose.review.yaml config --quiet
+docker compose -f compose.review.yaml up -d --wait
+.venv/bin/python scripts/init_review_store.py
+```
+
+初始化仅用于全新库：已有角色/表时会失败并回滚，不清空数据；重启应复用首次凭据，修改环境不会重设已有账号密码。数据卷为独立 `sql-agent-review-data`，不能指向优化库的卷。服务只用 `review_app`：有报告/事件的 SELECT、INSERT 权限，没有 UPDATE/DELETE；条目锁定所需的 UPDATE 权限由不可变触发器阻止实际修改。管理员凭据仅用于初始化，不供 API 使用。`REVIEW_DB_NAME=sql_optimization` 被拒绝。
+
+服务端认证配置 `REVIEW_TOKENS` 为令牌到 `{name, role}` 的 JSON 映射，role 只能是 `viewer` 或 `reviewer`。用随机令牌替换下列占位值；审核者名称从服务端映射取得，提交体不能覆盖身份。单团队共享信任域，没有多租户隔离；跨机器访问应在受控 HTTPS 反向代理后使用，示例仅监听 loopback。
+
+```bash
+export REVIEW_TOKENS='{"<viewer-token>":{"name":"reader","role":"viewer"},"<alice-token>":{"name":"alice","role":"reviewer"},"<bob-token>":{"name":"bob","role":"reviewer"}}'
+.venv/bin/python -m uvicorn sql_optimization_agent.api:app --host 127.0.0.1 --port 8000
+```
+
+在客户端终端设置 `REVIEWER_TOKEN` / `VIEWER_TOKEN` 为对应令牌：
+
+```bash
+# 审核者导入原始 JSON 字节；并发/重复导入返回同一个 batch_id，首次字节不覆盖
+curl -sS -X POST http://127.0.0.1:8000/reviews/batches \
+  -H "Authorization: Bearer $REVIEWER_TOKEN" -H 'Content-Type: application/json' \
+  --data-binary @reports/batch_sql_diagnosis_acceptance.json
+curl -sS http://127.0.0.1:8000/reviews/batches -H "Authorization: Bearer $VIEWER_TOKEN"
+# 将 BATCH 设置为导入返回的完整 batch_id
+curl -sS "http://127.0.0.1:8000/reviews/batches/$BATCH" -H "Authorization: Bearer $VIEWER_TOKEN"
+curl -sS "http://127.0.0.1:8000/reviews/batches/$BATCH/raw" -H "Authorization: Bearer $VIEWER_TOKEN"
+curl -sS "http://127.0.0.1:8000/reviews/batches/$BATCH/entries/2" -H "Authorization: Bearer $VIEWER_TOKEN"
+curl -sS -X POST "http://127.0.0.1:8000/reviews/batches/$BATCH/entries/2/reviews" \
+  -H "Authorization: Bearer $REVIEWER_TOKEN" -H 'Content-Type: application/json' \
+  -d '{"version":0,"decision":"defer","reason":"先核对实际性能证据"}'
+```
+
+条目初始版本为 0；提交携带最近读取的版本。数据库在同一事务内锁定条目、检查版本、追加事件；过期版本返回 409，必须重新 GET 并决定是否用新版本再次提交，不应自动盲重试。事件只追加，详情按版本展示全部审核者、理由和数据库时间。viewer 只能 GET，reviewer 额外可导入和提交。未认证/令牌无效为 401，越权写入为 403，缺失资源 404，非法报告/禁止采纳 400，参数错误 422，存储不可用 503。配置缺失时审核接口关闭，不影响既有优化接口。查看者读取的是完整原报告，导入前应完成脱敏。
+
+真实 HTTP + 独立 PostgreSQL 并发验收：
+
+```bash
+.venv/bin/python scripts/check_shared_reviews.py
+```
+
+脚本创建独立临时容器及受限账号，随机注入环境凭据，不访问目标库或模型；结束后停止容器并保留数据，已有报告时不覆盖。脱敏报告为 `reports/shared_batch_review_acceptance.json`：401、403、并发导入仅一条；两个审核者同版本提交恰好一次 200、一次 409；冲突方重读后提交得到版本 2，两次决定可追溯；拒绝项采纳被阻止，原始字节及系统推荐未修改。新增真实千问请求和优化目标库连接均为 0。

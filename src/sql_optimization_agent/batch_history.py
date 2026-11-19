@@ -47,8 +47,7 @@ def _read(path):
 
 def import_report(root,source):
     raw=_read(source);report=validate(_decode(raw))
-    canonical=json.dumps(report,sort_keys=True,separators=(',',':'),ensure_ascii=False).encode()
-    batch=hashlib.sha256(canonical).hexdigest()
+    batch=report_id(report)
     directory=Path(root)/batch;directory.mkdir(parents=True,exist_ok=True)
     path=directory/'report.json'
     try:
@@ -97,14 +96,25 @@ def review(root,batch,index,decision,reviewer,reason):
     if not reviewer.strip() or not reason.strip() or len(reviewer)>200 or len(reason)>4000:raise HistoryError('Reviewer and reason are required (limits 200/4000 characters)')
     directory,report=load(root,batch)
     if index<1 or index>len(report['results']):raise HistoryError('Entry not found')
+    check_review(report,index,decision,reviewer,reason)
+    event={'review_id':uuid.uuid4().hex,'batch_id':batch,'entry':index,'decision':decision,
+           'reviewer':reviewer,'reason':reason,'time':datetime.now(timezone.utc).isoformat()}
+    reviews=directory/'reviews';reviews.mkdir(exist_ok=True)
+    with (reviews/(event['review_id']+'.json')).open('x') as f:json.dump(event,f,ensure_ascii=False,indent=2)
+    return event
+
+
+def check_review(report,index,decision,reviewer,reason):
+    if decision not in ('accept','defer','reject'):raise HistoryError('Invalid decision')
+    if not reviewer.strip() or not reason.strip() or len(reviewer)>200 or len(reason)>4000:raise HistoryError('Reviewer and reason are required')
+    if index<1 or index>len(report['results']):raise HistoryError('Entry not found')
     row=report['results'][index-1];evidence=row['detail']
     from sql_optimization_agent.performance import validation_passed
     if decision=='accept' and not (row['status']=='completed' and evidence.get('status')=='completed'
                                   and isinstance(evidence.get('candidate'),dict) and isinstance(evidence['candidate'].get('sql'),str) and evidence['candidate']['sql'].strip()
                                   and validation_passed(evidence)):
         raise HistoryError('Cannot accept: a verified result and candidate SQL are required')
-    event={'review_id':uuid.uuid4().hex,'batch_id':batch,'entry':index,'decision':decision,
-           'reviewer':reviewer,'reason':reason,'time':datetime.now(timezone.utc).isoformat()}
-    reviews=directory/'reviews';reviews.mkdir(exist_ok=True)
-    with (reviews/(event['review_id']+'.json')).open('x') as f:json.dump(event,f,ensure_ascii=False,indent=2)
-    return event
+
+
+def report_id(report):
+    return hashlib.sha256(json.dumps(report,sort_keys=True,separators=(',',':'),ensure_ascii=False).encode()).hexdigest()
