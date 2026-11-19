@@ -33,13 +33,17 @@ class OptimizationService:
         self.items_fixture = items_fixture
         self.enabled_scenarios = (ORDERS_DATE_SCENARIO,ORDER_ITEMS_SCENARIO) if enabled_scenarios is None else enabled_scenarios
 
-    def optimize(self, scenario: str, *, date: str | None = None, use_qwen: bool | None = None) -> dict:
-        return attach_recommendation(attach_assessment(self._optimize(scenario,date=date,use_qwen=use_qwen)))
+    def optimize(self, scenario: str, *, date: str | None = None, use_qwen: bool | None = None, repair_on_mismatch: bool = False) -> dict:
+        return attach_recommendation(attach_assessment(self._optimize(scenario,date=date,use_qwen=use_qwen,repair_on_mismatch=repair_on_mismatch)))
 
-    def _optimize(self, scenario: str, *, date: str | None = None, use_qwen: bool | None = None) -> dict:
+    def _optimize(self, scenario: str, *, date: str | None = None, use_qwen: bool | None = None, repair_on_mismatch: bool = False) -> dict:
         if scenario not in self.enabled_scenarios:
             return {"status": "unsupported_scenario", "reason": "Unknown scenario; use " + ", ".join(self.enabled_scenarios),
                     "benchmark": None}
+        if repair_on_mismatch and scenario != ORDERS_DATE_SCENARIO:
+            return {"status":"unsupported_mode","stage":"configuration",
+                    "reason":"Mismatch repair is only supported for the orders date-filter scenario",
+                    "model_requests":0,"benchmark":None}
         try:
             date_context = OrderDateContext.parse(DEFAULT_ORDER_DATE if date is None else date)
         except ValueError as error:
@@ -62,7 +66,8 @@ class OptimizationService:
                 report = (run_items_qwen(self.config,date_context,fixture=fixture) if use_qwen
                           else run_items(self.config,date_context,fixture=fixture or 'normal'))
             else:
-                report = run_workflow(self.config, date_context=date_context, fixture=fixture)
+                report = run_workflow(self.config, date_context=date_context, fixture=fixture,
+                                      **({"repair_on_mismatch": True} if repair_on_mismatch else {}))
         except (DatabaseConfigurationError,DatabaseConnectionError,BenchmarkValidationError) as error:
             report = {"status":"validation_error","stage":"result_validation","reason":str(error),
                       "scenario":scenario,"target_date":date_context.target.isoformat(),"model_requests":0,"benchmark":None}

@@ -97,72 +97,127 @@ def _redact(value, config):
     return value
 
 
-def run_workflow(config: Mapping, *, date_context: OrderDateContext, fixture: str | None = None) -> dict:
+def _validate_candidate(config, date_context, candidate, report):
+    """Each attempt validates and measures in its own bounded read-only snapshot."""
+    report["stage"] = "result_validation"
+    with readonly_connection(config) as connection, _timeout_errors():
+        connection.isolation_level = psycopg.IsolationLevel.REPEATABLE_READ
+        connection.execute("SET LOCAL statement_timeout = '5s'")
+        connection.execute("SET LOCAL idle_in_transaction_session_timeout = '30s'")
+        identity = connection.execute(
+            "SELECT current_database(), current_user, current_setting('transaction_read_only'), "
+            "current_setting('transaction_isolation'), version()"
+        ).fetchone()
+        report["connection"] = dict(zip(("database", "user", "read_only", "isolation", "version"), identity))
+        original = _fetch(connection, ORDER_DATE_SQL, 10000, 16 * 1024 * 1024, date_context.original_params)
+        proposed = _fetch(connection, candidate.sql, 10000, 16 * 1024 * 1024, candidate.params)
+        report["comparison"] = _compare(original, proposed)
+        # Feedback never includes row values, metadata names, or truncated row samples.
+        report["difference_summary"] = {
+            "original_rows": original.count, "candidate_rows": proposed.count,
+            "missing_row_copies": sum((original.rows - proposed.rows).values()),
+            "extra_row_copies": sum((proposed.rows - original.rows).values()),
+            "columns_equal": report["comparison"]["columns_equal"],
+            "equivalent": report["comparison"]["equivalent"],
+        }
+        if report["comparison"]["equivalent"]:
+            report["stage"] = "benchmark"
+            report["benchmark"] = measure_pair(connection, candidate.sql, candidate.params,
+                                               original_sql=ORDER_DATE_SQL, original_params=date_context.original_params)
+            report.update(status="completed", stage="complete", reason="在本次测试数据上结果一致")
+        else:
+            report.update(status="result_mismatch", reason="Full results differ; candidate benchmark skipped")
+
+
+def run_workflow(config: Mapping, *, date_context: OrderDateContext, fixture: str | None = None,
+                 repair_on_mismatch: bool = False) -> dict:
     report = {"source": "controlled_model_response" if fixture else "live_qwen",
               "fixture": fixture, "requested_model": config.get("QWEN_MODEL"),
               "measured_at_utc": datetime.now(timezone.utc).isoformat(), "model_requests": 0,
               "benchmark": None, "model_request_ms": 0.0, "stage": "diagnosis", "target_date": date_context.target.isoformat(),
-              "date_context": date_context.as_dict()}
+              "date_context": date_context.as_dict(), "repair_on_mismatch": repair_on_mismatch,
+              "max_model_requests": 2 if repair_on_mismatch else 1, "attempts": []}
+    attempt = None
     try:
         context = diagnostic_context(config, date_context)
         report["diagnostic_context"] = context
-        report["stage"] = "model_request"
-        if fixture:
-            if fixture not in FIXTURES:
-                raise QwenFailure("invalid_fixture", "Unknown controlled response fixture")
-            reply = ModelReply("controlled-fixture-not-a-real-model", fixture_content(fixture, date_context))
-        else:
-            # Configuration failures happen before any network request.
-            try:
-                reply = request_suggestion(context, config)
-                report["model_requests"] = 1
-            except QwenFailure as error:
-                report["model_requests"] = 0 if error.status in ("missing_config", "invalid_config") else 1
-                raise
-        report["model_id"] = reply.model
-        report["received_content"] = reply.content
-        report["model_request_ms"] = reply.request_elapsed_ms or 0.0
-        report["stage"] = "suggestion_validation"
-        suggestion, candidate = parse_suggestion(reply.content, date_context)
-        report["suggestion"] = suggestion
-        if candidate is None:
-            report.update(status="no_suggestion", stage="complete", reason="Model returned no suggestion")
-        else:
-            report["candidate"] = {"sql": candidate.sql,
-                                   "parameters": [value.isoformat(sep=" ") for value in candidate.params]}
-            report["stage"] = "result_validation"
-            with readonly_connection(config) as connection, _timeout_errors():
-                connection.isolation_level = psycopg.IsolationLevel.REPEATABLE_READ
-                connection.execute("SET LOCAL statement_timeout = '5s'")
-                connection.execute("SET LOCAL idle_in_transaction_session_timeout = '30s'")
-                identity = connection.execute(
-                    "SELECT current_database(), current_user, current_setting('transaction_read_only'), "
-                    "current_setting('transaction_isolation'), version()"
-                ).fetchone()
-                report["connection"] = dict(zip(("database", "user", "read_only", "isolation", "version"), identity))
-                original = _fetch(connection, ORDER_DATE_SQL, 10000, 16 * 1024 * 1024, date_context.original_params)
-                proposed = _fetch(connection, candidate.sql, 10000, 16 * 1024 * 1024, candidate.params)
-                comparison = _compare(original, proposed)
-                report["comparison"] = comparison
-                if comparison["equivalent"]:
-                    report["stage"] = "benchmark"
-                    report["benchmark"] = measure_pair(connection, candidate.sql, candidate.params,
-                                                       original_sql=ORDER_DATE_SQL, original_params=date_context.original_params)
-                    report.update(status="completed", stage="complete", reason="在本次测试数据上结果一致")
-                else:
-                    report.update(status="result_mismatch", reason="Full results differ; candidate benchmark skipped")
+        for number in range(1, 3 if repair_on_mismatch else 2):
+            attempt = {"attempt": number, "kind": "initial" if number == 1 else "repair",
+                       "stage": "model_request", "benchmark": None, "model_requests": 0}
+            report["attempts"].append(attempt)
+            for key in ("candidate", "comparison", "difference_summary", "connection",
+                        "model_id", "received_content", "suggestion", "reason", "status"):
+                report.pop(key, None)
+            report["benchmark"] = None
+            report["stage"] = "model_request"
+            if fixture:
+                if fixture not in FIXTURES:
+                    raise QwenFailure("invalid_fixture", "Unknown controlled response fixture")
+                name = fixture
+                if fixture in ("repair-success", "repair-failure"):
+                    name = "normal" if number == 2 and fixture == "repair-success" else "wrong-upper"
+                reply = ModelReply("controlled-fixture-not-a-real-model", fixture_content(name, date_context))
+            else:
+                # One POST per call; only the explicit mismatch gate can make a second call.
+                try:
+                    reply = request_suggestion(context, config)
+                except QwenFailure as error:
+                    attempt["model_requests"] = 0 if error.status in ("missing_config", "invalid_config") else 1
+                    raise
+                attempt["model_requests"] = 1
+            attempt.update(model_id=reply.model, received_content=reply.content,
+                           model_request_ms=reply.request_elapsed_ms or 0.0, stage="suggestion_validation")
+            report["stage"] = "suggestion_validation"
+            suggestion, candidate = parse_suggestion(reply.content, date_context)
+            attempt["suggestion"] = suggestion
+            if candidate is None:
+                attempt.update(status="no_suggestion", stage="complete", reason="Model returned no suggestion")
+            else:
+                attempt["candidate"] = {"sql": candidate.sql,
+                                        "parameters": [value.isoformat(sep=" ") for value in candidate.params]}
+                _validate_candidate(config, date_context, candidate, attempt)
+            # Root fields always describe the latest attempt; historical evidence stays in attempts.
+            for key in ("candidate", "comparison", "difference_summary", "connection"):
+                report.pop(key, None)
+            report.update(attempt)
+            if attempt["status"] != "result_mismatch" or not repair_on_mismatch or number == 2:
+                break
+            feedback = {"target_date": date_context.target.isoformat(),
+                        "candidate_boundaries": {key: suggestion[key] for key in
+                                                 ("start", "end", "start_inclusive", "end_inclusive")},
+                        "difference_summary": attempt["difference_summary"],
+                        "instruction": "Repair the date boundaries using the same structured contract, or return no_suggestion."}
+            report["repair_feedback"] = feedback
+            # The first transaction is closed before sending aggregate-only feedback.
+            context = {**context, "repair_feedback": feedback}
     except QwenFailure as error:
-        report["model_request_ms"] = error.request_elapsed_ms or 0.0
+        if attempt is not None:
+            attempt.update(status=error.status, reason=str(error))
+            if error.request_elapsed_ms is not None:
+                attempt["model_request_ms"] = error.request_elapsed_ms
+            for key in ("candidate", "comparison", "difference_summary", "connection"):
+                report.pop(key, None)
+            report.update(attempt)
         report.update(status=error.status, reason=str(error))
     except (DatabaseConfigurationError, DatabaseConnectionError, BenchmarkValidationError, TableNotFoundError) as error:
+        if attempt is not None:
+            attempt.update(status="validation_error", reason=str(error))
+            report.update(attempt)
         report.update(status="validation_error", reason=str(error))
+    # Attempt-local counters must not replace workflow totals during report.update().
+    report["model_requests"] = sum(item["model_requests"] for item in report["attempts"])
+    report["model_request_ms"] = sum(item.get("model_request_ms", 0.0) for item in report["attempts"])
+    report.pop("attempt", None)
+    report.pop("kind", None)
     return _redact(report, config)
 
 
-FIXTURES = ("normal", "malformed", "wrong-upper", "no-suggestion")
+FIXTURES = ("normal", "malformed", "wrong-upper", "no-suggestion", "repair-success", "repair-failure")
 
 
 def fixture_content(name: str, date_context: OrderDateContext) -> str:
+    if name in ("repair-success", "repair-failure"):
+        name = "wrong-upper"
     if name == "malformed":
         return '{"action": "date_range", "sql": "not executable model text"}'
     if name == "no-suggestion":
