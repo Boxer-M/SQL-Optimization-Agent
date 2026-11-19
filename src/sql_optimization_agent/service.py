@@ -36,6 +36,17 @@ class OptimizationService:
         self.enabled_scenarios = (ORDERS_DATE_SCENARIO,ORDER_ITEMS_SCENARIO) if enabled_scenarios is None else enabled_scenarios
 
     def optimize(self, scenario: str, *, date: str | None = None, use_qwen: bool | None = None, repair_on_mismatch: bool = False) -> dict:
+        if scenario == 'orders_date_interval':
+            from sql_optimization_agent.date_interval import run, bounds
+            try:
+                if not isinstance(date,list) or len(date)!=2:raise ValueError('Expected two interval dates')
+                bounds(*date)
+                if use_qwen or repair_on_mismatch:
+                    return attach_sql_diff(attach_recommendation(attach_assessment({'status':'unsupported_mode','benchmark':None,'model_requests':0})))
+                report=run(self.config,*date)
+                return attach_sql_diff(attach_recommendation(attach_assessment(report)))
+            except ValueError as error:
+                return attach_sql_diff(attach_recommendation(attach_assessment({'status':'invalid_date','reason':str(error),'benchmark':None,'model_requests':0})))
         if scenario == ORDERS_DATE_SCENARIO:
             if type(self.date_repair_enabled) is not bool:
                 return attach_sql_diff(attach_recommendation(attach_assessment({

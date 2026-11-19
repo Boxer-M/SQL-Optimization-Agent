@@ -97,8 +97,10 @@ def _redact(value, config):
     return value
 
 
-def _validate_candidate(config, date_context, candidate, report, *, allow_benchmark=True):
+def _validate_candidate(config, date_context, candidate, report, *, allow_benchmark=True, original_sql=ORDER_DATE_SQL, original_params=None):
     """Each attempt validates and measures in its own bounded read-only snapshot."""
+    if original_params is None:
+        original_params = date_context.original_params
     report["stage"] = "result_validation"
     with readonly_connection(config) as connection, _timeout_errors():
         connection.isolation_level = psycopg.IsolationLevel.REPEATABLE_READ
@@ -109,7 +111,7 @@ def _validate_candidate(config, date_context, candidate, report, *, allow_benchm
             "current_setting('transaction_isolation'), version()"
         ).fetchone()
         report["connection"] = dict(zip(("database", "user", "read_only", "isolation", "version"), identity))
-        original = _fetch(connection, ORDER_DATE_SQL, 10000, 16 * 1024 * 1024, date_context.original_params)
+        original = _fetch(connection, original_sql, 10000, 16 * 1024 * 1024, original_params)
         proposed = _fetch(connection, candidate.sql, 10000, 16 * 1024 * 1024, candidate.params)
         report["comparison"] = _compare(original, proposed)
         # Feedback never includes row values, metadata names, or truncated row samples.
@@ -125,7 +127,7 @@ def _validate_candidate(config, date_context, candidate, report, *, allow_benchm
         elif report["comparison"]["equivalent"]:
             report["stage"] = "benchmark"
             report["benchmark"] = measure_pair(connection, candidate.sql, candidate.params,
-                                               original_sql=ORDER_DATE_SQL, original_params=date_context.original_params)
+                                               original_sql=original_sql, original_params=original_params)
             report.update(status="completed", stage="complete", reason="在本次测试数据上结果一致")
         else:
             report.update(status="result_mismatch", reason="Full results differ; candidate benchmark skipped")
