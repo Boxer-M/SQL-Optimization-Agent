@@ -767,3 +767,48 @@ git diff --check
 所有一致性结论均为“在本次测试数据上结果一致”；空结果不能证明范围外日期的所有潜在数据也语义等价，仍需依靠边界用例和受控模板约束。性能数据是本地热缓存小样本，不能据此保证其他环境收益。鉴权/额度停止、保留原查询及断点落盘等异常路径由离线可控测试覆盖，本轮真实调用没有触发这些路径。
 
 本轮全量测试 93 项通过（另含 11 个子测试）；`pip check`、`git diff --check` 与报告脱敏检查通过。既有 CI 可直接运行新测试，不需要真实 API Key 或本地 PostgreSQL。
+
+## 本次采样的保守性能判定
+
+公共服务在原有优化结果返回前追加 `performance_assessment`，CLI、HTTP 和 MCP 共用此字段，不改变既有 `status`、错误原因或成功/拒绝流程。复用现有 `benchmark.execution_ms` 的原始样本，不增加模型请求或重复 SQL 计时。已有中位数和百分比字段继续保留。
+
+仅当报告明确为结果验证通过、两侧计时已完成且样本有效时判定：
+
+| 判定 | 规则 |
+| --- | --- |
+| `improved` | 候选最慢样本严格快于原查询最快样本：`max(candidate) < min(original)` |
+| `regressed` | 候选最快样本严格慢于原查询最慢样本：`min(candidate) > max(original)` |
+| `inconclusive` | 两组区间重叠或相接，包括端点相等 |
+
+报告同时给出两组区间、重新从原始样本计算的中位数、`median_difference_ms` 和 `median_change_percent`。差值定义为“候选 − 原查询”，负数表示候选中位数更低；百分比为 `(候选中位数 / 原查询中位数 − 1) × 100%`。原查询中位数为 0 时百分比为 JSON null，不做除零或替换成无穷值。
+
+原查询保留（`no_suggestion` / `no_rewrite`）、验证不一致、模型/连接错误、计时缺失或非法样本时，`performance_assessment=null`，另附 `performance_assessment_skipped` 原因。明细场景还要求 ID 验证、双向差集、最终计数及纳入 ID 数一致；不会仅凭计数相同或旧的计时字段作判定。此规则只描述本次采样，不能解释为统计显著性或其他负载上的收益保证。
+
+### 本地模拟建议 + PostgreSQL 验收
+
+```sh
+.venv/bin/python scripts/optimize_orders.py --fixture normal --date 2025-06-15
+.venv/bin/python scripts/optimize_orders.py --scenario orders_with_items_count --date 2025-06-15 --qwen --fixture items-exists
+.venv/bin/python -m pytest -q
+.venv/bin/python -m pip check
+git diff --check
+```
+
+本轮实际结果保存在 `reports/performance_assessment_local.json`，模型请求均为 0：
+
+| 场景 | 验证 | 原查询样本区间（ms） | 候选样本区间（ms） | 中位数（原/候选，ms） | 差值（ms） | 判定 |
+| --- | --- | --- | --- | --- | --- | --- |
+| 日期过滤 | 825/825，完整结果一致 | 5.738–7.377 | 0.053–0.074 | 6.196 / 0.060 | -6.136 | improved |
+| 有明细计数 | 551/551，ID 双向差集 0/0 | 0.393–0.467 | 0.317–0.338 | 0.407 / 0.325 | -0.082 | improved |
+
+两者中位变化百分比分别约为 -99.03% 和 -20.15%，报告保留原始样本及自然计划。固定样本测试另覆盖明确退化、重叠、双向端点相等、零基线，以及结果不一致/保留原查询时跳过判定；HTTP/MCP 协议测试核对与公共服务字段一致。
+
+### 复用上一轮真实报告，不重新调用模型
+
+从已推送的批量评测提交 [`99c00c1`](https://github.com/Boxer-M/SQL-Optimization-Agent/blob/99c00c1354b9ad3b227d9ca2c74aca8038ec5cc1/reports/qwen_evaluation_live.json) 只读提取真实评测样本，生成 `reports/performance_assessment_reused_live.json`。该文件记录来源提交、报告路径、SHA-256、逐例验证证据、原始计时及复算判定，批量评测现已合入 main；保留其代码和原报告，不改写原始采样证据。
+
+12 例复算为 **10 个 improved、2 个 inconclusive**，没有 regressed。范围外日期 `2026-01-01` 的明细计数两次样本区间未严格分离，因此即使候选中位数更低也判为 inconclusive。本轮没有额外真实千问请求。
+
+全量本地测试 103 项通过（另含 11 个子测试）；`pip check`、`git diff --check` 及报告凭据排除检查通过。
+
+合并最新 main 后的兼容性检查：112 项 pytest 测试通过（另含 11 个子测试），`pip check` 与差异检查通过；未重新调用模型或改写既有报告。
