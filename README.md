@@ -1163,3 +1163,21 @@ docker compose up -d --wait
 ```
 
 随后在该终端按上文依次装载订单、创建只读账号、装载明细；子进程会继承隔离配置。等待 pip 安装成功后再启动验收。完成后可执行 `docker compose stop` 保留独立数据，勿操作原项目容器或数据卷。
+
+## v2：明细计数 SQL 文件入口
+
+`--sql-file` 现在也识别 `orders_with_items_count` 的原查询。完整 AST 基准来自 `JOIN_COUNT`：`COUNT(DISTINCT o.order_id) AS order_count`，`public.orders AS o JOIN public.order_items AS i ON i.order_id = o.order_id`，过滤为 `o.created_at >= 起点::timestamp AND o.created_at < 终点::timestamp`。仅允许两个时间字面量变化，并严格要求它们是同一目标日当天零点和次日零点；更改聚合、连接、投影、过滤或日界操作符均拒绝。时间文本使用 `YYYY-MM-DD 00:00:00`，不接受时区或非零点时间。
+
+```bash
+.venv/bin/python scripts/optimize_orders.py \
+  --sql-file sql/examples/orders_with_items_2025_06_15.sql --qwen --fixture items-exists
+.venv/bin/python scripts/optimize_orders.py \
+  --sql-file sql/examples/orders_with_items_2025_06_16.sql --qwen --fixture items-exists
+# 显式路径对照
+.venv/bin/python scripts/optimize_orders.py \
+  --scenario orders_with_items_count --date 2025-06-16 --qwen --fixture items-exists
+```
+
+这里 `--qwen --fixture items-exists` 使用模拟模型建议，不产生真实请求。识别器派发场景和日期，数据库执行始终使用仓库内的 JOIN/EXISTS 参数化模板。订单 ID 完整比较、双向差集与计数在同一只读快照中完成，均通过后才计时；推荐继续按实测性能规则决定。`--sql-file` 与显式 `--scenario`、`--date` 仍冲突，原日期过滤文件入口保持兼容。
+
+实测报告 `reports/order_items_sql_file_acceptance.json`：2025-06-15 为 551/551，2025-06-16 为 548/548，双向差集均为 0/0；文件与显式参数路径结果和候选日界一致。本次两组文件路径均为 `improved / use_candidate`，报告保留自然计划和原始样本，不代表其他采样必然提升。改动聚合、连接条件、增加过滤、非法日期、非零点/非次日日界及多语句均有测试，拒绝前未构建服务，数据库连接和模型调用计数均为 0。本轮新增真实千问请求为 0。
