@@ -14,6 +14,7 @@ from sql_optimization_agent.tools.sql_benchmark import BenchmarkValidationError
 from sql_optimization_agent.db import DatabaseConfigurationError, DatabaseConnectionError
 from sql_optimization_agent.order_items_qwen import MODEL_FIXTURES, run as run_items_qwen
 from sql_optimization_agent.performance import attach_assessment
+from sql_optimization_agent.recommendation import attach_recommendation
 
 
 ORDERS_DATE_SCENARIO = "orders_date_filter_2025_06_15"
@@ -33,7 +34,7 @@ class OptimizationService:
         self.enabled_scenarios = (ORDERS_DATE_SCENARIO,ORDER_ITEMS_SCENARIO) if enabled_scenarios is None else enabled_scenarios
 
     def optimize(self, scenario: str, *, date: str | None = None, use_qwen: bool | None = None) -> dict:
-        return attach_assessment(self._optimize(scenario,date=date,use_qwen=use_qwen))
+        return attach_recommendation(attach_assessment(self._optimize(scenario,date=date,use_qwen=use_qwen)))
 
     def _optimize(self, scenario: str, *, date: str | None = None, use_qwen: bool | None = None) -> dict:
         if scenario not in self.enabled_scenarios:

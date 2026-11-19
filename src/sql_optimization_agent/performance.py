@@ -26,11 +26,8 @@ def assess_samples(original, candidate):
             'scope':'This sampling run only; not a general performance guarantee'}
 
 
-def attach_assessment(report):
-    result={**report,'performance_assessment':None}
-    if report.get('status')!='completed':
-        result['performance_assessment_skipped']='result_not_verified_or_original_retained'
-        return result
+def validation_passed(report):
+    """Reuse the same result/ID/count evidence for assessment and recommendation."""
     comparison=report.get('comparison')
     membership=report.get('membership')
     if membership is not None:
@@ -43,7 +40,15 @@ def attach_assessment(report):
                   and counts.get('join_count_distinct')==ids.get('original_rows')==ids.get('candidate_rows'))
     else:
         verified=isinstance(comparison,dict) and comparison.get('equivalent') is True
-    if not verified:
+    return verified
+
+
+def attach_assessment(report):
+    result={**report,'performance_assessment':None}
+    if report.get('status')!='completed':
+        result['performance_assessment_skipped']='result_not_verified_or_original_retained'
+        return result
+    if not validation_passed(report):
         result['performance_assessment_skipped']='missing_or_inconsistent_validation_evidence'
         return result
     benchmark=report.get('benchmark')

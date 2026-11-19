@@ -812,3 +812,80 @@ git diff --check
 全量本地测试 103 项通过（另含 11 个子测试）；`pip check`、`git diff --check` 及报告凭据排除检查通过。
 
 合并最新 main 后的兼容性检查：112 项 pytest 测试通过（另含 11 个子测试），`pip check` 与差异检查通过；未重新调用模型或改写既有报告。
+
+## 程序生成的优化推荐
+
+CLI、HTTP 与 MCP 共用的公共服务现在在性能判定之后追加 `recommendation`，不改变原有 `status`、错误原因、HTTP 状态码或 MCP 错误标记。推荐是程序按已验证结果和采样规则生成的建议，不采用模型自行给出的推荐结论，也不会自动替换调用方 SQL；调用方决定是否采用。
+
+| 条件 | `decision` | `reason_code` |
+| --- | --- | --- |
+| 候选结果验证通过，性能为 improved | `use_candidate` | `validated_and_improved` |
+| 候选结果/ID/计数不一致，或建议校验拒绝 | `keep_original` | `candidate_rejected` |
+| 模型选择 no_suggestion / no_rewrite | `keep_original` | `model_kept_original` |
+| 验证通过，性能为 regressed | `keep_original` | `performance_regressed` |
+| 验证通过，性能为 inconclusive | `keep_original` | `performance_inconclusive` |
+| 输入、配置、模型请求或服务错误 | `not_evaluated` | `evaluation_error` |
+| 完成状态但缺少可确认的校验证据 | `not_evaluated` | `validation_not_confirmed` |
+| 验证通过但性能尚未判定/计时不完整 | `not_evaluated` | `performance_not_assessed` |
+
+所有推荐均带 `advisory_only=true`。结果验证证据直接复用性能判定的 `validation_passed`，不维护另一套 ID 或计数规则。错误/保留状态优先于任何残留计时或旧的 improved 字段，避免失败候选被错误推荐。
+
+成功报告示例（省略其他原有字段）：
+
+```json
+{
+  "status": "completed",
+  "performance_assessment": {"verdict": "improved"},
+  "recommendation": {
+    "decision": "use_candidate",
+    "reason_code": "validated_and_improved",
+    "advisory_only": true
+  }
+}
+```
+
+中位数更低但区间重叠时，仍保留原查询，且不会把已完成状态改成错误：
+
+```json
+{
+  "status": "completed",
+  "performance_assessment": {"verdict": "inconclusive", "median_difference_ms": -0.002},
+  "recommendation": {
+    "decision": "keep_original",
+    "reason_code": "performance_inconclusive",
+    "advisory_only": true
+  }
+}
+```
+
+复现命令沿用已有三入口，无新增调用参数或真实模型需求：
+
+```sh
+.venv/bin/python scripts/optimize_orders.py --fixture normal --date 2025-06-15
+.venv/bin/python scripts/optimize_orders.py --scenario orders_with_items_count --date 2025-06-15 --qwen --fixture items-exists
+# HTTP：按前文的两个模拟 fixture 启动服务，再调用两个场景
+# MCP：下例会自动启动服务，并转发服务端模拟配置
+SQL_OPTIMIZATION_MODEL_FIXTURE=normal SQL_OPTIMIZATION_ITEMS_FIXTURE=items-exists \
+  .venv/bin/python scripts/call_optimization_mcp.py --scenario orders_with_items_count --date 2025-06-15
+.venv/bin/python -m pytest -q
+.venv/bin/python -m pip check
+git diff --check
+```
+
+本轮用模拟模型响应和真实本地 PostgreSQL，实际运行 CLI、loopback HTTP 与 stdio MCP，报告为 `reports/optimization_recommendation_local.json`：
+
+| 场景 | 校验 | CLI 中位数（原/候选，ms） | HTTP 中位数 | MCP 中位数 | 三入口推荐 |
+| --- | --- | --- | --- | --- | --- |
+| 日期过滤 2025-06-15 | 均 825/825 | 6.114 / 0.066 | 6.488 / 0.067 | 6.508 / 0.064 | use_candidate / validated_and_improved |
+| 明细计数 2025-06-15 | 均 551/551，ID 差集 0/0 | 0.428 / 0.332 | 0.406 / 0.318 | 0.422 / 0.329 | use_candidate / validated_and_improved |
+
+每个入口均按各自实际样本判为 improved，推荐字段完全一致；独立运行的耗时不要求相同。报告保留各次原始样本、性能判定和推荐，验收进程禁止真实模型调用，`.env` 未修改。
+
+`reports/optimization_recommendation_reused_live.json` 离线复算既有真实样本，记录来源报告和 SHA-256，得到 10 个 use_candidate、2 个 keep_original。重点两例为明细场景 2026-01-01：
+
+| 重复 | 原查询/候选中位数（ms） | 差值（ms） | 性能 | 推荐 |
+| --- | --- | --- | --- | --- |
+| 1 | 0.008 / 0.006 | -0.002 | inconclusive | keep_original / performance_inconclusive |
+| 2 | 0.010 / 0.008 | -0.002 | inconclusive | keep_original / performance_inconclusive |
+
+本轮未再调用真实千问。133 项 pytest 测试通过（另含 11 个子测试），覆盖提升、退化、重叠/相接、候选拒绝、模型保留、错误状态、缺失证据/计时，以及真实历史样本的两个 inconclusive 用例；`pip check`、`git diff --check` 和报告凭据排除检查通过。推荐和性能结论均只针对本次测试数据与采样，不能保证其他负载收益。
