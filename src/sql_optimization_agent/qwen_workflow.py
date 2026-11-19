@@ -97,7 +97,7 @@ def _redact(value, config):
     return value
 
 
-def _validate_candidate(config, date_context, candidate, report):
+def _validate_candidate(config, date_context, candidate, report, *, allow_benchmark=True):
     """Each attempt validates and measures in its own bounded read-only snapshot."""
     report["stage"] = "result_validation"
     with readonly_connection(config) as connection, _timeout_errors():
@@ -120,7 +120,9 @@ def _validate_candidate(config, date_context, candidate, report):
             "columns_equal": report["comparison"]["columns_equal"],
             "equivalent": report["comparison"]["equivalent"],
         }
-        if report["comparison"]["equivalent"]:
+        if report["comparison"]["equivalent"] and not allow_benchmark:
+            report.update(status="validation_only", reason="Fixed initial candidate validation only; no timing")
+        elif report["comparison"]["equivalent"]:
             report["stage"] = "benchmark"
             report["benchmark"] = measure_pair(connection, candidate.sql, candidate.params,
                                                original_sql=ORDER_DATE_SQL, original_params=date_context.original_params)
@@ -130,13 +132,15 @@ def _validate_candidate(config, date_context, candidate, report):
 
 
 def run_workflow(config: Mapping, *, date_context: OrderDateContext, fixture: str | None = None,
-                 repair_on_mismatch: bool = False) -> dict:
-    report = {"source": "controlled_model_response" if fixture else "live_qwen",
+                 repair_on_mismatch: bool = False, fixed_initial_wrong_upper: bool = False) -> dict:
+    report = {"source": ("fixed_initial_then_live_qwen" if fixed_initial_wrong_upper and not fixture else
+                         "controlled_model_response" if fixture else "live_qwen"),
               "fixture": fixture, "requested_model": config.get("QWEN_MODEL"),
               "measured_at_utc": datetime.now(timezone.utc).isoformat(), "model_requests": 0,
               "benchmark": None, "model_request_ms": 0.0, "stage": "diagnosis", "target_date": date_context.target.isoformat(),
               "date_context": date_context.as_dict(), "repair_on_mismatch": repair_on_mismatch,
-              "max_model_requests": 2 if repair_on_mismatch else 1, "attempts": []}
+              "max_model_requests": (int(repair_on_mismatch) if fixed_initial_wrong_upper else
+                                     2 if repair_on_mismatch else 1), "attempts": []}
     attempt = None
     try:
         context = diagnostic_context(config, date_context)
@@ -150,13 +154,16 @@ def run_workflow(config: Mapping, *, date_context: OrderDateContext, fixture: st
                 report.pop(key, None)
             report["benchmark"] = None
             report["stage"] = "model_request"
-            if fixture:
-                if fixture not in FIXTURES:
+            fixed_initial = fixed_initial_wrong_upper and number == 1
+            attempt["source"] = "fixed_wrong_upper" if fixed_initial else "controlled_model_response" if fixture else "live_qwen"
+            if fixture or fixed_initial:
+                if fixture is not None and fixture not in FIXTURES:
                     raise QwenFailure("invalid_fixture", "Unknown controlled response fixture")
-                name = fixture
-                if fixture in ("repair-success", "repair-failure"):
+                name = "wrong-upper" if fixed_initial else fixture
+                if not fixed_initial and fixture in ("repair-success", "repair-failure"):
                     name = "normal" if number == 2 and fixture == "repair-success" else "wrong-upper"
-                reply = ModelReply("controlled-fixture-not-a-real-model", fixture_content(name, date_context))
+                reply = ModelReply("fixed-candidate-not-a-model" if fixed_initial else "controlled-fixture-not-a-real-model",
+                                   fixture_content(name, date_context))
             else:
                 # One POST per call; only the explicit mismatch gate can make a second call.
                 try:
@@ -175,11 +182,20 @@ def run_workflow(config: Mapping, *, date_context: OrderDateContext, fixture: st
             else:
                 attempt["candidate"] = {"sql": candidate.sql,
                                         "parameters": [value.isoformat(sep=" ") for value in candidate.params]}
-                _validate_candidate(config, date_context, candidate, attempt)
+                _validate_candidate(config, date_context, candidate, attempt,
+                                    **({"allow_benchmark": False} if fixed_initial else {}))
             # Root fields always describe the latest attempt; historical evidence stays in attempts.
             for key in ("candidate", "comparison", "difference_summary", "connection"):
                 report.pop(key, None)
             report.update(attempt)
+            if fixed_initial:
+                summary = attempt.get("difference_summary") or {}
+                if (attempt["status"] != "result_mismatch" or summary.get("original_rows") != 825
+                        or summary.get("candidate_rows") != 826):
+                    attempt.update(status="evaluation_precondition_failed",
+                                   reason="Fixed initial candidate must produce a verified 825/826 mismatch; repair request skipped")
+                    report.update(attempt)
+                    break
             if attempt["status"] != "result_mismatch" or not repair_on_mismatch or number == 2:
                 break
             feedback = {"target_date": date_context.target.isoformat(),
