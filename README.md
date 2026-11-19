@@ -1145,3 +1145,21 @@ WHERE created_at::date = DATE '2025-06-15';
 ```bash
 .venv/bin/python scripts/check_sql_file_intake.py --output reports/sql_file_intake_rerun.json
 ```
+
+## 隔离的发布验收数据库
+
+独立检出目录中创建新的 Python 3.12 `.venv` 并安装 `-e '.[test]'`。不要复制原项目 `.env`。除选择空闲 `POSTGRES_PORT` 和生成新密码外，还须同时覆盖 Compose 项目名及数据卷名称：原配置的数据卷名固定，仅使用 `-p` 不能隔离数据。
+
+```sh
+cat > /tmp/sql-agent-v1-compose.yaml <<'YAML'
+volumes:
+  postgres_data:
+    name: sql-agent-v1-release-data
+YAML
+export COMPOSE_PROJECT_NAME=sql-agent-v1-release
+export COMPOSE_FILE=compose.yaml:/tmp/sql-agent-v1-compose.yaml
+docker compose config --quiet
+docker compose up -d --wait
+```
+
+随后在该终端按上文依次装载订单、创建只读账号、装载明细；子进程会继承隔离配置。等待 pip 安装成功后再启动验收。完成后可执行 `docker compose stop` 保留独立数据，勿操作原项目容器或数据卷。
