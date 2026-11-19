@@ -1,0 +1,1943 @@
+{
+  "source": "Existing committed real PostgreSQL 16.15 plans from local synthetic benchmark data; no new query or model execution",
+  "diagnosis_stage_calls": {
+    "database_connections": 0,
+    "qwen_requests": 0,
+    "socket_connections": 0
+  },
+  "cases": {
+    "date": {
+      "exit_code": 0,
+      "output": {
+        "status": "ok",
+        "mode": "comparison",
+        "original": {
+          "status": "ok",
+          "plan_count": 1,
+          "plans": [
+            {
+              "document_index": 0,
+              "runtime_data_present": true,
+              "measurement": "runtime_present",
+              "planning_time_ms": 0.625,
+              "execution_time_ms": 24.578,
+              "tables": [
+                {
+                  "schema": "public",
+                  "name": "orders"
+                }
+              ],
+              "indexes": [],
+              "root": {
+                "node_id": "0",
+                "parent_id": null,
+                "node_type": "Gather",
+                "scan_method": null,
+                "measurement": "actual",
+                "details": {
+                  "Node Type": "Gather",
+                  "Parallel Aware": false,
+                  "Startup Cost": 1000.0,
+                  "Total Cost": 6510.1,
+                  "Plan Rows": 1500,
+                  "Plan Width": 27,
+                  "Actual Rows": 825,
+                  "Actual Loops": 1,
+                  "Workers Planned": 1,
+                  "Workers Launched": 1,
+                  "Shared Hit Blocks": 2713,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                },
+                "children": [
+                  {
+                    "node_id": "0.0",
+                    "parent_id": "0",
+                    "node_type": "Seq Scan",
+                    "scan_method": "Parallel Seq Scan",
+                    "measurement": "actual",
+                    "details": {
+                      "Node Type": "Seq Scan",
+                      "Parent Relationship": "Outer",
+                      "Parallel Aware": true,
+                      "Relation Name": "orders",
+                      "Schema": "public",
+                      "Alias": "orders",
+                      "Startup Cost": 0.0,
+                      "Total Cost": 5360.1,
+                      "Plan Rows": 882,
+                      "Plan Width": 27,
+                      "Actual Rows": 412,
+                      "Actual Loops": 2,
+                      "Filter": "((orders.created_at)::date = '2025-06-15'::date)",
+                      "Rows Removed by Filter": 149590,
+                      "Shared Hit Blocks": 2713,
+                      "Shared Read Blocks": 0,
+                      "Shared Dirtied Blocks": 0,
+                      "Shared Written Blocks": 0,
+                      "Local Hit Blocks": 0,
+                      "Local Read Blocks": 0,
+                      "Local Dirtied Blocks": 0,
+                      "Local Written Blocks": 0,
+                      "Temp Read Blocks": 0,
+                      "Temp Written Blocks": 0
+                    },
+                    "children": []
+                  }
+                ]
+              },
+              "observations": [
+                {
+                  "kind": "sequential_scan",
+                  "node_id": "0.0",
+                  "scan_method": "Parallel Seq Scan",
+                  "interpretation": "Observed scan method; bottleneck status requires measurement"
+                }
+              ]
+            }
+          ],
+          "interpretation": "Observations only, not bottleneck conclusions. Actual Rows are per-loop averages; no totals are inferred."
+        },
+        "candidate": {
+          "status": "ok",
+          "plan_count": 1,
+          "plans": [
+            {
+              "document_index": 0,
+              "runtime_data_present": true,
+              "measurement": "runtime_present",
+              "planning_time_ms": 0.101,
+              "execution_time_ms": 0.113,
+              "tables": [
+                {
+                  "schema": "public",
+                  "name": "orders"
+                }
+              ],
+              "indexes": [
+                "orders_created_at_idx"
+              ],
+              "root": {
+                "node_id": "0",
+                "parent_id": null,
+                "node_type": "Index Scan",
+                "scan_method": "Index Scan",
+                "measurement": "actual",
+                "details": {
+                  "Node Type": "Index Scan",
+                  "Parallel Aware": false,
+                  "Scan Direction": "Forward",
+                  "Index Name": "orders_created_at_idx",
+                  "Relation Name": "orders",
+                  "Schema": "public",
+                  "Alias": "orders",
+                  "Startup Cost": 0.42,
+                  "Total Cost": 39.5,
+                  "Plan Rows": 804,
+                  "Plan Width": 27,
+                  "Actual Rows": 825,
+                  "Actual Loops": 1,
+                  "Index Cond": "((orders.created_at >= '2025-06-15 00:00:00'::timestamp without time zone) AND (orders.created_at < '2025-06-16 00:00:00'::timestamp without time zone))",
+                  "Shared Hit Blocks": 16,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                },
+                "children": []
+              },
+              "observations": []
+            }
+          ],
+          "interpretation": "Observations only, not bottleneck conclusions. Actual Rows are per-loop averages; no totals are inferred."
+        },
+        "feature_comparison": {
+          "scans": [
+            {
+              "feature": {
+                "method": "Index Scan",
+                "schema": "public",
+                "table": "orders",
+                "index": "orders_created_at_idx"
+              },
+              "original_count": 0,
+              "candidate_count": 1,
+              "count_delta": 1,
+              "change": "increased",
+              "original_occurrences": [],
+              "candidate_occurrences": [
+                {
+                  "node_path": "0",
+                  "parent_path": null,
+                  "measurement": "actual",
+                  "actual_rows": 825,
+                  "actual_loops": 1,
+                  "missing_runtime_fields": []
+                }
+              ]
+            },
+            {
+              "feature": {
+                "method": "Parallel Seq Scan",
+                "schema": "public",
+                "table": "orders",
+                "index": null
+              },
+              "original_count": 1,
+              "candidate_count": 0,
+              "count_delta": -1,
+              "change": "decreased",
+              "original_occurrences": [
+                {
+                  "node_path": "0.0",
+                  "parent_path": "0",
+                  "measurement": "actual",
+                  "actual_rows": 412,
+                  "actual_loops": 2,
+                  "missing_runtime_fields": []
+                }
+              ],
+              "candidate_occurrences": []
+            }
+          ],
+          "tables": [
+            {
+              "feature": {
+                "schema": "public",
+                "table": "orders"
+              },
+              "original_count": 1,
+              "candidate_count": 1,
+              "count_delta": 0,
+              "change": "unchanged_count",
+              "original_occurrences": [
+                {
+                  "node_path": "0.0",
+                  "parent_path": "0",
+                  "measurement": "actual",
+                  "actual_rows": 412,
+                  "actual_loops": 2,
+                  "missing_runtime_fields": []
+                }
+              ],
+              "candidate_occurrences": [
+                {
+                  "node_path": "0",
+                  "parent_path": null,
+                  "measurement": "actual",
+                  "actual_rows": 825,
+                  "actual_loops": 1,
+                  "missing_runtime_fields": []
+                }
+              ]
+            }
+          ],
+          "indexes": [
+            {
+              "feature": {
+                "schema": "public",
+                "table": "orders",
+                "index": "orders_created_at_idx"
+              },
+              "original_count": 0,
+              "candidate_count": 1,
+              "count_delta": 1,
+              "change": "increased",
+              "original_occurrences": [],
+              "candidate_occurrences": [
+                {
+                  "node_path": "0",
+                  "parent_path": null,
+                  "measurement": "actual",
+                  "actual_rows": 825,
+                  "actual_loops": 1,
+                  "missing_runtime_fields": []
+                }
+              ]
+            }
+          ],
+          "joins": [],
+          "sorts": []
+        },
+        "scope": "Observed plan features and occurrence counts across all roots; no positional node matching.",
+        "interpretation": "Plan changes only. Equal feature counts do not imply identical trees or equivalent SQL results. Performance benefit requires the existing repeated-sampling workflow."
+      }
+    },
+    "items": {
+      "exit_code": 0,
+      "output": {
+        "status": "ok",
+        "mode": "comparison",
+        "original": {
+          "status": "ok",
+          "plan_count": 1,
+          "plans": [
+            {
+              "document_index": 0,
+              "runtime_data_present": true,
+              "measurement": "runtime_present",
+              "planning_time_ms": 0.55,
+              "execution_time_ms": 1.227,
+              "tables": [
+                {
+                  "schema": "public",
+                  "name": "order_items"
+                },
+                {
+                  "schema": "public",
+                  "name": "orders"
+                }
+              ],
+              "indexes": [
+                "order_items_order_id_idx",
+                "orders_created_at_idx"
+              ],
+              "root": {
+                "node_id": "0",
+                "parent_id": null,
+                "node_type": "Aggregate",
+                "scan_method": null,
+                "measurement": "actual",
+                "details": {
+                  "Node Type": "Aggregate",
+                  "Parallel Aware": false,
+                  "Startup Cost": 2690.73,
+                  "Total Cost": 2690.74,
+                  "Plan Rows": 1,
+                  "Plan Width": 8,
+                  "Actual Rows": 1,
+                  "Actual Loops": 1,
+                  "Shared Hit Blocks": 2495,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                },
+                "children": [
+                  {
+                    "node_id": "0.0",
+                    "parent_id": "0",
+                    "node_type": "Sort",
+                    "scan_method": null,
+                    "measurement": "actual",
+                    "details": {
+                      "Node Type": "Sort",
+                      "Parent Relationship": "Outer",
+                      "Parallel Aware": false,
+                      "Startup Cost": 2685.37,
+                      "Total Cost": 2688.05,
+                      "Plan Rows": 1072,
+                      "Plan Width": 8,
+                      "Actual Rows": 1103,
+                      "Actual Loops": 1,
+                      "Sort Key": [
+                        "o.order_id"
+                      ],
+                      "Sort Method": "quicksort",
+                      "Sort Space Used": 49,
+                      "Sort Space Type": "Memory",
+                      "Shared Hit Blocks": 2495,
+                      "Shared Read Blocks": 0,
+                      "Shared Dirtied Blocks": 0,
+                      "Shared Written Blocks": 0,
+                      "Local Hit Blocks": 0,
+                      "Local Read Blocks": 0,
+                      "Local Dirtied Blocks": 0,
+                      "Local Written Blocks": 0,
+                      "Temp Read Blocks": 0,
+                      "Temp Written Blocks": 0
+                    },
+                    "children": [
+                      {
+                        "node_id": "0.0.0",
+                        "parent_id": "0.0",
+                        "node_type": "Nested Loop",
+                        "scan_method": null,
+                        "measurement": "actual",
+                        "details": {
+                          "Node Type": "Nested Loop",
+                          "Parent Relationship": "Outer",
+                          "Parallel Aware": false,
+                          "Join Type": "Inner",
+                          "Startup Cost": 0.84,
+                          "Total Cost": 2631.41,
+                          "Plan Rows": 1072,
+                          "Plan Width": 8,
+                          "Actual Rows": 1103,
+                          "Actual Loops": 1,
+                          "Inner Unique": false,
+                          "Shared Hit Blocks": 2492,
+                          "Shared Read Blocks": 0,
+                          "Shared Dirtied Blocks": 0,
+                          "Shared Written Blocks": 0,
+                          "Local Hit Blocks": 0,
+                          "Local Read Blocks": 0,
+                          "Local Dirtied Blocks": 0,
+                          "Local Written Blocks": 0,
+                          "Temp Read Blocks": 0,
+                          "Temp Written Blocks": 0
+                        },
+                        "children": [
+                          {
+                            "node_id": "0.0.0.0",
+                            "parent_id": "0.0.0",
+                            "node_type": "Index Scan",
+                            "scan_method": "Index Scan",
+                            "measurement": "actual",
+                            "details": {
+                              "Node Type": "Index Scan",
+                              "Parent Relationship": "Outer",
+                              "Parallel Aware": false,
+                              "Scan Direction": "Forward",
+                              "Index Name": "orders_created_at_idx",
+                              "Relation Name": "orders",
+                              "Schema": "public",
+                              "Alias": "o",
+                              "Startup Cost": 0.42,
+                              "Total Cost": 39.5,
+                              "Plan Rows": 804,
+                              "Plan Width": 8,
+                              "Actual Rows": 825,
+                              "Actual Loops": 1,
+                              "Index Cond": "((o.created_at >= '2025-06-15 00:00:00'::timestamp without time zone) AND (o.created_at < '2025-06-16 00:00:00'::timestamp without time zone))",
+                              "Shared Hit Blocks": 16,
+                              "Shared Read Blocks": 0,
+                              "Shared Dirtied Blocks": 0,
+                              "Shared Written Blocks": 0,
+                              "Local Hit Blocks": 0,
+                              "Local Read Blocks": 0,
+                              "Local Dirtied Blocks": 0,
+                              "Local Written Blocks": 0,
+                              "Temp Read Blocks": 0,
+                              "Temp Written Blocks": 0
+                            },
+                            "children": []
+                          },
+                          {
+                            "node_id": "0.0.0.1",
+                            "parent_id": "0.0.0",
+                            "node_type": "Index Only Scan",
+                            "scan_method": "Index Only Scan",
+                            "measurement": "actual",
+                            "details": {
+                              "Node Type": "Index Only Scan",
+                              "Parent Relationship": "Inner",
+                              "Parallel Aware": false,
+                              "Scan Direction": "Forward",
+                              "Index Name": "order_items_order_id_idx",
+                              "Relation Name": "order_items",
+                              "Schema": "public",
+                              "Alias": "i",
+                              "Startup Cost": 0.42,
+                              "Total Cost": 3.2,
+                              "Plan Rows": 2,
+                              "Plan Width": 8,
+                              "Actual Rows": 1,
+                              "Actual Loops": 825,
+                              "Index Cond": "(i.order_id = o.order_id)",
+                              "Heap Fetches": 0,
+                              "Shared Hit Blocks": 2476,
+                              "Shared Read Blocks": 0,
+                              "Shared Dirtied Blocks": 0,
+                              "Shared Written Blocks": 0,
+                              "Local Hit Blocks": 0,
+                              "Local Read Blocks": 0,
+                              "Local Dirtied Blocks": 0,
+                              "Local Written Blocks": 0,
+                              "Temp Read Blocks": 0,
+                              "Temp Written Blocks": 0
+                            },
+                            "children": []
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              "observations": [
+                {
+                  "kind": "sort",
+                  "node_id": "0.0",
+                  "interpretation": "Observed sorting; bottleneck status requires measurement"
+                }
+              ]
+            }
+          ],
+          "interpretation": "Observations only, not bottleneck conclusions. Actual Rows are per-loop averages; no totals are inferred."
+        },
+        "candidate": {
+          "status": "ok",
+          "plan_count": 1,
+          "plans": [
+            {
+              "document_index": 0,
+              "runtime_data_present": true,
+              "measurement": "runtime_present",
+              "planning_time_ms": 0.083,
+              "execution_time_ms": 0.427,
+              "tables": [
+                {
+                  "schema": "public",
+                  "name": "order_items"
+                },
+                {
+                  "schema": "public",
+                  "name": "orders"
+                }
+              ],
+              "indexes": [
+                "order_items_order_id_idx",
+                "orders_created_at_idx"
+              ],
+              "root": {
+                "node_id": "0",
+                "parent_id": null,
+                "node_type": "Aggregate",
+                "scan_method": null,
+                "measurement": "actual",
+                "details": {
+                  "Node Type": "Aggregate",
+                  "Parallel Aware": false,
+                  "Startup Cost": 1589.99,
+                  "Total Cost": 1590.0,
+                  "Plan Rows": 1,
+                  "Plan Width": 8,
+                  "Actual Rows": 1,
+                  "Actual Loops": 1,
+                  "Shared Hit Blocks": 2492,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                },
+                "children": [
+                  {
+                    "node_id": "0.0",
+                    "parent_id": "0",
+                    "node_type": "Nested Loop",
+                    "scan_method": null,
+                    "measurement": "actual",
+                    "details": {
+                      "Node Type": "Nested Loop",
+                      "Parent Relationship": "Outer",
+                      "Parallel Aware": false,
+                      "Join Type": "Semi",
+                      "Startup Cost": 0.84,
+                      "Total Cost": 1588.91,
+                      "Plan Rows": 430,
+                      "Plan Width": 0,
+                      "Actual Rows": 551,
+                      "Actual Loops": 1,
+                      "Inner Unique": false,
+                      "Shared Hit Blocks": 2492,
+                      "Shared Read Blocks": 0,
+                      "Shared Dirtied Blocks": 0,
+                      "Shared Written Blocks": 0,
+                      "Local Hit Blocks": 0,
+                      "Local Read Blocks": 0,
+                      "Local Dirtied Blocks": 0,
+                      "Local Written Blocks": 0,
+                      "Temp Read Blocks": 0,
+                      "Temp Written Blocks": 0
+                    },
+                    "children": [
+                      {
+                        "node_id": "0.0.0",
+                        "parent_id": "0.0",
+                        "node_type": "Index Scan",
+                        "scan_method": "Index Scan",
+                        "measurement": "actual",
+                        "details": {
+                          "Node Type": "Index Scan",
+                          "Parent Relationship": "Outer",
+                          "Parallel Aware": false,
+                          "Scan Direction": "Forward",
+                          "Index Name": "orders_created_at_idx",
+                          "Relation Name": "orders",
+                          "Schema": "public",
+                          "Alias": "o",
+                          "Startup Cost": 0.42,
+                          "Total Cost": 39.5,
+                          "Plan Rows": 804,
+                          "Plan Width": 8,
+                          "Actual Rows": 825,
+                          "Actual Loops": 1,
+                          "Index Cond": "((o.created_at >= '2025-06-15 00:00:00'::timestamp without time zone) AND (o.created_at < '2025-06-16 00:00:00'::timestamp without time zone))",
+                          "Shared Hit Blocks": 16,
+                          "Shared Read Blocks": 0,
+                          "Shared Dirtied Blocks": 0,
+                          "Shared Written Blocks": 0,
+                          "Local Hit Blocks": 0,
+                          "Local Read Blocks": 0,
+                          "Local Dirtied Blocks": 0,
+                          "Local Written Blocks": 0,
+                          "Temp Read Blocks": 0,
+                          "Temp Written Blocks": 0
+                        },
+                        "children": []
+                      },
+                      {
+                        "node_id": "0.0.1",
+                        "parent_id": "0.0",
+                        "node_type": "Index Only Scan",
+                        "scan_method": "Index Only Scan",
+                        "measurement": "actual",
+                        "details": {
+                          "Node Type": "Index Only Scan",
+                          "Parent Relationship": "Inner",
+                          "Parallel Aware": false,
+                          "Scan Direction": "Forward",
+                          "Index Name": "order_items_order_id_idx",
+                          "Relation Name": "order_items",
+                          "Schema": "public",
+                          "Alias": "i",
+                          "Startup Cost": 0.42,
+                          "Total Cost": 3.2,
+                          "Plan Rows": 2,
+                          "Plan Width": 8,
+                          "Actual Rows": 1,
+                          "Actual Loops": 825,
+                          "Index Cond": "(i.order_id = o.order_id)",
+                          "Heap Fetches": 0,
+                          "Shared Hit Blocks": 2476,
+                          "Shared Read Blocks": 0,
+                          "Shared Dirtied Blocks": 0,
+                          "Shared Written Blocks": 0,
+                          "Local Hit Blocks": 0,
+                          "Local Read Blocks": 0,
+                          "Local Dirtied Blocks": 0,
+                          "Local Written Blocks": 0,
+                          "Temp Read Blocks": 0,
+                          "Temp Written Blocks": 0
+                        },
+                        "children": []
+                      }
+                    ]
+                  }
+                ]
+              },
+              "observations": []
+            }
+          ],
+          "interpretation": "Observations only, not bottleneck conclusions. Actual Rows are per-loop averages; no totals are inferred."
+        },
+        "feature_comparison": {
+          "scans": [
+            {
+              "feature": {
+                "method": "Index Only Scan",
+                "schema": "public",
+                "table": "order_items",
+                "index": "order_items_order_id_idx"
+              },
+              "original_count": 1,
+              "candidate_count": 1,
+              "count_delta": 0,
+              "change": "unchanged_count",
+              "original_occurrences": [
+                {
+                  "node_path": "0.0.0.1",
+                  "parent_path": "0.0.0",
+                  "measurement": "actual",
+                  "actual_rows": 1,
+                  "actual_loops": 825,
+                  "missing_runtime_fields": []
+                }
+              ],
+              "candidate_occurrences": [
+                {
+                  "node_path": "0.0.1",
+                  "parent_path": "0.0",
+                  "measurement": "actual",
+                  "actual_rows": 1,
+                  "actual_loops": 825,
+                  "missing_runtime_fields": []
+                }
+              ]
+            },
+            {
+              "feature": {
+                "method": "Index Scan",
+                "schema": "public",
+                "table": "orders",
+                "index": "orders_created_at_idx"
+              },
+              "original_count": 1,
+              "candidate_count": 1,
+              "count_delta": 0,
+              "change": "unchanged_count",
+              "original_occurrences": [
+                {
+                  "node_path": "0.0.0.0",
+                  "parent_path": "0.0.0",
+                  "measurement": "actual",
+                  "actual_rows": 825,
+                  "actual_loops": 1,
+                  "missing_runtime_fields": []
+                }
+              ],
+              "candidate_occurrences": [
+                {
+                  "node_path": "0.0.0",
+                  "parent_path": "0.0",
+                  "measurement": "actual",
+                  "actual_rows": 825,
+                  "actual_loops": 1,
+                  "missing_runtime_fields": []
+                }
+              ]
+            }
+          ],
+          "tables": [
+            {
+              "feature": {
+                "schema": "public",
+                "table": "order_items"
+              },
+              "original_count": 1,
+              "candidate_count": 1,
+              "count_delta": 0,
+              "change": "unchanged_count",
+              "original_occurrences": [
+                {
+                  "node_path": "0.0.0.1",
+                  "parent_path": "0.0.0",
+                  "measurement": "actual",
+                  "actual_rows": 1,
+                  "actual_loops": 825,
+                  "missing_runtime_fields": []
+                }
+              ],
+              "candidate_occurrences": [
+                {
+                  "node_path": "0.0.1",
+                  "parent_path": "0.0",
+                  "measurement": "actual",
+                  "actual_rows": 1,
+                  "actual_loops": 825,
+                  "missing_runtime_fields": []
+                }
+              ]
+            },
+            {
+              "feature": {
+                "schema": "public",
+                "table": "orders"
+              },
+              "original_count": 1,
+              "candidate_count": 1,
+              "count_delta": 0,
+              "change": "unchanged_count",
+              "original_occurrences": [
+                {
+                  "node_path": "0.0.0.0",
+                  "parent_path": "0.0.0",
+                  "measurement": "actual",
+                  "actual_rows": 825,
+                  "actual_loops": 1,
+                  "missing_runtime_fields": []
+                }
+              ],
+              "candidate_occurrences": [
+                {
+                  "node_path": "0.0.0",
+                  "parent_path": "0.0",
+                  "measurement": "actual",
+                  "actual_rows": 825,
+                  "actual_loops": 1,
+                  "missing_runtime_fields": []
+                }
+              ]
+            }
+          ],
+          "indexes": [
+            {
+              "feature": {
+                "schema": "public",
+                "table": "order_items",
+                "index": "order_items_order_id_idx"
+              },
+              "original_count": 1,
+              "candidate_count": 1,
+              "count_delta": 0,
+              "change": "unchanged_count",
+              "original_occurrences": [
+                {
+                  "node_path": "0.0.0.1",
+                  "parent_path": "0.0.0",
+                  "measurement": "actual",
+                  "actual_rows": 1,
+                  "actual_loops": 825,
+                  "missing_runtime_fields": []
+                }
+              ],
+              "candidate_occurrences": [
+                {
+                  "node_path": "0.0.1",
+                  "parent_path": "0.0",
+                  "measurement": "actual",
+                  "actual_rows": 1,
+                  "actual_loops": 825,
+                  "missing_runtime_fields": []
+                }
+              ]
+            },
+            {
+              "feature": {
+                "schema": "public",
+                "table": "orders",
+                "index": "orders_created_at_idx"
+              },
+              "original_count": 1,
+              "candidate_count": 1,
+              "count_delta": 0,
+              "change": "unchanged_count",
+              "original_occurrences": [
+                {
+                  "node_path": "0.0.0.0",
+                  "parent_path": "0.0.0",
+                  "measurement": "actual",
+                  "actual_rows": 825,
+                  "actual_loops": 1,
+                  "missing_runtime_fields": []
+                }
+              ],
+              "candidate_occurrences": [
+                {
+                  "node_path": "0.0.0",
+                  "parent_path": "0.0",
+                  "measurement": "actual",
+                  "actual_rows": 825,
+                  "actual_loops": 1,
+                  "missing_runtime_fields": []
+                }
+              ]
+            }
+          ],
+          "joins": [
+            {
+              "feature": {
+                "node_type": "Nested Loop",
+                "join_type": "Inner"
+              },
+              "original_count": 1,
+              "candidate_count": 0,
+              "count_delta": -1,
+              "change": "decreased",
+              "original_occurrences": [
+                {
+                  "node_path": "0.0.0",
+                  "parent_path": "0.0",
+                  "measurement": "actual",
+                  "actual_rows": 1103,
+                  "actual_loops": 1,
+                  "missing_runtime_fields": []
+                }
+              ],
+              "candidate_occurrences": []
+            },
+            {
+              "feature": {
+                "node_type": "Nested Loop",
+                "join_type": "Semi"
+              },
+              "original_count": 0,
+              "candidate_count": 1,
+              "count_delta": 1,
+              "change": "increased",
+              "original_occurrences": [],
+              "candidate_occurrences": [
+                {
+                  "node_path": "0.0",
+                  "parent_path": "0",
+                  "measurement": "actual",
+                  "actual_rows": 551,
+                  "actual_loops": 1,
+                  "missing_runtime_fields": []
+                }
+              ]
+            }
+          ],
+          "sorts": [
+            {
+              "feature": {
+                "node_type": "Sort",
+                "sort_key": [
+                  "o.order_id"
+                ]
+              },
+              "original_count": 1,
+              "candidate_count": 0,
+              "count_delta": -1,
+              "change": "decreased",
+              "original_occurrences": [
+                {
+                  "node_path": "0.0",
+                  "parent_path": "0",
+                  "measurement": "actual",
+                  "actual_rows": 1103,
+                  "actual_loops": 1,
+                  "missing_runtime_fields": []
+                }
+              ],
+              "candidate_occurrences": []
+            }
+          ]
+        },
+        "scope": "Observed plan features and occurrence counts across all roots; no positional node matching.",
+        "interpretation": "Plan changes only. Equal feature counts do not imply identical trees or equivalent SQL results. Performance benefit requires the existing repeated-sampling workflow."
+      }
+    },
+    "identical": {
+      "exit_code": 0,
+      "output": {
+        "status": "ok",
+        "mode": "comparison",
+        "original": {
+          "status": "ok",
+          "plan_count": 1,
+          "plans": [
+            {
+              "document_index": 0,
+              "runtime_data_present": true,
+              "measurement": "runtime_present",
+              "planning_time_ms": 0.55,
+              "execution_time_ms": 1.227,
+              "tables": [
+                {
+                  "schema": "public",
+                  "name": "order_items"
+                },
+                {
+                  "schema": "public",
+                  "name": "orders"
+                }
+              ],
+              "indexes": [
+                "order_items_order_id_idx",
+                "orders_created_at_idx"
+              ],
+              "root": {
+                "node_id": "0",
+                "parent_id": null,
+                "node_type": "Aggregate",
+                "scan_method": null,
+                "measurement": "actual",
+                "details": {
+                  "Node Type": "Aggregate",
+                  "Parallel Aware": false,
+                  "Startup Cost": 2690.73,
+                  "Total Cost": 2690.74,
+                  "Plan Rows": 1,
+                  "Plan Width": 8,
+                  "Actual Rows": 1,
+                  "Actual Loops": 1,
+                  "Shared Hit Blocks": 2495,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                },
+                "children": [
+                  {
+                    "node_id": "0.0",
+                    "parent_id": "0",
+                    "node_type": "Sort",
+                    "scan_method": null,
+                    "measurement": "actual",
+                    "details": {
+                      "Node Type": "Sort",
+                      "Parent Relationship": "Outer",
+                      "Parallel Aware": false,
+                      "Startup Cost": 2685.37,
+                      "Total Cost": 2688.05,
+                      "Plan Rows": 1072,
+                      "Plan Width": 8,
+                      "Actual Rows": 1103,
+                      "Actual Loops": 1,
+                      "Sort Key": [
+                        "o.order_id"
+                      ],
+                      "Sort Method": "quicksort",
+                      "Sort Space Used": 49,
+                      "Sort Space Type": "Memory",
+                      "Shared Hit Blocks": 2495,
+                      "Shared Read Blocks": 0,
+                      "Shared Dirtied Blocks": 0,
+                      "Shared Written Blocks": 0,
+                      "Local Hit Blocks": 0,
+                      "Local Read Blocks": 0,
+                      "Local Dirtied Blocks": 0,
+                      "Local Written Blocks": 0,
+                      "Temp Read Blocks": 0,
+                      "Temp Written Blocks": 0
+                    },
+                    "children": [
+                      {
+                        "node_id": "0.0.0",
+                        "parent_id": "0.0",
+                        "node_type": "Nested Loop",
+                        "scan_method": null,
+                        "measurement": "actual",
+                        "details": {
+                          "Node Type": "Nested Loop",
+                          "Parent Relationship": "Outer",
+                          "Parallel Aware": false,
+                          "Join Type": "Inner",
+                          "Startup Cost": 0.84,
+                          "Total Cost": 2631.41,
+                          "Plan Rows": 1072,
+                          "Plan Width": 8,
+                          "Actual Rows": 1103,
+                          "Actual Loops": 1,
+                          "Inner Unique": false,
+                          "Shared Hit Blocks": 2492,
+                          "Shared Read Blocks": 0,
+                          "Shared Dirtied Blocks": 0,
+                          "Shared Written Blocks": 0,
+                          "Local Hit Blocks": 0,
+                          "Local Read Blocks": 0,
+                          "Local Dirtied Blocks": 0,
+                          "Local Written Blocks": 0,
+                          "Temp Read Blocks": 0,
+                          "Temp Written Blocks": 0
+                        },
+                        "children": [
+                          {
+                            "node_id": "0.0.0.0",
+                            "parent_id": "0.0.0",
+                            "node_type": "Index Scan",
+                            "scan_method": "Index Scan",
+                            "measurement": "actual",
+                            "details": {
+                              "Node Type": "Index Scan",
+                              "Parent Relationship": "Outer",
+                              "Parallel Aware": false,
+                              "Scan Direction": "Forward",
+                              "Index Name": "orders_created_at_idx",
+                              "Relation Name": "orders",
+                              "Schema": "public",
+                              "Alias": "o",
+                              "Startup Cost": 0.42,
+                              "Total Cost": 39.5,
+                              "Plan Rows": 804,
+                              "Plan Width": 8,
+                              "Actual Rows": 825,
+                              "Actual Loops": 1,
+                              "Index Cond": "((o.created_at >= '2025-06-15 00:00:00'::timestamp without time zone) AND (o.created_at < '2025-06-16 00:00:00'::timestamp without time zone))",
+                              "Shared Hit Blocks": 16,
+                              "Shared Read Blocks": 0,
+                              "Shared Dirtied Blocks": 0,
+                              "Shared Written Blocks": 0,
+                              "Local Hit Blocks": 0,
+                              "Local Read Blocks": 0,
+                              "Local Dirtied Blocks": 0,
+                              "Local Written Blocks": 0,
+                              "Temp Read Blocks": 0,
+                              "Temp Written Blocks": 0
+                            },
+                            "children": []
+                          },
+                          {
+                            "node_id": "0.0.0.1",
+                            "parent_id": "0.0.0",
+                            "node_type": "Index Only Scan",
+                            "scan_method": "Index Only Scan",
+                            "measurement": "actual",
+                            "details": {
+                              "Node Type": "Index Only Scan",
+                              "Parent Relationship": "Inner",
+                              "Parallel Aware": false,
+                              "Scan Direction": "Forward",
+                              "Index Name": "order_items_order_id_idx",
+                              "Relation Name": "order_items",
+                              "Schema": "public",
+                              "Alias": "i",
+                              "Startup Cost": 0.42,
+                              "Total Cost": 3.2,
+                              "Plan Rows": 2,
+                              "Plan Width": 8,
+                              "Actual Rows": 1,
+                              "Actual Loops": 825,
+                              "Index Cond": "(i.order_id = o.order_id)",
+                              "Heap Fetches": 0,
+                              "Shared Hit Blocks": 2476,
+                              "Shared Read Blocks": 0,
+                              "Shared Dirtied Blocks": 0,
+                              "Shared Written Blocks": 0,
+                              "Local Hit Blocks": 0,
+                              "Local Read Blocks": 0,
+                              "Local Dirtied Blocks": 0,
+                              "Local Written Blocks": 0,
+                              "Temp Read Blocks": 0,
+                              "Temp Written Blocks": 0
+                            },
+                            "children": []
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              "observations": [
+                {
+                  "kind": "sort",
+                  "node_id": "0.0",
+                  "interpretation": "Observed sorting; bottleneck status requires measurement"
+                }
+              ]
+            }
+          ],
+          "interpretation": "Observations only, not bottleneck conclusions. Actual Rows are per-loop averages; no totals are inferred."
+        },
+        "candidate": {
+          "status": "ok",
+          "plan_count": 1,
+          "plans": [
+            {
+              "document_index": 0,
+              "runtime_data_present": true,
+              "measurement": "runtime_present",
+              "planning_time_ms": 0.55,
+              "execution_time_ms": 1.227,
+              "tables": [
+                {
+                  "schema": "public",
+                  "name": "order_items"
+                },
+                {
+                  "schema": "public",
+                  "name": "orders"
+                }
+              ],
+              "indexes": [
+                "order_items_order_id_idx",
+                "orders_created_at_idx"
+              ],
+              "root": {
+                "node_id": "0",
+                "parent_id": null,
+                "node_type": "Aggregate",
+                "scan_method": null,
+                "measurement": "actual",
+                "details": {
+                  "Node Type": "Aggregate",
+                  "Parallel Aware": false,
+                  "Startup Cost": 2690.73,
+                  "Total Cost": 2690.74,
+                  "Plan Rows": 1,
+                  "Plan Width": 8,
+                  "Actual Rows": 1,
+                  "Actual Loops": 1,
+                  "Shared Hit Blocks": 2495,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                },
+                "children": [
+                  {
+                    "node_id": "0.0",
+                    "parent_id": "0",
+                    "node_type": "Sort",
+                    "scan_method": null,
+                    "measurement": "actual",
+                    "details": {
+                      "Node Type": "Sort",
+                      "Parent Relationship": "Outer",
+                      "Parallel Aware": false,
+                      "Startup Cost": 2685.37,
+                      "Total Cost": 2688.05,
+                      "Plan Rows": 1072,
+                      "Plan Width": 8,
+                      "Actual Rows": 1103,
+                      "Actual Loops": 1,
+                      "Sort Key": [
+                        "o.order_id"
+                      ],
+                      "Sort Method": "quicksort",
+                      "Sort Space Used": 49,
+                      "Sort Space Type": "Memory",
+                      "Shared Hit Blocks": 2495,
+                      "Shared Read Blocks": 0,
+                      "Shared Dirtied Blocks": 0,
+                      "Shared Written Blocks": 0,
+                      "Local Hit Blocks": 0,
+                      "Local Read Blocks": 0,
+                      "Local Dirtied Blocks": 0,
+                      "Local Written Blocks": 0,
+                      "Temp Read Blocks": 0,
+                      "Temp Written Blocks": 0
+                    },
+                    "children": [
+                      {
+                        "node_id": "0.0.0",
+                        "parent_id": "0.0",
+                        "node_type": "Nested Loop",
+                        "scan_method": null,
+                        "measurement": "actual",
+                        "details": {
+                          "Node Type": "Nested Loop",
+                          "Parent Relationship": "Outer",
+                          "Parallel Aware": false,
+                          "Join Type": "Inner",
+                          "Startup Cost": 0.84,
+                          "Total Cost": 2631.41,
+                          "Plan Rows": 1072,
+                          "Plan Width": 8,
+                          "Actual Rows": 1103,
+                          "Actual Loops": 1,
+                          "Inner Unique": false,
+                          "Shared Hit Blocks": 2492,
+                          "Shared Read Blocks": 0,
+                          "Shared Dirtied Blocks": 0,
+                          "Shared Written Blocks": 0,
+                          "Local Hit Blocks": 0,
+                          "Local Read Blocks": 0,
+                          "Local Dirtied Blocks": 0,
+                          "Local Written Blocks": 0,
+                          "Temp Read Blocks": 0,
+                          "Temp Written Blocks": 0
+                        },
+                        "children": [
+                          {
+                            "node_id": "0.0.0.0",
+                            "parent_id": "0.0.0",
+                            "node_type": "Index Scan",
+                            "scan_method": "Index Scan",
+                            "measurement": "actual",
+                            "details": {
+                              "Node Type": "Index Scan",
+                              "Parent Relationship": "Outer",
+                              "Parallel Aware": false,
+                              "Scan Direction": "Forward",
+                              "Index Name": "orders_created_at_idx",
+                              "Relation Name": "orders",
+                              "Schema": "public",
+                              "Alias": "o",
+                              "Startup Cost": 0.42,
+                              "Total Cost": 39.5,
+                              "Plan Rows": 804,
+                              "Plan Width": 8,
+                              "Actual Rows": 825,
+                              "Actual Loops": 1,
+                              "Index Cond": "((o.created_at >= '2025-06-15 00:00:00'::timestamp without time zone) AND (o.created_at < '2025-06-16 00:00:00'::timestamp without time zone))",
+                              "Shared Hit Blocks": 16,
+                              "Shared Read Blocks": 0,
+                              "Shared Dirtied Blocks": 0,
+                              "Shared Written Blocks": 0,
+                              "Local Hit Blocks": 0,
+                              "Local Read Blocks": 0,
+                              "Local Dirtied Blocks": 0,
+                              "Local Written Blocks": 0,
+                              "Temp Read Blocks": 0,
+                              "Temp Written Blocks": 0
+                            },
+                            "children": []
+                          },
+                          {
+                            "node_id": "0.0.0.1",
+                            "parent_id": "0.0.0",
+                            "node_type": "Index Only Scan",
+                            "scan_method": "Index Only Scan",
+                            "measurement": "actual",
+                            "details": {
+                              "Node Type": "Index Only Scan",
+                              "Parent Relationship": "Inner",
+                              "Parallel Aware": false,
+                              "Scan Direction": "Forward",
+                              "Index Name": "order_items_order_id_idx",
+                              "Relation Name": "order_items",
+                              "Schema": "public",
+                              "Alias": "i",
+                              "Startup Cost": 0.42,
+                              "Total Cost": 3.2,
+                              "Plan Rows": 2,
+                              "Plan Width": 8,
+                              "Actual Rows": 1,
+                              "Actual Loops": 825,
+                              "Index Cond": "(i.order_id = o.order_id)",
+                              "Heap Fetches": 0,
+                              "Shared Hit Blocks": 2476,
+                              "Shared Read Blocks": 0,
+                              "Shared Dirtied Blocks": 0,
+                              "Shared Written Blocks": 0,
+                              "Local Hit Blocks": 0,
+                              "Local Read Blocks": 0,
+                              "Local Dirtied Blocks": 0,
+                              "Local Written Blocks": 0,
+                              "Temp Read Blocks": 0,
+                              "Temp Written Blocks": 0
+                            },
+                            "children": []
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              "observations": [
+                {
+                  "kind": "sort",
+                  "node_id": "0.0",
+                  "interpretation": "Observed sorting; bottleneck status requires measurement"
+                }
+              ]
+            }
+          ],
+          "interpretation": "Observations only, not bottleneck conclusions. Actual Rows are per-loop averages; no totals are inferred."
+        },
+        "feature_comparison": {
+          "scans": [
+            {
+              "feature": {
+                "method": "Index Only Scan",
+                "schema": "public",
+                "table": "order_items",
+                "index": "order_items_order_id_idx"
+              },
+              "original_count": 1,
+              "candidate_count": 1,
+              "count_delta": 0,
+              "change": "unchanged_count",
+              "original_occurrences": [
+                {
+                  "node_path": "0.0.0.1",
+                  "parent_path": "0.0.0",
+                  "measurement": "actual",
+                  "actual_rows": 1,
+                  "actual_loops": 825,
+                  "missing_runtime_fields": []
+                }
+              ],
+              "candidate_occurrences": [
+                {
+                  "node_path": "0.0.0.1",
+                  "parent_path": "0.0.0",
+                  "measurement": "actual",
+                  "actual_rows": 1,
+                  "actual_loops": 825,
+                  "missing_runtime_fields": []
+                }
+              ]
+            },
+            {
+              "feature": {
+                "method": "Index Scan",
+                "schema": "public",
+                "table": "orders",
+                "index": "orders_created_at_idx"
+              },
+              "original_count": 1,
+              "candidate_count": 1,
+              "count_delta": 0,
+              "change": "unchanged_count",
+              "original_occurrences": [
+                {
+                  "node_path": "0.0.0.0",
+                  "parent_path": "0.0.0",
+                  "measurement": "actual",
+                  "actual_rows": 825,
+                  "actual_loops": 1,
+                  "missing_runtime_fields": []
+                }
+              ],
+              "candidate_occurrences": [
+                {
+                  "node_path": "0.0.0.0",
+                  "parent_path": "0.0.0",
+                  "measurement": "actual",
+                  "actual_rows": 825,
+                  "actual_loops": 1,
+                  "missing_runtime_fields": []
+                }
+              ]
+            }
+          ],
+          "tables": [
+            {
+              "feature": {
+                "schema": "public",
+                "table": "order_items"
+              },
+              "original_count": 1,
+              "candidate_count": 1,
+              "count_delta": 0,
+              "change": "unchanged_count",
+              "original_occurrences": [
+                {
+                  "node_path": "0.0.0.1",
+                  "parent_path": "0.0.0",
+                  "measurement": "actual",
+                  "actual_rows": 1,
+                  "actual_loops": 825,
+                  "missing_runtime_fields": []
+                }
+              ],
+              "candidate_occurrences": [
+                {
+                  "node_path": "0.0.0.1",
+                  "parent_path": "0.0.0",
+                  "measurement": "actual",
+                  "actual_rows": 1,
+                  "actual_loops": 825,
+                  "missing_runtime_fields": []
+                }
+              ]
+            },
+            {
+              "feature": {
+                "schema": "public",
+                "table": "orders"
+              },
+              "original_count": 1,
+              "candidate_count": 1,
+              "count_delta": 0,
+              "change": "unchanged_count",
+              "original_occurrences": [
+                {
+                  "node_path": "0.0.0.0",
+                  "parent_path": "0.0.0",
+                  "measurement": "actual",
+                  "actual_rows": 825,
+                  "actual_loops": 1,
+                  "missing_runtime_fields": []
+                }
+              ],
+              "candidate_occurrences": [
+                {
+                  "node_path": "0.0.0.0",
+                  "parent_path": "0.0.0",
+                  "measurement": "actual",
+                  "actual_rows": 825,
+                  "actual_loops": 1,
+                  "missing_runtime_fields": []
+                }
+              ]
+            }
+          ],
+          "indexes": [
+            {
+              "feature": {
+                "schema": "public",
+                "table": "order_items",
+                "index": "order_items_order_id_idx"
+              },
+              "original_count": 1,
+              "candidate_count": 1,
+              "count_delta": 0,
+              "change": "unchanged_count",
+              "original_occurrences": [
+                {
+                  "node_path": "0.0.0.1",
+                  "parent_path": "0.0.0",
+                  "measurement": "actual",
+                  "actual_rows": 1,
+                  "actual_loops": 825,
+                  "missing_runtime_fields": []
+                }
+              ],
+              "candidate_occurrences": [
+                {
+                  "node_path": "0.0.0.1",
+                  "parent_path": "0.0.0",
+                  "measurement": "actual",
+                  "actual_rows": 1,
+                  "actual_loops": 825,
+                  "missing_runtime_fields": []
+                }
+              ]
+            },
+            {
+              "feature": {
+                "schema": "public",
+                "table": "orders",
+                "index": "orders_created_at_idx"
+              },
+              "original_count": 1,
+              "candidate_count": 1,
+              "count_delta": 0,
+              "change": "unchanged_count",
+              "original_occurrences": [
+                {
+                  "node_path": "0.0.0.0",
+                  "parent_path": "0.0.0",
+                  "measurement": "actual",
+                  "actual_rows": 825,
+                  "actual_loops": 1,
+                  "missing_runtime_fields": []
+                }
+              ],
+              "candidate_occurrences": [
+                {
+                  "node_path": "0.0.0.0",
+                  "parent_path": "0.0.0",
+                  "measurement": "actual",
+                  "actual_rows": 825,
+                  "actual_loops": 1,
+                  "missing_runtime_fields": []
+                }
+              ]
+            }
+          ],
+          "joins": [
+            {
+              "feature": {
+                "node_type": "Nested Loop",
+                "join_type": "Inner"
+              },
+              "original_count": 1,
+              "candidate_count": 1,
+              "count_delta": 0,
+              "change": "unchanged_count",
+              "original_occurrences": [
+                {
+                  "node_path": "0.0.0",
+                  "parent_path": "0.0",
+                  "measurement": "actual",
+                  "actual_rows": 1103,
+                  "actual_loops": 1,
+                  "missing_runtime_fields": []
+                }
+              ],
+              "candidate_occurrences": [
+                {
+                  "node_path": "0.0.0",
+                  "parent_path": "0.0",
+                  "measurement": "actual",
+                  "actual_rows": 1103,
+                  "actual_loops": 1,
+                  "missing_runtime_fields": []
+                }
+              ]
+            }
+          ],
+          "sorts": [
+            {
+              "feature": {
+                "node_type": "Sort",
+                "sort_key": [
+                  "o.order_id"
+                ]
+              },
+              "original_count": 1,
+              "candidate_count": 1,
+              "count_delta": 0,
+              "change": "unchanged_count",
+              "original_occurrences": [
+                {
+                  "node_path": "0.0",
+                  "parent_path": "0",
+                  "measurement": "actual",
+                  "actual_rows": 1103,
+                  "actual_loops": 1,
+                  "missing_runtime_fields": []
+                }
+              ],
+              "candidate_occurrences": [
+                {
+                  "node_path": "0.0",
+                  "parent_path": "0",
+                  "measurement": "actual",
+                  "actual_rows": 1103,
+                  "actual_loops": 1,
+                  "missing_runtime_fields": []
+                }
+              ]
+            }
+          ]
+        },
+        "scope": "Observed plan features and occurrence counts across all roots; no positional node matching.",
+        "interpretation": "Plan changes only. Equal feature counts do not imply identical trees or equivalent SQL results. Performance benefit requires the existing repeated-sampling workflow."
+      }
+    },
+    "estimated_actual": {
+      "exit_code": 0,
+      "output": {
+        "status": "ok",
+        "mode": "comparison",
+        "original": {
+          "status": "ok",
+          "plan_count": 1,
+          "plans": [
+            {
+              "document_index": 0,
+              "runtime_data_present": false,
+              "measurement": "estimated_only",
+              "planning_time_ms": null,
+              "execution_time_ms": null,
+              "tables": [
+                {
+                  "schema": "public",
+                  "name": "orders"
+                }
+              ],
+              "indexes": [],
+              "root": {
+                "node_id": "0",
+                "parent_id": null,
+                "node_type": "Gather",
+                "scan_method": null,
+                "measurement": "estimated_only",
+                "details": {
+                  "Node Type": "Gather",
+                  "Parallel Aware": false,
+                  "Startup Cost": 1000.0,
+                  "Total Cost": 6510.1,
+                  "Plan Rows": 1500,
+                  "Plan Width": 27,
+                  "Workers Planned": 1
+                },
+                "children": [
+                  {
+                    "node_id": "0.0",
+                    "parent_id": "0",
+                    "node_type": "Seq Scan",
+                    "scan_method": "Parallel Seq Scan",
+                    "measurement": "estimated_only",
+                    "details": {
+                      "Node Type": "Seq Scan",
+                      "Parent Relationship": "Outer",
+                      "Parallel Aware": true,
+                      "Relation Name": "orders",
+                      "Schema": "public",
+                      "Alias": "orders",
+                      "Startup Cost": 0.0,
+                      "Total Cost": 5360.1,
+                      "Plan Rows": 882,
+                      "Plan Width": 27,
+                      "Filter": "((orders.created_at)::date = '2025-06-15'::date)"
+                    },
+                    "children": []
+                  }
+                ]
+              },
+              "observations": [
+                {
+                  "kind": "sequential_scan",
+                  "node_id": "0.0",
+                  "scan_method": "Parallel Seq Scan",
+                  "interpretation": "Observed scan method; bottleneck status requires measurement"
+                }
+              ]
+            }
+          ],
+          "interpretation": "Observations only, not bottleneck conclusions. Actual Rows are per-loop averages; no totals are inferred."
+        },
+        "candidate": {
+          "status": "ok",
+          "plan_count": 1,
+          "plans": [
+            {
+              "document_index": 0,
+              "runtime_data_present": true,
+              "measurement": "runtime_present",
+              "planning_time_ms": 0.625,
+              "execution_time_ms": 24.578,
+              "tables": [
+                {
+                  "schema": "public",
+                  "name": "orders"
+                }
+              ],
+              "indexes": [],
+              "root": {
+                "node_id": "0",
+                "parent_id": null,
+                "node_type": "Gather",
+                "scan_method": null,
+                "measurement": "actual",
+                "details": {
+                  "Node Type": "Gather",
+                  "Parallel Aware": false,
+                  "Startup Cost": 1000.0,
+                  "Total Cost": 6510.1,
+                  "Plan Rows": 1500,
+                  "Plan Width": 27,
+                  "Actual Rows": 825,
+                  "Actual Loops": 1,
+                  "Workers Planned": 1,
+                  "Workers Launched": 1,
+                  "Shared Hit Blocks": 2713,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                },
+                "children": [
+                  {
+                    "node_id": "0.0",
+                    "parent_id": "0",
+                    "node_type": "Seq Scan",
+                    "scan_method": "Parallel Seq Scan",
+                    "measurement": "actual",
+                    "details": {
+                      "Node Type": "Seq Scan",
+                      "Parent Relationship": "Outer",
+                      "Parallel Aware": true,
+                      "Relation Name": "orders",
+                      "Schema": "public",
+                      "Alias": "orders",
+                      "Startup Cost": 0.0,
+                      "Total Cost": 5360.1,
+                      "Plan Rows": 882,
+                      "Plan Width": 27,
+                      "Actual Rows": 412,
+                      "Actual Loops": 2,
+                      "Filter": "((orders.created_at)::date = '2025-06-15'::date)",
+                      "Rows Removed by Filter": 149590,
+                      "Shared Hit Blocks": 2713,
+                      "Shared Read Blocks": 0,
+                      "Shared Dirtied Blocks": 0,
+                      "Shared Written Blocks": 0,
+                      "Local Hit Blocks": 0,
+                      "Local Read Blocks": 0,
+                      "Local Dirtied Blocks": 0,
+                      "Local Written Blocks": 0,
+                      "Temp Read Blocks": 0,
+                      "Temp Written Blocks": 0
+                    },
+                    "children": []
+                  }
+                ]
+              },
+              "observations": [
+                {
+                  "kind": "sequential_scan",
+                  "node_id": "0.0",
+                  "scan_method": "Parallel Seq Scan",
+                  "interpretation": "Observed scan method; bottleneck status requires measurement"
+                }
+              ]
+            }
+          ],
+          "interpretation": "Observations only, not bottleneck conclusions. Actual Rows are per-loop averages; no totals are inferred."
+        },
+        "feature_comparison": {
+          "scans": [
+            {
+              "feature": {
+                "method": "Parallel Seq Scan",
+                "schema": "public",
+                "table": "orders",
+                "index": null
+              },
+              "original_count": 1,
+              "candidate_count": 1,
+              "count_delta": 0,
+              "change": "unchanged_count",
+              "original_occurrences": [
+                {
+                  "node_path": "0.0",
+                  "parent_path": "0",
+                  "measurement": "estimated_only",
+                  "actual_rows": null,
+                  "actual_loops": null,
+                  "missing_runtime_fields": [
+                    "Actual Rows",
+                    "Actual Loops"
+                  ]
+                }
+              ],
+              "candidate_occurrences": [
+                {
+                  "node_path": "0.0",
+                  "parent_path": "0",
+                  "measurement": "actual",
+                  "actual_rows": 412,
+                  "actual_loops": 2,
+                  "missing_runtime_fields": []
+                }
+              ]
+            }
+          ],
+          "tables": [
+            {
+              "feature": {
+                "schema": "public",
+                "table": "orders"
+              },
+              "original_count": 1,
+              "candidate_count": 1,
+              "count_delta": 0,
+              "change": "unchanged_count",
+              "original_occurrences": [
+                {
+                  "node_path": "0.0",
+                  "parent_path": "0",
+                  "measurement": "estimated_only",
+                  "actual_rows": null,
+                  "actual_loops": null,
+                  "missing_runtime_fields": [
+                    "Actual Rows",
+                    "Actual Loops"
+                  ]
+                }
+              ],
+              "candidate_occurrences": [
+                {
+                  "node_path": "0.0",
+                  "parent_path": "0",
+                  "measurement": "actual",
+                  "actual_rows": 412,
+                  "actual_loops": 2,
+                  "missing_runtime_fields": []
+                }
+              ]
+            }
+          ],
+          "indexes": [],
+          "joins": [],
+          "sorts": []
+        },
+        "scope": "Observed plan features and occurrence counts across all roots; no positional node matching.",
+        "interpretation": "Plan changes only. Equal feature counts do not imply identical trees or equivalent SQL results. Performance benefit requires the existing repeated-sampling workflow."
+      }
+    },
+    "single_file": {
+      "exit_code": 0,
+      "output": {
+        "status": "ok",
+        "plan_count": 1,
+        "plans": [
+          {
+            "document_index": 0,
+            "runtime_data_present": true,
+            "measurement": "runtime_present",
+            "planning_time_ms": 0.625,
+            "execution_time_ms": 24.578,
+            "tables": [
+              {
+                "schema": "public",
+                "name": "orders"
+              }
+            ],
+            "indexes": [],
+            "root": {
+              "node_id": "0",
+              "parent_id": null,
+              "node_type": "Gather",
+              "scan_method": null,
+              "measurement": "actual",
+              "details": {
+                "Node Type": "Gather",
+                "Parallel Aware": false,
+                "Startup Cost": 1000.0,
+                "Total Cost": 6510.1,
+                "Plan Rows": 1500,
+                "Plan Width": 27,
+                "Actual Rows": 825,
+                "Actual Loops": 1,
+                "Workers Planned": 1,
+                "Workers Launched": 1,
+                "Shared Hit Blocks": 2713,
+                "Shared Read Blocks": 0,
+                "Shared Dirtied Blocks": 0,
+                "Shared Written Blocks": 0,
+                "Local Hit Blocks": 0,
+                "Local Read Blocks": 0,
+                "Local Dirtied Blocks": 0,
+                "Local Written Blocks": 0,
+                "Temp Read Blocks": 0,
+                "Temp Written Blocks": 0
+              },
+              "children": [
+                {
+                  "node_id": "0.0",
+                  "parent_id": "0",
+                  "node_type": "Seq Scan",
+                  "scan_method": "Parallel Seq Scan",
+                  "measurement": "actual",
+                  "details": {
+                    "Node Type": "Seq Scan",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": true,
+                    "Relation Name": "orders",
+                    "Schema": "public",
+                    "Alias": "orders",
+                    "Startup Cost": 0.0,
+                    "Total Cost": 5360.1,
+                    "Plan Rows": 882,
+                    "Plan Width": 27,
+                    "Actual Rows": 412,
+                    "Actual Loops": 2,
+                    "Filter": "((orders.created_at)::date = '2025-06-15'::date)",
+                    "Rows Removed by Filter": 149590,
+                    "Shared Hit Blocks": 2713,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0
+                  },
+                  "children": []
+                }
+              ]
+            },
+            "observations": [
+              {
+                "kind": "sequential_scan",
+                "node_id": "0.0",
+                "scan_method": "Parallel Seq Scan",
+                "interpretation": "Observed scan method; bottleneck status requires measurement"
+              }
+            ]
+          }
+        ],
+        "interpretation": "Observations only, not bottleneck conclusions. Actual Rows are per-loop averages; no totals are inferred."
+      }
+    },
+    "invalid_second_file": {
+      "exit_code": 1,
+      "output": {
+        "status": "error",
+        "error_code": "invalid_json",
+        "message": "candidate: Invalid JSON at line 1, column 2"
+      }
+    }
+  }
+}
