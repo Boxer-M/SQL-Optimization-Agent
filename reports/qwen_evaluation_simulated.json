@@ -1,0 +1,3473 @@
+{
+  "mode": "simulated",
+  "planned_cases": [
+    {
+      "scenario": "orders_date_filter_2025_06_15",
+      "date": "2025-06-15",
+      "repeat": 1
+    },
+    {
+      "scenario": "orders_date_filter_2025_06_15",
+      "date": "2025-06-15",
+      "repeat": 2
+    },
+    {
+      "scenario": "orders_date_filter_2025_06_15",
+      "date": "2025-06-16",
+      "repeat": 1
+    },
+    {
+      "scenario": "orders_date_filter_2025_06_15",
+      "date": "2025-06-16",
+      "repeat": 2
+    },
+    {
+      "scenario": "orders_date_filter_2025_06_15",
+      "date": "2026-01-01",
+      "repeat": 1
+    },
+    {
+      "scenario": "orders_date_filter_2025_06_15",
+      "date": "2026-01-01",
+      "repeat": 2
+    },
+    {
+      "scenario": "orders_with_items_count",
+      "date": "2025-06-15",
+      "repeat": 1
+    },
+    {
+      "scenario": "orders_with_items_count",
+      "date": "2025-06-15",
+      "repeat": 2
+    },
+    {
+      "scenario": "orders_with_items_count",
+      "date": "2025-06-16",
+      "repeat": 1
+    },
+    {
+      "scenario": "orders_with_items_count",
+      "date": "2025-06-16",
+      "repeat": 2
+    },
+    {
+      "scenario": "orders_with_items_count",
+      "date": "2026-01-01",
+      "repeat": 1
+    },
+    {
+      "scenario": "orders_with_items_count",
+      "date": "2026-01-01",
+      "repeat": 2
+    }
+  ],
+  "maximum_model_requests": 0,
+  "requested_model": "qwen3.7-plus",
+  "started_at_utc": "2026-11-19T00:19:55.079685+00:00",
+  "status": "completed",
+  "results": [
+    {
+      "scenario": "orders_date_filter_2025_06_15",
+      "date": "2025-06-15",
+      "repeat": 1,
+      "status": "completed",
+      "stage": "complete",
+      "source": "controlled_model_response",
+      "model_id": "controlled-fixture-not-a-real-model",
+      "model_requests": 0,
+      "action": "date_range",
+      "suggestion": {
+        "action": "date_range",
+        "start": "2025-06-15 00:00:00",
+        "end": "2025-06-16 00:00:00",
+        "start_inclusive": true,
+        "end_inclusive": false,
+        "reason": "Use the timestamp B-tree with inclusive start and exclusive end."
+      },
+      "received_content": "{\"action\": \"date_range\", \"start\": \"2025-06-15 00:00:00\", \"end\": \"2025-06-16 00:00:00\", \"start_inclusive\": true, \"end_inclusive\": false, \"reason\": \"Use the timestamp B-tree with inclusive start and exclusive end.\"}",
+      "decision": "rewrite_verified",
+      "reason": "在本次测试数据上结果一致",
+      "model_request_ms": 0.0,
+      "optimization_elapsed_ms": 149.808,
+      "validation": {
+        "status": "passed",
+        "comparison": {
+          "original_rows": 825,
+          "candidate_rows": 825,
+          "columns_equal": true,
+          "rows_and_multiplicities_equal": true,
+          "equivalent": true,
+          "reason": "在本次测试数据上结果一致",
+          "missing_from_candidate": [],
+          "extra_in_candidate": [],
+          "columns": [
+            [
+              "customer_id",
+              23,
+              4,
+              null,
+              null
+            ],
+            [
+              "created_at",
+              1114,
+              8,
+              null,
+              null
+            ],
+            [
+              "status",
+              25,
+              null,
+              null,
+              null
+            ],
+            [
+              "amount",
+              1700,
+              null,
+              12,
+              2
+            ]
+          ]
+        },
+        "counts": null
+      },
+      "candidate": {
+        "sql": "SELECT customer_id, created_at, status, amount\nFROM public.orders\nWHERE created_at >= %s::timestamp without time zone\n  AND created_at < %s::timestamp without time zone",
+        "parameters": [
+          "2025-06-15 00:00:00",
+          "2025-06-16 00:00:00"
+        ]
+      },
+      "sql": null,
+      "parameters": [
+        "2025-06-15 00:00:00",
+        "2025-06-16 00:00:00"
+      ],
+      "date_context": {
+        "target_date": "2025-06-15",
+        "start": "2025-06-15 00:00:00",
+        "end": "2025-06-16 00:00:00",
+        "timestamp_type": "timestamp without time zone"
+      },
+      "benchmark": {
+        "warmups_per_query": 1,
+        "samples_per_query": 7,
+        "execution_order": [
+          "original",
+          "rewritten",
+          "original",
+          "rewritten",
+          "original",
+          "rewritten",
+          "original",
+          "rewritten",
+          "original",
+          "rewritten",
+          "original",
+          "rewritten",
+          "original",
+          "rewritten"
+        ],
+        "execution_ms": {
+          "original": [
+            7.631,
+            7.325,
+            6.732,
+            6.468,
+            6.141,
+            6.213,
+            6.293
+          ],
+          "rewritten": [
+            0.075,
+            0.071,
+            0.065,
+            0.06,
+            0.058,
+            0.059,
+            0.06
+          ]
+        },
+        "median_ms": {
+          "original": 6.468,
+          "rewritten": 0.06
+        },
+        "rewritten_time_change_percent": -99.07235621521335,
+        "spread_range_over_median": {
+          "original": 0.23036487322201613,
+          "rewritten": 0.28333333333333327
+        },
+        "variability_note": "本次两组极差均不超过中位数的 50%",
+        "method": "Natural planner settings; warm-cache EXPLAIN server execution time, not client transfer time",
+        "plan_variants": {
+          "original": [
+            {
+              "nodes": [
+                {
+                  "Node Type": "Gather",
+                  "Parallel Aware": false,
+                  "Actual Rows": 825,
+                  "Actual Loops": 1,
+                  "Shared Hit Blocks": 2713,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                },
+                {
+                  "Node Type": "Seq Scan",
+                  "Parallel Aware": true,
+                  "Relation Name": "orders",
+                  "Actual Rows": 412,
+                  "Actual Loops": 2,
+                  "Filter": "((created_at)::date = '2025-06-15'::date)",
+                  "Rows Removed by Filter": 149590,
+                  "Shared Hit Blocks": 2713,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                }
+              ],
+              "sample_numbers": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7
+              ]
+            }
+          ],
+          "rewritten": [
+            {
+              "nodes": [
+                {
+                  "Node Type": "Index Scan",
+                  "Parallel Aware": false,
+                  "Scan Direction": "Forward",
+                  "Index Name": "orders_created_at_idx",
+                  "Relation Name": "orders",
+                  "Actual Rows": 825,
+                  "Actual Loops": 1,
+                  "Index Cond": "((created_at >= '2025-06-15 00:00:00'::timestamp without time zone) AND (created_at < '2025-06-16 00:00:00'::timestamp without time zone))",
+                  "Shared Hit Blocks": 16,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                }
+              ],
+              "sample_numbers": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "scenario": "orders_date_filter_2025_06_15",
+      "date": "2025-06-15",
+      "repeat": 2,
+      "status": "completed",
+      "stage": "complete",
+      "source": "controlled_model_response",
+      "model_id": "controlled-fixture-not-a-real-model",
+      "model_requests": 0,
+      "action": "date_range",
+      "suggestion": {
+        "action": "date_range",
+        "start": "2025-06-15 00:00:00",
+        "end": "2025-06-16 00:00:00",
+        "start_inclusive": true,
+        "end_inclusive": false,
+        "reason": "Use the timestamp B-tree with inclusive start and exclusive end."
+      },
+      "received_content": "{\"action\": \"date_range\", \"start\": \"2025-06-15 00:00:00\", \"end\": \"2025-06-16 00:00:00\", \"start_inclusive\": true, \"end_inclusive\": false, \"reason\": \"Use the timestamp B-tree with inclusive start and exclusive end.\"}",
+      "decision": "rewrite_verified",
+      "reason": "在本次测试数据上结果一致",
+      "model_request_ms": 0.0,
+      "optimization_elapsed_ms": 91.349,
+      "validation": {
+        "status": "passed",
+        "comparison": {
+          "original_rows": 825,
+          "candidate_rows": 825,
+          "columns_equal": true,
+          "rows_and_multiplicities_equal": true,
+          "equivalent": true,
+          "reason": "在本次测试数据上结果一致",
+          "missing_from_candidate": [],
+          "extra_in_candidate": [],
+          "columns": [
+            [
+              "customer_id",
+              23,
+              4,
+              null,
+              null
+            ],
+            [
+              "created_at",
+              1114,
+              8,
+              null,
+              null
+            ],
+            [
+              "status",
+              25,
+              null,
+              null,
+              null
+            ],
+            [
+              "amount",
+              1700,
+              null,
+              12,
+              2
+            ]
+          ]
+        },
+        "counts": null
+      },
+      "candidate": {
+        "sql": "SELECT customer_id, created_at, status, amount\nFROM public.orders\nWHERE created_at >= %s::timestamp without time zone\n  AND created_at < %s::timestamp without time zone",
+        "parameters": [
+          "2025-06-15 00:00:00",
+          "2025-06-16 00:00:00"
+        ]
+      },
+      "sql": null,
+      "parameters": [
+        "2025-06-15 00:00:00",
+        "2025-06-16 00:00:00"
+      ],
+      "date_context": {
+        "target_date": "2025-06-15",
+        "start": "2025-06-15 00:00:00",
+        "end": "2025-06-16 00:00:00",
+        "timestamp_type": "timestamp without time zone"
+      },
+      "benchmark": {
+        "warmups_per_query": 1,
+        "samples_per_query": 7,
+        "execution_order": [
+          "original",
+          "rewritten",
+          "original",
+          "rewritten",
+          "original",
+          "rewritten",
+          "original",
+          "rewritten",
+          "original",
+          "rewritten",
+          "original",
+          "rewritten",
+          "original",
+          "rewritten"
+        ],
+        "execution_ms": {
+          "original": [
+            5.883,
+            6.02,
+            6.06,
+            5.891,
+            5.979,
+            5.912,
+            5.962
+          ],
+          "rewritten": [
+            0.06,
+            0.061,
+            0.069,
+            0.054,
+            0.055,
+            0.073,
+            0.056
+          ]
+        },
+        "median_ms": {
+          "original": 5.962,
+          "rewritten": 0.06
+        },
+        "rewritten_time_change_percent": -98.99362629989936,
+        "spread_range_over_median": {
+          "original": 0.029688024152968735,
+          "rewritten": 0.3166666666666666
+        },
+        "variability_note": "本次两组极差均不超过中位数的 50%",
+        "method": "Natural planner settings; warm-cache EXPLAIN server execution time, not client transfer time",
+        "plan_variants": {
+          "original": [
+            {
+              "nodes": [
+                {
+                  "Node Type": "Gather",
+                  "Parallel Aware": false,
+                  "Actual Rows": 825,
+                  "Actual Loops": 1,
+                  "Shared Hit Blocks": 2713,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                },
+                {
+                  "Node Type": "Seq Scan",
+                  "Parallel Aware": true,
+                  "Relation Name": "orders",
+                  "Actual Rows": 412,
+                  "Actual Loops": 2,
+                  "Filter": "((created_at)::date = '2025-06-15'::date)",
+                  "Rows Removed by Filter": 149590,
+                  "Shared Hit Blocks": 2713,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                }
+              ],
+              "sample_numbers": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7
+              ]
+            }
+          ],
+          "rewritten": [
+            {
+              "nodes": [
+                {
+                  "Node Type": "Index Scan",
+                  "Parallel Aware": false,
+                  "Scan Direction": "Forward",
+                  "Index Name": "orders_created_at_idx",
+                  "Relation Name": "orders",
+                  "Actual Rows": 825,
+                  "Actual Loops": 1,
+                  "Index Cond": "((created_at >= '2025-06-15 00:00:00'::timestamp without time zone) AND (created_at < '2025-06-16 00:00:00'::timestamp without time zone))",
+                  "Shared Hit Blocks": 16,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                }
+              ],
+              "sample_numbers": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "scenario": "orders_date_filter_2025_06_15",
+      "date": "2025-06-16",
+      "repeat": 1,
+      "status": "completed",
+      "stage": "complete",
+      "source": "controlled_model_response",
+      "model_id": "controlled-fixture-not-a-real-model",
+      "model_requests": 0,
+      "action": "date_range",
+      "suggestion": {
+        "action": "date_range",
+        "start": "2025-06-16 00:00:00",
+        "end": "2025-06-17 00:00:00",
+        "start_inclusive": true,
+        "end_inclusive": false,
+        "reason": "Use the timestamp B-tree with inclusive start and exclusive end."
+      },
+      "received_content": "{\"action\": \"date_range\", \"start\": \"2025-06-16 00:00:00\", \"end\": \"2025-06-17 00:00:00\", \"start_inclusive\": true, \"end_inclusive\": false, \"reason\": \"Use the timestamp B-tree with inclusive start and exclusive end.\"}",
+      "decision": "rewrite_verified",
+      "reason": "在本次测试数据上结果一致",
+      "model_request_ms": 0.0,
+      "optimization_elapsed_ms": 90.333,
+      "validation": {
+        "status": "passed",
+        "comparison": {
+          "original_rows": 823,
+          "candidate_rows": 823,
+          "columns_equal": true,
+          "rows_and_multiplicities_equal": true,
+          "equivalent": true,
+          "reason": "在本次测试数据上结果一致",
+          "missing_from_candidate": [],
+          "extra_in_candidate": [],
+          "columns": [
+            [
+              "customer_id",
+              23,
+              4,
+              null,
+              null
+            ],
+            [
+              "created_at",
+              1114,
+              8,
+              null,
+              null
+            ],
+            [
+              "status",
+              25,
+              null,
+              null,
+              null
+            ],
+            [
+              "amount",
+              1700,
+              null,
+              12,
+              2
+            ]
+          ]
+        },
+        "counts": null
+      },
+      "candidate": {
+        "sql": "SELECT customer_id, created_at, status, amount\nFROM public.orders\nWHERE created_at >= %s::timestamp without time zone\n  AND created_at < %s::timestamp without time zone",
+        "parameters": [
+          "2025-06-16 00:00:00",
+          "2025-06-17 00:00:00"
+        ]
+      },
+      "sql": null,
+      "parameters": [
+        "2025-06-16 00:00:00",
+        "2025-06-17 00:00:00"
+      ],
+      "date_context": {
+        "target_date": "2025-06-16",
+        "start": "2025-06-16 00:00:00",
+        "end": "2025-06-17 00:00:00",
+        "timestamp_type": "timestamp without time zone"
+      },
+      "benchmark": {
+        "warmups_per_query": 1,
+        "samples_per_query": 7,
+        "execution_order": [
+          "original",
+          "rewritten",
+          "original",
+          "rewritten",
+          "original",
+          "rewritten",
+          "original",
+          "rewritten",
+          "original",
+          "rewritten",
+          "original",
+          "rewritten",
+          "original",
+          "rewritten"
+        ],
+        "execution_ms": {
+          "original": [
+            5.979,
+            6.235,
+            5.826,
+            5.976,
+            6.329,
+            6.061,
+            5.84
+          ],
+          "rewritten": [
+            0.059,
+            0.064,
+            0.055,
+            0.057,
+            0.058,
+            0.057,
+            0.058
+          ]
+        },
+        "median_ms": {
+          "original": 5.979,
+          "rewritten": 0.058
+        },
+        "rewritten_time_change_percent": -99.02993811674193,
+        "spread_range_over_median": {
+          "original": 0.08412778056531195,
+          "rewritten": 0.15517241379310345
+        },
+        "variability_note": "本次两组极差均不超过中位数的 50%",
+        "method": "Natural planner settings; warm-cache EXPLAIN server execution time, not client transfer time",
+        "plan_variants": {
+          "original": [
+            {
+              "nodes": [
+                {
+                  "Node Type": "Gather",
+                  "Parallel Aware": false,
+                  "Actual Rows": 823,
+                  "Actual Loops": 1,
+                  "Shared Hit Blocks": 2713,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                },
+                {
+                  "Node Type": "Seq Scan",
+                  "Parallel Aware": true,
+                  "Relation Name": "orders",
+                  "Actual Rows": 412,
+                  "Actual Loops": 2,
+                  "Filter": "((created_at)::date = '2025-06-16'::date)",
+                  "Rows Removed by Filter": 149591,
+                  "Shared Hit Blocks": 2713,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                }
+              ],
+              "sample_numbers": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7
+              ]
+            }
+          ],
+          "rewritten": [
+            {
+              "nodes": [
+                {
+                  "Node Type": "Index Scan",
+                  "Parallel Aware": false,
+                  "Scan Direction": "Forward",
+                  "Index Name": "orders_created_at_idx",
+                  "Relation Name": "orders",
+                  "Actual Rows": 823,
+                  "Actual Loops": 1,
+                  "Index Cond": "((created_at >= '2025-06-16 00:00:00'::timestamp without time zone) AND (created_at < '2025-06-17 00:00:00'::timestamp without time zone))",
+                  "Shared Hit Blocks": 15,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                }
+              ],
+              "sample_numbers": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "scenario": "orders_date_filter_2025_06_15",
+      "date": "2025-06-16",
+      "repeat": 2,
+      "status": "completed",
+      "stage": "complete",
+      "source": "controlled_model_response",
+      "model_id": "controlled-fixture-not-a-real-model",
+      "model_requests": 0,
+      "action": "date_range",
+      "suggestion": {
+        "action": "date_range",
+        "start": "2025-06-16 00:00:00",
+        "end": "2025-06-17 00:00:00",
+        "start_inclusive": true,
+        "end_inclusive": false,
+        "reason": "Use the timestamp B-tree with inclusive start and exclusive end."
+      },
+      "received_content": "{\"action\": \"date_range\", \"start\": \"2025-06-16 00:00:00\", \"end\": \"2025-06-17 00:00:00\", \"start_inclusive\": true, \"end_inclusive\": false, \"reason\": \"Use the timestamp B-tree with inclusive start and exclusive end.\"}",
+      "decision": "rewrite_verified",
+      "reason": "在本次测试数据上结果一致",
+      "model_request_ms": 0.0,
+      "optimization_elapsed_ms": 100.614,
+      "validation": {
+        "status": "passed",
+        "comparison": {
+          "original_rows": 823,
+          "candidate_rows": 823,
+          "columns_equal": true,
+          "rows_and_multiplicities_equal": true,
+          "equivalent": true,
+          "reason": "在本次测试数据上结果一致",
+          "missing_from_candidate": [],
+          "extra_in_candidate": [],
+          "columns": [
+            [
+              "customer_id",
+              23,
+              4,
+              null,
+              null
+            ],
+            [
+              "created_at",
+              1114,
+              8,
+              null,
+              null
+            ],
+            [
+              "status",
+              25,
+              null,
+              null,
+              null
+            ],
+            [
+              "amount",
+              1700,
+              null,
+              12,
+              2
+            ]
+          ]
+        },
+        "counts": null
+      },
+      "candidate": {
+        "sql": "SELECT customer_id, created_at, status, amount\nFROM public.orders\nWHERE created_at >= %s::timestamp without time zone\n  AND created_at < %s::timestamp without time zone",
+        "parameters": [
+          "2025-06-16 00:00:00",
+          "2025-06-17 00:00:00"
+        ]
+      },
+      "sql": null,
+      "parameters": [
+        "2025-06-16 00:00:00",
+        "2025-06-17 00:00:00"
+      ],
+      "date_context": {
+        "target_date": "2025-06-16",
+        "start": "2025-06-16 00:00:00",
+        "end": "2025-06-17 00:00:00",
+        "timestamp_type": "timestamp without time zone"
+      },
+      "benchmark": {
+        "warmups_per_query": 1,
+        "samples_per_query": 7,
+        "execution_order": [
+          "original",
+          "rewritten",
+          "original",
+          "rewritten",
+          "original",
+          "rewritten",
+          "original",
+          "rewritten",
+          "original",
+          "rewritten",
+          "original",
+          "rewritten",
+          "original",
+          "rewritten"
+        ],
+        "execution_ms": {
+          "original": [
+            6.004,
+            5.973,
+            5.91,
+            5.841,
+            5.873,
+            5.937,
+            5.772
+          ],
+          "rewritten": [
+            0.056,
+            0.055,
+            0.058,
+            0.054,
+            0.056,
+            0.052,
+            0.055
+          ]
+        },
+        "median_ms": {
+          "original": 5.91,
+          "rewritten": 0.055
+        },
+        "rewritten_time_change_percent": -99.06937394247038,
+        "spread_range_over_median": {
+          "original": 0.03925549915397619,
+          "rewritten": 0.10909090909090918
+        },
+        "variability_note": "本次两组极差均不超过中位数的 50%",
+        "method": "Natural planner settings; warm-cache EXPLAIN server execution time, not client transfer time",
+        "plan_variants": {
+          "original": [
+            {
+              "nodes": [
+                {
+                  "Node Type": "Gather",
+                  "Parallel Aware": false,
+                  "Actual Rows": 823,
+                  "Actual Loops": 1,
+                  "Shared Hit Blocks": 2713,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                },
+                {
+                  "Node Type": "Seq Scan",
+                  "Parallel Aware": true,
+                  "Relation Name": "orders",
+                  "Actual Rows": 412,
+                  "Actual Loops": 2,
+                  "Filter": "((created_at)::date = '2025-06-16'::date)",
+                  "Rows Removed by Filter": 149591,
+                  "Shared Hit Blocks": 2713,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                }
+              ],
+              "sample_numbers": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7
+              ]
+            }
+          ],
+          "rewritten": [
+            {
+              "nodes": [
+                {
+                  "Node Type": "Index Scan",
+                  "Parallel Aware": false,
+                  "Scan Direction": "Forward",
+                  "Index Name": "orders_created_at_idx",
+                  "Relation Name": "orders",
+                  "Actual Rows": 823,
+                  "Actual Loops": 1,
+                  "Index Cond": "((created_at >= '2025-06-16 00:00:00'::timestamp without time zone) AND (created_at < '2025-06-17 00:00:00'::timestamp without time zone))",
+                  "Shared Hit Blocks": 15,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                }
+              ],
+              "sample_numbers": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "scenario": "orders_date_filter_2025_06_15",
+      "date": "2026-01-01",
+      "repeat": 1,
+      "status": "completed",
+      "stage": "complete",
+      "source": "controlled_model_response",
+      "model_id": "controlled-fixture-not-a-real-model",
+      "model_requests": 0,
+      "action": "date_range",
+      "suggestion": {
+        "action": "date_range",
+        "start": "2026-01-01 00:00:00",
+        "end": "2026-01-02 00:00:00",
+        "start_inclusive": true,
+        "end_inclusive": false,
+        "reason": "Use the timestamp B-tree with inclusive start and exclusive end."
+      },
+      "received_content": "{\"action\": \"date_range\", \"start\": \"2026-01-01 00:00:00\", \"end\": \"2026-01-02 00:00:00\", \"start_inclusive\": true, \"end_inclusive\": false, \"reason\": \"Use the timestamp B-tree with inclusive start and exclusive end.\"}",
+      "decision": "rewrite_verified",
+      "reason": "在本次测试数据上结果一致",
+      "model_request_ms": 0.0,
+      "optimization_elapsed_ms": 89.89,
+      "validation": {
+        "status": "passed",
+        "comparison": {
+          "original_rows": 0,
+          "candidate_rows": 0,
+          "columns_equal": true,
+          "rows_and_multiplicities_equal": true,
+          "equivalent": true,
+          "reason": "在本次测试数据上结果一致",
+          "missing_from_candidate": [],
+          "extra_in_candidate": [],
+          "columns": [
+            [
+              "customer_id",
+              23,
+              4,
+              null,
+              null
+            ],
+            [
+              "created_at",
+              1114,
+              8,
+              null,
+              null
+            ],
+            [
+              "status",
+              25,
+              null,
+              null,
+              null
+            ],
+            [
+              "amount",
+              1700,
+              null,
+              12,
+              2
+            ]
+          ]
+        },
+        "counts": null
+      },
+      "candidate": {
+        "sql": "SELECT customer_id, created_at, status, amount\nFROM public.orders\nWHERE created_at >= %s::timestamp without time zone\n  AND created_at < %s::timestamp without time zone",
+        "parameters": [
+          "2026-01-01 00:00:00",
+          "2026-01-02 00:00:00"
+        ]
+      },
+      "sql": null,
+      "parameters": [
+        "2026-01-01 00:00:00",
+        "2026-01-02 00:00:00"
+      ],
+      "date_context": {
+        "target_date": "2026-01-01",
+        "start": "2026-01-01 00:00:00",
+        "end": "2026-01-02 00:00:00",
+        "timestamp_type": "timestamp without time zone"
+      },
+      "benchmark": {
+        "warmups_per_query": 1,
+        "samples_per_query": 7,
+        "execution_order": [
+          "original",
+          "rewritten",
+          "original",
+          "rewritten",
+          "original",
+          "rewritten",
+          "original",
+          "rewritten",
+          "original",
+          "rewritten",
+          "original",
+          "rewritten",
+          "original",
+          "rewritten"
+        ],
+        "execution_ms": {
+          "original": [
+            5.745,
+            5.882,
+            5.767,
+            5.771,
+            5.713,
+            5.718,
+            5.776
+          ],
+          "rewritten": [
+            0.003,
+            0.003,
+            0.002,
+            0.003,
+            0.002,
+            0.003,
+            0.003
+          ]
+        },
+        "median_ms": {
+          "original": 5.767,
+          "rewritten": 0.003
+        },
+        "rewritten_time_change_percent": -99.94797988555575,
+        "spread_range_over_median": {
+          "original": 0.02930466447026176,
+          "rewritten": 0.3333333333333333
+        },
+        "variability_note": "本次两组极差均不超过中位数的 50%",
+        "method": "Natural planner settings; warm-cache EXPLAIN server execution time, not client transfer time",
+        "plan_variants": {
+          "original": [
+            {
+              "nodes": [
+                {
+                  "Node Type": "Gather",
+                  "Parallel Aware": false,
+                  "Actual Rows": 0,
+                  "Actual Loops": 1,
+                  "Shared Hit Blocks": 2713,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                },
+                {
+                  "Node Type": "Seq Scan",
+                  "Parallel Aware": true,
+                  "Relation Name": "orders",
+                  "Actual Rows": 0,
+                  "Actual Loops": 2,
+                  "Filter": "((created_at)::date = '2026-01-01'::date)",
+                  "Rows Removed by Filter": 150002,
+                  "Shared Hit Blocks": 2713,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                }
+              ],
+              "sample_numbers": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7
+              ]
+            }
+          ],
+          "rewritten": [
+            {
+              "nodes": [
+                {
+                  "Node Type": "Index Scan",
+                  "Parallel Aware": false,
+                  "Scan Direction": "Forward",
+                  "Index Name": "orders_created_at_idx",
+                  "Relation Name": "orders",
+                  "Actual Rows": 0,
+                  "Actual Loops": 1,
+                  "Index Cond": "((created_at >= '2026-01-01 00:00:00'::timestamp without time zone) AND (created_at < '2026-01-02 00:00:00'::timestamp without time zone))",
+                  "Shared Hit Blocks": 3,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                }
+              ],
+              "sample_numbers": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "scenario": "orders_date_filter_2025_06_15",
+      "date": "2026-01-01",
+      "repeat": 2,
+      "status": "completed",
+      "stage": "complete",
+      "source": "controlled_model_response",
+      "model_id": "controlled-fixture-not-a-real-model",
+      "model_requests": 0,
+      "action": "date_range",
+      "suggestion": {
+        "action": "date_range",
+        "start": "2026-01-01 00:00:00",
+        "end": "2026-01-02 00:00:00",
+        "start_inclusive": true,
+        "end_inclusive": false,
+        "reason": "Use the timestamp B-tree with inclusive start and exclusive end."
+      },
+      "received_content": "{\"action\": \"date_range\", \"start\": \"2026-01-01 00:00:00\", \"end\": \"2026-01-02 00:00:00\", \"start_inclusive\": true, \"end_inclusive\": false, \"reason\": \"Use the timestamp B-tree with inclusive start and exclusive end.\"}",
+      "decision": "rewrite_verified",
+      "reason": "在本次测试数据上结果一致",
+      "model_request_ms": 0.0,
+      "optimization_elapsed_ms": 92.295,
+      "validation": {
+        "status": "passed",
+        "comparison": {
+          "original_rows": 0,
+          "candidate_rows": 0,
+          "columns_equal": true,
+          "rows_and_multiplicities_equal": true,
+          "equivalent": true,
+          "reason": "在本次测试数据上结果一致",
+          "missing_from_candidate": [],
+          "extra_in_candidate": [],
+          "columns": [
+            [
+              "customer_id",
+              23,
+              4,
+              null,
+              null
+            ],
+            [
+              "created_at",
+              1114,
+              8,
+              null,
+              null
+            ],
+            [
+              "status",
+              25,
+              null,
+              null,
+              null
+            ],
+            [
+              "amount",
+              1700,
+              null,
+              12,
+              2
+            ]
+          ]
+        },
+        "counts": null
+      },
+      "candidate": {
+        "sql": "SELECT customer_id, created_at, status, amount\nFROM public.orders\nWHERE created_at >= %s::timestamp without time zone\n  AND created_at < %s::timestamp without time zone",
+        "parameters": [
+          "2026-01-01 00:00:00",
+          "2026-01-02 00:00:00"
+        ]
+      },
+      "sql": null,
+      "parameters": [
+        "2026-01-01 00:00:00",
+        "2026-01-02 00:00:00"
+      ],
+      "date_context": {
+        "target_date": "2026-01-01",
+        "start": "2026-01-01 00:00:00",
+        "end": "2026-01-02 00:00:00",
+        "timestamp_type": "timestamp without time zone"
+      },
+      "benchmark": {
+        "warmups_per_query": 1,
+        "samples_per_query": 7,
+        "execution_order": [
+          "original",
+          "rewritten",
+          "original",
+          "rewritten",
+          "original",
+          "rewritten",
+          "original",
+          "rewritten",
+          "original",
+          "rewritten",
+          "original",
+          "rewritten",
+          "original",
+          "rewritten"
+        ],
+        "execution_ms": {
+          "original": [
+            5.824,
+            5.747,
+            5.878,
+            5.645,
+            5.912,
+            5.857,
+            5.806
+          ],
+          "rewritten": [
+            0.003,
+            0.003,
+            0.002,
+            0.003,
+            0.003,
+            0.003,
+            0.003
+          ]
+        },
+        "median_ms": {
+          "original": 5.824,
+          "rewritten": 0.003
+        },
+        "rewritten_time_change_percent": -99.94848901098901,
+        "spread_range_over_median": {
+          "original": 0.04584478021978028,
+          "rewritten": 0.3333333333333333
+        },
+        "variability_note": "本次两组极差均不超过中位数的 50%",
+        "method": "Natural planner settings; warm-cache EXPLAIN server execution time, not client transfer time",
+        "plan_variants": {
+          "original": [
+            {
+              "nodes": [
+                {
+                  "Node Type": "Gather",
+                  "Parallel Aware": false,
+                  "Actual Rows": 0,
+                  "Actual Loops": 1,
+                  "Shared Hit Blocks": 2713,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                },
+                {
+                  "Node Type": "Seq Scan",
+                  "Parallel Aware": true,
+                  "Relation Name": "orders",
+                  "Actual Rows": 0,
+                  "Actual Loops": 2,
+                  "Filter": "((created_at)::date = '2026-01-01'::date)",
+                  "Rows Removed by Filter": 150002,
+                  "Shared Hit Blocks": 2713,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                }
+              ],
+              "sample_numbers": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7
+              ]
+            }
+          ],
+          "rewritten": [
+            {
+              "nodes": [
+                {
+                  "Node Type": "Index Scan",
+                  "Parallel Aware": false,
+                  "Scan Direction": "Forward",
+                  "Index Name": "orders_created_at_idx",
+                  "Relation Name": "orders",
+                  "Actual Rows": 0,
+                  "Actual Loops": 1,
+                  "Index Cond": "((created_at >= '2026-01-01 00:00:00'::timestamp without time zone) AND (created_at < '2026-01-02 00:00:00'::timestamp without time zone))",
+                  "Shared Hit Blocks": 3,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                }
+              ],
+              "sample_numbers": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "scenario": "orders_with_items_count",
+      "date": "2025-06-15",
+      "repeat": 1,
+      "status": "completed",
+      "stage": "complete",
+      "source": "controlled_model_response_order_items",
+      "model_id": "controlled-fixture-not-a-real-model",
+      "model_requests": 0,
+      "action": "exists",
+      "suggestion": {
+        "action": "exists",
+        "reason": "Controlled EXISTS suggestion."
+      },
+      "received_content": "{\"action\":\"exists\",\"reason\":\"Controlled EXISTS suggestion.\"}",
+      "decision": "rewrite_verified",
+      "reason": "在本次测试数据上结果一致",
+      "model_request_ms": 0.0,
+      "optimization_elapsed_ms": 85.71,
+      "validation": {
+        "status": "passed",
+        "comparison": null,
+        "counts": {
+          "join_count_distinct": 551,
+          "candidate_count": 551
+        },
+        "membership": {
+          "comparison": {
+            "original_rows": 551,
+            "candidate_rows": 551,
+            "columns_equal": true,
+            "rows_and_multiplicities_equal": true,
+            "equivalent": true,
+            "reason": "在本次测试数据上结果一致",
+            "missing_from_candidate": [],
+            "extra_in_candidate": [],
+            "columns": [
+              [
+                "order_id",
+                20,
+                8,
+                null,
+                null
+              ]
+            ]
+          },
+          "join_minus_candidate": [],
+          "candidate_minus_join": [],
+          "join_minus_candidate_count": 0,
+          "candidate_minus_join_count": 0
+        }
+      },
+      "candidate": {
+        "kind": "exists",
+        "sql": "SELECT COUNT(*) AS order_count\nFROM public.orders AS o\nWHERE o.created_at >= %s::timestamp AND o.created_at < %s::timestamp AND EXISTS (SELECT 1 FROM public.order_items AS i WHERE i.order_id = o.order_id)",
+        "order_ids_sql": "SELECT o.order_id\nFROM public.orders AS o\nWHERE o.created_at >= %s::timestamp AND o.created_at < %s::timestamp AND EXISTS (SELECT 1 FROM public.order_items AS i WHERE i.order_id = o.order_id)"
+      },
+      "sql": {
+        "join_count_distinct": "SELECT COUNT(DISTINCT o.order_id) AS order_count\nFROM public.orders AS o JOIN public.order_items AS i ON i.order_id = o.order_id\nWHERE o.created_at >= %s::timestamp AND o.created_at < %s::timestamp",
+        "candidate_count": "SELECT COUNT(*) AS order_count\nFROM public.orders AS o\nWHERE o.created_at >= %s::timestamp AND o.created_at < %s::timestamp AND EXISTS (SELECT 1 FROM public.order_items AS i WHERE i.order_id = o.order_id)",
+        "join_order_ids": "SELECT DISTINCT o.order_id\nFROM public.orders AS o JOIN public.order_items AS i ON i.order_id = o.order_id\nWHERE o.created_at >= %s::timestamp AND o.created_at < %s::timestamp",
+        "candidate_order_ids": "SELECT o.order_id\nFROM public.orders AS o\nWHERE o.created_at >= %s::timestamp AND o.created_at < %s::timestamp AND EXISTS (SELECT 1 FROM public.order_items AS i WHERE i.order_id = o.order_id)"
+      },
+      "parameters": [
+        "2025-06-15 00:00:00",
+        "2025-06-16 00:00:00"
+      ],
+      "date_context": {
+        "target_date": "2025-06-15",
+        "start": "2025-06-15 00:00:00",
+        "end": "2025-06-16 00:00:00",
+        "timestamp_type": "timestamp without time zone"
+      },
+      "benchmark": {
+        "warmups_per_query": 1,
+        "samples_per_query": 7,
+        "execution_order": [
+          "original",
+          "rewritten",
+          "original",
+          "rewritten",
+          "original",
+          "rewritten",
+          "original",
+          "rewritten",
+          "original",
+          "rewritten",
+          "original",
+          "rewritten",
+          "original",
+          "rewritten"
+        ],
+        "execution_ms": {
+          "original": [
+            0.393,
+            0.402,
+            0.43,
+            0.4,
+            0.401,
+            0.394,
+            0.421
+          ],
+          "rewritten": [
+            0.312,
+            0.347,
+            0.326,
+            0.318,
+            0.32,
+            0.318,
+            0.349
+          ]
+        },
+        "median_ms": {
+          "original": 0.401,
+          "rewritten": 0.32
+        },
+        "rewritten_time_change_percent": -20.1995012468828,
+        "spread_range_over_median": {
+          "original": 0.09226932668329171,
+          "rewritten": 0.11562499999999992
+        },
+        "variability_note": "本次两组极差均不超过中位数的 50%",
+        "method": "Natural planner settings; warm-cache EXPLAIN server execution time, not client transfer time",
+        "plan_variants": {
+          "original": [
+            {
+              "nodes": [
+                {
+                  "Node Type": "Aggregate",
+                  "Parallel Aware": false,
+                  "Actual Rows": 1,
+                  "Actual Loops": 1,
+                  "Shared Hit Blocks": 2492,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                },
+                {
+                  "Node Type": "Sort",
+                  "Parallel Aware": false,
+                  "Actual Rows": 1103,
+                  "Actual Loops": 1,
+                  "Sort Key": [
+                    "o.order_id"
+                  ],
+                  "Sort Method": "quicksort",
+                  "Sort Space Used": 49,
+                  "Sort Space Type": "Memory",
+                  "Shared Hit Blocks": 2492,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                },
+                {
+                  "Node Type": "Nested Loop",
+                  "Parallel Aware": false,
+                  "Join Type": "Inner",
+                  "Actual Rows": 1103,
+                  "Actual Loops": 1,
+                  "Inner Unique": false,
+                  "Shared Hit Blocks": 2492,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                },
+                {
+                  "Node Type": "Index Scan",
+                  "Parallel Aware": false,
+                  "Scan Direction": "Forward",
+                  "Index Name": "orders_created_at_idx",
+                  "Relation Name": "orders",
+                  "Actual Rows": 825,
+                  "Actual Loops": 1,
+                  "Index Cond": "((created_at >= '2025-06-15 00:00:00'::timestamp without time zone) AND (created_at < '2025-06-16 00:00:00'::timestamp without time zone))",
+                  "Shared Hit Blocks": 16,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                },
+                {
+                  "Node Type": "Index Only Scan",
+                  "Parallel Aware": false,
+                  "Scan Direction": "Forward",
+                  "Index Name": "order_items_order_id_idx",
+                  "Relation Name": "order_items",
+                  "Actual Rows": 1,
+                  "Actual Loops": 825,
+                  "Index Cond": "(order_id = o.order_id)",
+                  "Heap Fetches": 0,
+                  "Shared Hit Blocks": 2476,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                }
+              ],
+              "sample_numbers": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7
+              ]
+            }
+          ],
+          "rewritten": [
+            {
+              "nodes": [
+                {
+                  "Node Type": "Aggregate",
+                  "Parallel Aware": false,
+                  "Actual Rows": 1,
+                  "Actual Loops": 1,
+                  "Shared Hit Blocks": 2492,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                },
+                {
+                  "Node Type": "Nested Loop",
+                  "Parallel Aware": false,
+                  "Join Type": "Semi",
+                  "Actual Rows": 551,
+                  "Actual Loops": 1,
+                  "Inner Unique": false,
+                  "Shared Hit Blocks": 2492,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                },
+                {
+                  "Node Type": "Index Scan",
+                  "Parallel Aware": false,
+                  "Scan Direction": "Forward",
+                  "Index Name": "orders_created_at_idx",
+                  "Relation Name": "orders",
+                  "Actual Rows": 825,
+                  "Actual Loops": 1,
+                  "Index Cond": "((created_at >= '2025-06-15 00:00:00'::timestamp without time zone) AND (created_at < '2025-06-16 00:00:00'::timestamp without time zone))",
+                  "Shared Hit Blocks": 16,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                },
+                {
+                  "Node Type": "Index Only Scan",
+                  "Parallel Aware": false,
+                  "Scan Direction": "Forward",
+                  "Index Name": "order_items_order_id_idx",
+                  "Relation Name": "order_items",
+                  "Actual Rows": 1,
+                  "Actual Loops": 825,
+                  "Index Cond": "(order_id = o.order_id)",
+                  "Heap Fetches": 0,
+                  "Shared Hit Blocks": 2476,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                }
+              ],
+              "sample_numbers": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "scenario": "orders_with_items_count",
+      "date": "2025-06-15",
+      "repeat": 2,
+      "status": "completed",
+      "stage": "complete",
+      "source": "controlled_model_response_order_items",
+      "model_id": "controlled-fixture-not-a-real-model",
+      "model_requests": 0,
+      "action": "exists",
+      "suggestion": {
+        "action": "exists",
+        "reason": "Controlled EXISTS suggestion."
+      },
+      "received_content": "{\"action\":\"exists\",\"reason\":\"Controlled EXISTS suggestion.\"}",
+      "decision": "rewrite_verified",
+      "reason": "在本次测试数据上结果一致",
+      "model_request_ms": 0.0,
+      "optimization_elapsed_ms": 70.56,
+      "validation": {
+        "status": "passed",
+        "comparison": null,
+        "counts": {
+          "join_count_distinct": 551,
+          "candidate_count": 551
+        },
+        "membership": {
+          "comparison": {
+            "original_rows": 551,
+            "candidate_rows": 551,
+            "columns_equal": true,
+            "rows_and_multiplicities_equal": true,
+            "equivalent": true,
+            "reason": "在本次测试数据上结果一致",
+            "missing_from_candidate": [],
+            "extra_in_candidate": [],
+            "columns": [
+              [
+                "order_id",
+                20,
+                8,
+                null,
+                null
+              ]
+            ]
+          },
+          "join_minus_candidate": [],
+          "candidate_minus_join": [],
+          "join_minus_candidate_count": 0,
+          "candidate_minus_join_count": 0
+        }
+      },
+      "candidate": {
+        "kind": "exists",
+        "sql": "SELECT COUNT(*) AS order_count\nFROM public.orders AS o\nWHERE o.created_at >= %s::timestamp AND o.created_at < %s::timestamp AND EXISTS (SELECT 1 FROM public.order_items AS i WHERE i.order_id = o.order_id)",
+        "order_ids_sql": "SELECT o.order_id\nFROM public.orders AS o\nWHERE o.created_at >= %s::timestamp AND o.created_at < %s::timestamp AND EXISTS (SELECT 1 FROM public.order_items AS i WHERE i.order_id = o.order_id)"
+      },
+      "sql": {
+        "join_count_distinct": "SELECT COUNT(DISTINCT o.order_id) AS order_count\nFROM public.orders AS o JOIN public.order_items AS i ON i.order_id = o.order_id\nWHERE o.created_at >= %s::timestamp AND o.created_at < %s::timestamp",
+        "candidate_count": "SELECT COUNT(*) AS order_count\nFROM public.orders AS o\nWHERE o.created_at >= %s::timestamp AND o.created_at < %s::timestamp AND EXISTS (SELECT 1 FROM public.order_items AS i WHERE i.order_id = o.order_id)",
+        "join_order_ids": "SELECT DISTINCT o.order_id\nFROM public.orders AS o JOIN public.order_items AS i ON i.order_id = o.order_id\nWHERE o.created_at >= %s::timestamp AND o.created_at < %s::timestamp",
+        "candidate_order_ids": "SELECT o.order_id\nFROM public.orders AS o\nWHERE o.created_at >= %s::timestamp AND o.created_at < %s::timestamp AND EXISTS (SELECT 1 FROM public.order_items AS i WHERE i.order_id = o.order_id)"
+      },
+      "parameters": [
+        "2025-06-15 00:00:00",
+        "2025-06-16 00:00:00"
+      ],
+      "date_context": {
+        "target_date": "2025-06-15",
+        "start": "2025-06-15 00:00:00",
+        "end": "2025-06-16 00:00:00",
+        "timestamp_type": "timestamp without time zone"
+      },
+      "benchmark": {
+        "warmups_per_query": 1,
+        "samples_per_query": 7,
+        "execution_order": [
+          "original",
+          "rewritten",
+          "original",
+          "rewritten",
+          "original",
+          "rewritten",
+          "original",
+          "rewritten",
+          "original",
+          "rewritten",
+          "original",
+          "rewritten",
+          "original",
+          "rewritten"
+        ],
+        "execution_ms": {
+          "original": [
+            0.411,
+            0.401,
+            0.396,
+            0.473,
+            0.465,
+            0.432,
+            0.416
+          ],
+          "rewritten": [
+            0.32,
+            0.345,
+            0.318,
+            0.359,
+            0.323,
+            0.348,
+            0.324
+          ]
+        },
+        "median_ms": {
+          "original": 0.416,
+          "rewritten": 0.324
+        },
+        "rewritten_time_change_percent": -22.115384615384613,
+        "spread_range_over_median": {
+          "original": 0.18509615384615374,
+          "rewritten": 0.12654320987654313
+        },
+        "variability_note": "本次两组极差均不超过中位数的 50%",
+        "method": "Natural planner settings; warm-cache EXPLAIN server execution time, not client transfer time",
+        "plan_variants": {
+          "original": [
+            {
+              "nodes": [
+                {
+                  "Node Type": "Aggregate",
+                  "Parallel Aware": false,
+                  "Actual Rows": 1,
+                  "Actual Loops": 1,
+                  "Shared Hit Blocks": 2492,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                },
+                {
+                  "Node Type": "Sort",
+                  "Parallel Aware": false,
+                  "Actual Rows": 1103,
+                  "Actual Loops": 1,
+                  "Sort Key": [
+                    "o.order_id"
+                  ],
+                  "Sort Method": "quicksort",
+                  "Sort Space Used": 49,
+                  "Sort Space Type": "Memory",
+                  "Shared Hit Blocks": 2492,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                },
+                {
+                  "Node Type": "Nested Loop",
+                  "Parallel Aware": false,
+                  "Join Type": "Inner",
+                  "Actual Rows": 1103,
+                  "Actual Loops": 1,
+                  "Inner Unique": false,
+                  "Shared Hit Blocks": 2492,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                },
+                {
+                  "Node Type": "Index Scan",
+                  "Parallel Aware": false,
+                  "Scan Direction": "Forward",
+                  "Index Name": "orders_created_at_idx",
+                  "Relation Name": "orders",
+                  "Actual Rows": 825,
+                  "Actual Loops": 1,
+                  "Index Cond": "((created_at >= '2025-06-15 00:00:00'::timestamp without time zone) AND (created_at < '2025-06-16 00:00:00'::timestamp without time zone))",
+                  "Shared Hit Blocks": 16,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                },
+                {
+                  "Node Type": "Index Only Scan",
+                  "Parallel Aware": false,
+                  "Scan Direction": "Forward",
+                  "Index Name": "order_items_order_id_idx",
+                  "Relation Name": "order_items",
+                  "Actual Rows": 1,
+                  "Actual Loops": 825,
+                  "Index Cond": "(order_id = o.order_id)",
+                  "Heap Fetches": 0,
+                  "Shared Hit Blocks": 2476,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                }
+              ],
+              "sample_numbers": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7
+              ]
+            }
+          ],
+          "rewritten": [
+            {
+              "nodes": [
+                {
+                  "Node Type": "Aggregate",
+                  "Parallel Aware": false,
+                  "Actual Rows": 1,
+                  "Actual Loops": 1,
+                  "Shared Hit Blocks": 2492,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                },
+                {
+                  "Node Type": "Nested Loop",
+                  "Parallel Aware": false,
+                  "Join Type": "Semi",
+                  "Actual Rows": 551,
+                  "Actual Loops": 1,
+                  "Inner Unique": false,
+                  "Shared Hit Blocks": 2492,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                },
+                {
+                  "Node Type": "Index Scan",
+                  "Parallel Aware": false,
+                  "Scan Direction": "Forward",
+                  "Index Name": "orders_created_at_idx",
+                  "Relation Name": "orders",
+                  "Actual Rows": 825,
+                  "Actual Loops": 1,
+                  "Index Cond": "((created_at >= '2025-06-15 00:00:00'::timestamp without time zone) AND (created_at < '2025-06-16 00:00:00'::timestamp without time zone))",
+                  "Shared Hit Blocks": 16,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                },
+                {
+                  "Node Type": "Index Only Scan",
+                  "Parallel Aware": false,
+                  "Scan Direction": "Forward",
+                  "Index Name": "order_items_order_id_idx",
+                  "Relation Name": "order_items",
+                  "Actual Rows": 1,
+                  "Actual Loops": 825,
+                  "Index Cond": "(order_id = o.order_id)",
+                  "Heap Fetches": 0,
+                  "Shared Hit Blocks": 2476,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                }
+              ],
+              "sample_numbers": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "scenario": "orders_with_items_count",
+      "date": "2025-06-16",
+      "repeat": 1,
+      "status": "completed",
+      "stage": "complete",
+      "source": "controlled_model_response_order_items",
+      "model_id": "controlled-fixture-not-a-real-model",
+      "model_requests": 0,
+      "action": "exists",
+      "suggestion": {
+        "action": "exists",
+        "reason": "Controlled EXISTS suggestion."
+      },
+      "received_content": "{\"action\":\"exists\",\"reason\":\"Controlled EXISTS suggestion.\"}",
+      "decision": "rewrite_verified",
+      "reason": "在本次测试数据上结果一致",
+      "model_request_ms": 0.0,
+      "optimization_elapsed_ms": 63.235,
+      "validation": {
+        "status": "passed",
+        "comparison": null,
+        "counts": {
+          "join_count_distinct": 548,
+          "candidate_count": 548
+        },
+        "membership": {
+          "comparison": {
+            "original_rows": 548,
+            "candidate_rows": 548,
+            "columns_equal": true,
+            "rows_and_multiplicities_equal": true,
+            "equivalent": true,
+            "reason": "在本次测试数据上结果一致",
+            "missing_from_candidate": [],
+            "extra_in_candidate": [],
+            "columns": [
+              [
+                "order_id",
+                20,
+                8,
+                null,
+                null
+              ]
+            ]
+          },
+          "join_minus_candidate": [],
+          "candidate_minus_join": [],
+          "join_minus_candidate_count": 0,
+          "candidate_minus_join_count": 0
+        }
+      },
+      "candidate": {
+        "kind": "exists",
+        "sql": "SELECT COUNT(*) AS order_count\nFROM public.orders AS o\nWHERE o.created_at >= %s::timestamp AND o.created_at < %s::timestamp AND EXISTS (SELECT 1 FROM public.order_items AS i WHERE i.order_id = o.order_id)",
+        "order_ids_sql": "SELECT o.order_id\nFROM public.orders AS o\nWHERE o.created_at >= %s::timestamp AND o.created_at < %s::timestamp AND EXISTS (SELECT 1 FROM public.order_items AS i WHERE i.order_id = o.order_id)"
+      },
+      "sql": {
+        "join_count_distinct": "SELECT COUNT(DISTINCT o.order_id) AS order_count\nFROM public.orders AS o JOIN public.order_items AS i ON i.order_id = o.order_id\nWHERE o.created_at >= %s::timestamp AND o.created_at < %s::timestamp",
+        "candidate_count": "SELECT COUNT(*) AS order_count\nFROM public.orders AS o\nWHERE o.created_at >= %s::timestamp AND o.created_at < %s::timestamp AND EXISTS (SELECT 1 FROM public.order_items AS i WHERE i.order_id = o.order_id)",
+        "join_order_ids": "SELECT DISTINCT o.order_id\nFROM public.orders AS o JOIN public.order_items AS i ON i.order_id = o.order_id\nWHERE o.created_at >= %s::timestamp AND o.created_at < %s::timestamp",
+        "candidate_order_ids": "SELECT o.order_id\nFROM public.orders AS o\nWHERE o.created_at >= %s::timestamp AND o.created_at < %s::timestamp AND EXISTS (SELECT 1 FROM public.order_items AS i WHERE i.order_id = o.order_id)"
+      },
+      "parameters": [
+        "2025-06-16 00:00:00",
+        "2025-06-17 00:00:00"
+      ],
+      "date_context": {
+        "target_date": "2025-06-16",
+        "start": "2025-06-16 00:00:00",
+        "end": "2025-06-17 00:00:00",
+        "timestamp_type": "timestamp without time zone"
+      },
+      "benchmark": {
+        "warmups_per_query": 1,
+        "samples_per_query": 7,
+        "execution_order": [
+          "original",
+          "rewritten",
+          "original",
+          "rewritten",
+          "original",
+          "rewritten",
+          "original",
+          "rewritten",
+          "original",
+          "rewritten",
+          "original",
+          "rewritten",
+          "original",
+          "rewritten"
+        ],
+        "execution_ms": {
+          "original": [
+            0.391,
+            0.381,
+            0.38,
+            0.392,
+            0.381,
+            0.395,
+            0.452
+          ],
+          "rewritten": [
+            0.326,
+            0.317,
+            0.324,
+            0.33,
+            0.312,
+            0.326,
+            0.321
+          ]
+        },
+        "median_ms": {
+          "original": 0.391,
+          "rewritten": 0.324
+        },
+        "rewritten_time_change_percent": -17.13554987212276,
+        "spread_range_over_median": {
+          "original": 0.18414322250639387,
+          "rewritten": 0.0555555555555556
+        },
+        "variability_note": "本次两组极差均不超过中位数的 50%",
+        "method": "Natural planner settings; warm-cache EXPLAIN server execution time, not client transfer time",
+        "plan_variants": {
+          "original": [
+            {
+              "nodes": [
+                {
+                  "Node Type": "Aggregate",
+                  "Parallel Aware": false,
+                  "Actual Rows": 1,
+                  "Actual Loops": 1,
+                  "Shared Hit Blocks": 2485,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                },
+                {
+                  "Node Type": "Sort",
+                  "Parallel Aware": false,
+                  "Actual Rows": 1096,
+                  "Actual Loops": 1,
+                  "Sort Key": [
+                    "o.order_id"
+                  ],
+                  "Sort Method": "quicksort",
+                  "Sort Space Used": 49,
+                  "Sort Space Type": "Memory",
+                  "Shared Hit Blocks": 2485,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                },
+                {
+                  "Node Type": "Nested Loop",
+                  "Parallel Aware": false,
+                  "Join Type": "Inner",
+                  "Actual Rows": 1096,
+                  "Actual Loops": 1,
+                  "Inner Unique": false,
+                  "Shared Hit Blocks": 2485,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                },
+                {
+                  "Node Type": "Index Scan",
+                  "Parallel Aware": false,
+                  "Scan Direction": "Forward",
+                  "Index Name": "orders_created_at_idx",
+                  "Relation Name": "orders",
+                  "Actual Rows": 823,
+                  "Actual Loops": 1,
+                  "Index Cond": "((created_at >= '2025-06-16 00:00:00'::timestamp without time zone) AND (created_at < '2025-06-17 00:00:00'::timestamp without time zone))",
+                  "Shared Hit Blocks": 15,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                },
+                {
+                  "Node Type": "Index Only Scan",
+                  "Parallel Aware": false,
+                  "Scan Direction": "Forward",
+                  "Index Name": "order_items_order_id_idx",
+                  "Relation Name": "order_items",
+                  "Actual Rows": 1,
+                  "Actual Loops": 823,
+                  "Index Cond": "(order_id = o.order_id)",
+                  "Heap Fetches": 0,
+                  "Shared Hit Blocks": 2470,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                }
+              ],
+              "sample_numbers": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7
+              ]
+            }
+          ],
+          "rewritten": [
+            {
+              "nodes": [
+                {
+                  "Node Type": "Aggregate",
+                  "Parallel Aware": false,
+                  "Actual Rows": 1,
+                  "Actual Loops": 1,
+                  "Shared Hit Blocks": 2485,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                },
+                {
+                  "Node Type": "Nested Loop",
+                  "Parallel Aware": false,
+                  "Join Type": "Semi",
+                  "Actual Rows": 548,
+                  "Actual Loops": 1,
+                  "Inner Unique": false,
+                  "Shared Hit Blocks": 2485,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                },
+                {
+                  "Node Type": "Index Scan",
+                  "Parallel Aware": false,
+                  "Scan Direction": "Forward",
+                  "Index Name": "orders_created_at_idx",
+                  "Relation Name": "orders",
+                  "Actual Rows": 823,
+                  "Actual Loops": 1,
+                  "Index Cond": "((created_at >= '2025-06-16 00:00:00'::timestamp without time zone) AND (created_at < '2025-06-17 00:00:00'::timestamp without time zone))",
+                  "Shared Hit Blocks": 15,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                },
+                {
+                  "Node Type": "Index Only Scan",
+                  "Parallel Aware": false,
+                  "Scan Direction": "Forward",
+                  "Index Name": "order_items_order_id_idx",
+                  "Relation Name": "order_items",
+                  "Actual Rows": 1,
+                  "Actual Loops": 823,
+                  "Index Cond": "(order_id = o.order_id)",
+                  "Heap Fetches": 0,
+                  "Shared Hit Blocks": 2470,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                }
+              ],
+              "sample_numbers": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "scenario": "orders_with_items_count",
+      "date": "2025-06-16",
+      "repeat": 2,
+      "status": "completed",
+      "stage": "complete",
+      "source": "controlled_model_response_order_items",
+      "model_id": "controlled-fixture-not-a-real-model",
+      "model_requests": 0,
+      "action": "exists",
+      "suggestion": {
+        "action": "exists",
+        "reason": "Controlled EXISTS suggestion."
+      },
+      "received_content": "{\"action\":\"exists\",\"reason\":\"Controlled EXISTS suggestion.\"}",
+      "decision": "rewrite_verified",
+      "reason": "在本次测试数据上结果一致",
+      "model_request_ms": 0.0,
+      "optimization_elapsed_ms": 66.624,
+      "validation": {
+        "status": "passed",
+        "comparison": null,
+        "counts": {
+          "join_count_distinct": 548,
+          "candidate_count": 548
+        },
+        "membership": {
+          "comparison": {
+            "original_rows": 548,
+            "candidate_rows": 548,
+            "columns_equal": true,
+            "rows_and_multiplicities_equal": true,
+            "equivalent": true,
+            "reason": "在本次测试数据上结果一致",
+            "missing_from_candidate": [],
+            "extra_in_candidate": [],
+            "columns": [
+              [
+                "order_id",
+                20,
+                8,
+                null,
+                null
+              ]
+            ]
+          },
+          "join_minus_candidate": [],
+          "candidate_minus_join": [],
+          "join_minus_candidate_count": 0,
+          "candidate_minus_join_count": 0
+        }
+      },
+      "candidate": {
+        "kind": "exists",
+        "sql": "SELECT COUNT(*) AS order_count\nFROM public.orders AS o\nWHERE o.created_at >= %s::timestamp AND o.created_at < %s::timestamp AND EXISTS (SELECT 1 FROM public.order_items AS i WHERE i.order_id = o.order_id)",
+        "order_ids_sql": "SELECT o.order_id\nFROM public.orders AS o\nWHERE o.created_at >= %s::timestamp AND o.created_at < %s::timestamp AND EXISTS (SELECT 1 FROM public.order_items AS i WHERE i.order_id = o.order_id)"
+      },
+      "sql": {
+        "join_count_distinct": "SELECT COUNT(DISTINCT o.order_id) AS order_count\nFROM public.orders AS o JOIN public.order_items AS i ON i.order_id = o.order_id\nWHERE o.created_at >= %s::timestamp AND o.created_at < %s::timestamp",
+        "candidate_count": "SELECT COUNT(*) AS order_count\nFROM public.orders AS o\nWHERE o.created_at >= %s::timestamp AND o.created_at < %s::timestamp AND EXISTS (SELECT 1 FROM public.order_items AS i WHERE i.order_id = o.order_id)",
+        "join_order_ids": "SELECT DISTINCT o.order_id\nFROM public.orders AS o JOIN public.order_items AS i ON i.order_id = o.order_id\nWHERE o.created_at >= %s::timestamp AND o.created_at < %s::timestamp",
+        "candidate_order_ids": "SELECT o.order_id\nFROM public.orders AS o\nWHERE o.created_at >= %s::timestamp AND o.created_at < %s::timestamp AND EXISTS (SELECT 1 FROM public.order_items AS i WHERE i.order_id = o.order_id)"
+      },
+      "parameters": [
+        "2025-06-16 00:00:00",
+        "2025-06-17 00:00:00"
+      ],
+      "date_context": {
+        "target_date": "2025-06-16",
+        "start": "2025-06-16 00:00:00",
+        "end": "2025-06-17 00:00:00",
+        "timestamp_type": "timestamp without time zone"
+      },
+      "benchmark": {
+        "warmups_per_query": 1,
+        "samples_per_query": 7,
+        "execution_order": [
+          "original",
+          "rewritten",
+          "original",
+          "rewritten",
+          "original",
+          "rewritten",
+          "original",
+          "rewritten",
+          "original",
+          "rewritten",
+          "original",
+          "rewritten",
+          "original",
+          "rewritten"
+        ],
+        "execution_ms": {
+          "original": [
+            0.396,
+            0.398,
+            0.389,
+            0.404,
+            0.458,
+            0.399,
+            0.379
+          ],
+          "rewritten": [
+            0.318,
+            0.322,
+            0.332,
+            0.367,
+            0.37,
+            0.318,
+            0.332
+          ]
+        },
+        "median_ms": {
+          "original": 0.398,
+          "rewritten": 0.332
+        },
+        "rewritten_time_change_percent": -16.582914572864325,
+        "spread_range_over_median": {
+          "original": 0.19849246231155782,
+          "rewritten": 0.15662650602409636
+        },
+        "variability_note": "本次两组极差均不超过中位数的 50%",
+        "method": "Natural planner settings; warm-cache EXPLAIN server execution time, not client transfer time",
+        "plan_variants": {
+          "original": [
+            {
+              "nodes": [
+                {
+                  "Node Type": "Aggregate",
+                  "Parallel Aware": false,
+                  "Actual Rows": 1,
+                  "Actual Loops": 1,
+                  "Shared Hit Blocks": 2485,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                },
+                {
+                  "Node Type": "Sort",
+                  "Parallel Aware": false,
+                  "Actual Rows": 1096,
+                  "Actual Loops": 1,
+                  "Sort Key": [
+                    "o.order_id"
+                  ],
+                  "Sort Method": "quicksort",
+                  "Sort Space Used": 49,
+                  "Sort Space Type": "Memory",
+                  "Shared Hit Blocks": 2485,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                },
+                {
+                  "Node Type": "Nested Loop",
+                  "Parallel Aware": false,
+                  "Join Type": "Inner",
+                  "Actual Rows": 1096,
+                  "Actual Loops": 1,
+                  "Inner Unique": false,
+                  "Shared Hit Blocks": 2485,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                },
+                {
+                  "Node Type": "Index Scan",
+                  "Parallel Aware": false,
+                  "Scan Direction": "Forward",
+                  "Index Name": "orders_created_at_idx",
+                  "Relation Name": "orders",
+                  "Actual Rows": 823,
+                  "Actual Loops": 1,
+                  "Index Cond": "((created_at >= '2025-06-16 00:00:00'::timestamp without time zone) AND (created_at < '2025-06-17 00:00:00'::timestamp without time zone))",
+                  "Shared Hit Blocks": 15,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                },
+                {
+                  "Node Type": "Index Only Scan",
+                  "Parallel Aware": false,
+                  "Scan Direction": "Forward",
+                  "Index Name": "order_items_order_id_idx",
+                  "Relation Name": "order_items",
+                  "Actual Rows": 1,
+                  "Actual Loops": 823,
+                  "Index Cond": "(order_id = o.order_id)",
+                  "Heap Fetches": 0,
+                  "Shared Hit Blocks": 2470,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                }
+              ],
+              "sample_numbers": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7
+              ]
+            }
+          ],
+          "rewritten": [
+            {
+              "nodes": [
+                {
+                  "Node Type": "Aggregate",
+                  "Parallel Aware": false,
+                  "Actual Rows": 1,
+                  "Actual Loops": 1,
+                  "Shared Hit Blocks": 2485,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                },
+                {
+                  "Node Type": "Nested Loop",
+                  "Parallel Aware": false,
+                  "Join Type": "Semi",
+                  "Actual Rows": 548,
+                  "Actual Loops": 1,
+                  "Inner Unique": false,
+                  "Shared Hit Blocks": 2485,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                },
+                {
+                  "Node Type": "Index Scan",
+                  "Parallel Aware": false,
+                  "Scan Direction": "Forward",
+                  "Index Name": "orders_created_at_idx",
+                  "Relation Name": "orders",
+                  "Actual Rows": 823,
+                  "Actual Loops": 1,
+                  "Index Cond": "((created_at >= '2025-06-16 00:00:00'::timestamp without time zone) AND (created_at < '2025-06-17 00:00:00'::timestamp without time zone))",
+                  "Shared Hit Blocks": 15,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                },
+                {
+                  "Node Type": "Index Only Scan",
+                  "Parallel Aware": false,
+                  "Scan Direction": "Forward",
+                  "Index Name": "order_items_order_id_idx",
+                  "Relation Name": "order_items",
+                  "Actual Rows": 1,
+                  "Actual Loops": 823,
+                  "Index Cond": "(order_id = o.order_id)",
+                  "Heap Fetches": 0,
+                  "Shared Hit Blocks": 2470,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                }
+              ],
+              "sample_numbers": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "scenario": "orders_with_items_count",
+      "date": "2026-01-01",
+      "repeat": 1,
+      "status": "completed",
+      "stage": "complete",
+      "source": "controlled_model_response_order_items",
+      "model_id": "controlled-fixture-not-a-real-model",
+      "model_requests": 0,
+      "action": "exists",
+      "suggestion": {
+        "action": "exists",
+        "reason": "Controlled EXISTS suggestion."
+      },
+      "received_content": "{\"action\":\"exists\",\"reason\":\"Controlled EXISTS suggestion.\"}",
+      "decision": "rewrite_verified",
+      "reason": "在本次测试数据上结果一致",
+      "model_request_ms": 0.0,
+      "optimization_elapsed_ms": 47.997,
+      "validation": {
+        "status": "passed",
+        "comparison": null,
+        "counts": {
+          "join_count_distinct": 0,
+          "candidate_count": 0
+        },
+        "membership": {
+          "comparison": {
+            "original_rows": 0,
+            "candidate_rows": 0,
+            "columns_equal": true,
+            "rows_and_multiplicities_equal": true,
+            "equivalent": true,
+            "reason": "在本次测试数据上结果一致",
+            "missing_from_candidate": [],
+            "extra_in_candidate": [],
+            "columns": [
+              [
+                "order_id",
+                20,
+                8,
+                null,
+                null
+              ]
+            ]
+          },
+          "join_minus_candidate": [],
+          "candidate_minus_join": [],
+          "join_minus_candidate_count": 0,
+          "candidate_minus_join_count": 0
+        }
+      },
+      "candidate": {
+        "kind": "exists",
+        "sql": "SELECT COUNT(*) AS order_count\nFROM public.orders AS o\nWHERE o.created_at >= %s::timestamp AND o.created_at < %s::timestamp AND EXISTS (SELECT 1 FROM public.order_items AS i WHERE i.order_id = o.order_id)",
+        "order_ids_sql": "SELECT o.order_id\nFROM public.orders AS o\nWHERE o.created_at >= %s::timestamp AND o.created_at < %s::timestamp AND EXISTS (SELECT 1 FROM public.order_items AS i WHERE i.order_id = o.order_id)"
+      },
+      "sql": {
+        "join_count_distinct": "SELECT COUNT(DISTINCT o.order_id) AS order_count\nFROM public.orders AS o JOIN public.order_items AS i ON i.order_id = o.order_id\nWHERE o.created_at >= %s::timestamp AND o.created_at < %s::timestamp",
+        "candidate_count": "SELECT COUNT(*) AS order_count\nFROM public.orders AS o\nWHERE o.created_at >= %s::timestamp AND o.created_at < %s::timestamp AND EXISTS (SELECT 1 FROM public.order_items AS i WHERE i.order_id = o.order_id)",
+        "join_order_ids": "SELECT DISTINCT o.order_id\nFROM public.orders AS o JOIN public.order_items AS i ON i.order_id = o.order_id\nWHERE o.created_at >= %s::timestamp AND o.created_at < %s::timestamp",
+        "candidate_order_ids": "SELECT o.order_id\nFROM public.orders AS o\nWHERE o.created_at >= %s::timestamp AND o.created_at < %s::timestamp AND EXISTS (SELECT 1 FROM public.order_items AS i WHERE i.order_id = o.order_id)"
+      },
+      "parameters": [
+        "2026-01-01 00:00:00",
+        "2026-01-02 00:00:00"
+      ],
+      "date_context": {
+        "target_date": "2026-01-01",
+        "start": "2026-01-01 00:00:00",
+        "end": "2026-01-02 00:00:00",
+        "timestamp_type": "timestamp without time zone"
+      },
+      "benchmark": {
+        "warmups_per_query": 1,
+        "samples_per_query": 7,
+        "execution_order": [
+          "original",
+          "rewritten",
+          "original",
+          "rewritten",
+          "original",
+          "rewritten",
+          "original",
+          "rewritten",
+          "original",
+          "rewritten",
+          "original",
+          "rewritten",
+          "original",
+          "rewritten"
+        ],
+        "execution_ms": {
+          "original": [
+            0.006,
+            0.006,
+            0.006,
+            0.005,
+            0.004,
+            0.009,
+            0.005
+          ],
+          "rewritten": [
+            0.008,
+            0.006,
+            0.004,
+            0.004,
+            0.003,
+            0.004,
+            0.004
+          ]
+        },
+        "median_ms": {
+          "original": 0.006,
+          "rewritten": 0.004
+        },
+        "rewritten_time_change_percent": -33.333333333333336,
+        "spread_range_over_median": {
+          "original": 0.8333333333333331,
+          "rewritten": 1.25
+        },
+        "variability_note": "较大波动：至少一组极差超过中位数的 50%",
+        "method": "Natural planner settings; warm-cache EXPLAIN server execution time, not client transfer time",
+        "plan_variants": {
+          "original": [
+            {
+              "nodes": [
+                {
+                  "Node Type": "Aggregate",
+                  "Parallel Aware": false,
+                  "Actual Rows": 1,
+                  "Actual Loops": 1,
+                  "Shared Hit Blocks": 3,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                },
+                {
+                  "Node Type": "Sort",
+                  "Parallel Aware": false,
+                  "Actual Rows": 0,
+                  "Actual Loops": 1,
+                  "Sort Key": [
+                    "o.order_id"
+                  ],
+                  "Sort Method": "quicksort",
+                  "Sort Space Used": 25,
+                  "Sort Space Type": "Memory",
+                  "Shared Hit Blocks": 3,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                },
+                {
+                  "Node Type": "Nested Loop",
+                  "Parallel Aware": false,
+                  "Join Type": "Inner",
+                  "Actual Rows": 0,
+                  "Actual Loops": 1,
+                  "Inner Unique": false,
+                  "Shared Hit Blocks": 3,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                },
+                {
+                  "Node Type": "Index Scan",
+                  "Parallel Aware": false,
+                  "Scan Direction": "Forward",
+                  "Index Name": "orders_created_at_idx",
+                  "Relation Name": "orders",
+                  "Actual Rows": 0,
+                  "Actual Loops": 1,
+                  "Index Cond": "((created_at >= '2026-01-01 00:00:00'::timestamp without time zone) AND (created_at < '2026-01-02 00:00:00'::timestamp without time zone))",
+                  "Shared Hit Blocks": 3,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                },
+                {
+                  "Node Type": "Index Only Scan",
+                  "Parallel Aware": false,
+                  "Scan Direction": "Forward",
+                  "Index Name": "order_items_order_id_idx",
+                  "Relation Name": "order_items",
+                  "Actual Rows": 0,
+                  "Actual Loops": 0,
+                  "Index Cond": "(order_id = o.order_id)",
+                  "Heap Fetches": 0,
+                  "Shared Hit Blocks": 0,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                }
+              ],
+              "sample_numbers": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7
+              ]
+            }
+          ],
+          "rewritten": [
+            {
+              "nodes": [
+                {
+                  "Node Type": "Aggregate",
+                  "Parallel Aware": false,
+                  "Actual Rows": 1,
+                  "Actual Loops": 1,
+                  "Shared Hit Blocks": 3,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                },
+                {
+                  "Node Type": "Nested Loop",
+                  "Parallel Aware": false,
+                  "Join Type": "Semi",
+                  "Actual Rows": 0,
+                  "Actual Loops": 1,
+                  "Inner Unique": false,
+                  "Shared Hit Blocks": 3,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                },
+                {
+                  "Node Type": "Index Scan",
+                  "Parallel Aware": false,
+                  "Scan Direction": "Forward",
+                  "Index Name": "orders_created_at_idx",
+                  "Relation Name": "orders",
+                  "Actual Rows": 0,
+                  "Actual Loops": 1,
+                  "Index Cond": "((created_at >= '2026-01-01 00:00:00'::timestamp without time zone) AND (created_at < '2026-01-02 00:00:00'::timestamp without time zone))",
+                  "Shared Hit Blocks": 3,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                },
+                {
+                  "Node Type": "Index Only Scan",
+                  "Parallel Aware": false,
+                  "Scan Direction": "Forward",
+                  "Index Name": "order_items_order_id_idx",
+                  "Relation Name": "order_items",
+                  "Actual Rows": 0,
+                  "Actual Loops": 0,
+                  "Index Cond": "(order_id = o.order_id)",
+                  "Heap Fetches": 0,
+                  "Shared Hit Blocks": 0,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                }
+              ],
+              "sample_numbers": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "scenario": "orders_with_items_count",
+      "date": "2026-01-01",
+      "repeat": 2,
+      "status": "completed",
+      "stage": "complete",
+      "source": "controlled_model_response_order_items",
+      "model_id": "controlled-fixture-not-a-real-model",
+      "model_requests": 0,
+      "action": "exists",
+      "suggestion": {
+        "action": "exists",
+        "reason": "Controlled EXISTS suggestion."
+      },
+      "received_content": "{\"action\":\"exists\",\"reason\":\"Controlled EXISTS suggestion.\"}",
+      "decision": "rewrite_verified",
+      "reason": "在本次测试数据上结果一致",
+      "model_request_ms": 0.0,
+      "optimization_elapsed_ms": 37.647,
+      "validation": {
+        "status": "passed",
+        "comparison": null,
+        "counts": {
+          "join_count_distinct": 0,
+          "candidate_count": 0
+        },
+        "membership": {
+          "comparison": {
+            "original_rows": 0,
+            "candidate_rows": 0,
+            "columns_equal": true,
+            "rows_and_multiplicities_equal": true,
+            "equivalent": true,
+            "reason": "在本次测试数据上结果一致",
+            "missing_from_candidate": [],
+            "extra_in_candidate": [],
+            "columns": [
+              [
+                "order_id",
+                20,
+                8,
+                null,
+                null
+              ]
+            ]
+          },
+          "join_minus_candidate": [],
+          "candidate_minus_join": [],
+          "join_minus_candidate_count": 0,
+          "candidate_minus_join_count": 0
+        }
+      },
+      "candidate": {
+        "kind": "exists",
+        "sql": "SELECT COUNT(*) AS order_count\nFROM public.orders AS o\nWHERE o.created_at >= %s::timestamp AND o.created_at < %s::timestamp AND EXISTS (SELECT 1 FROM public.order_items AS i WHERE i.order_id = o.order_id)",
+        "order_ids_sql": "SELECT o.order_id\nFROM public.orders AS o\nWHERE o.created_at >= %s::timestamp AND o.created_at < %s::timestamp AND EXISTS (SELECT 1 FROM public.order_items AS i WHERE i.order_id = o.order_id)"
+      },
+      "sql": {
+        "join_count_distinct": "SELECT COUNT(DISTINCT o.order_id) AS order_count\nFROM public.orders AS o JOIN public.order_items AS i ON i.order_id = o.order_id\nWHERE o.created_at >= %s::timestamp AND o.created_at < %s::timestamp",
+        "candidate_count": "SELECT COUNT(*) AS order_count\nFROM public.orders AS o\nWHERE o.created_at >= %s::timestamp AND o.created_at < %s::timestamp AND EXISTS (SELECT 1 FROM public.order_items AS i WHERE i.order_id = o.order_id)",
+        "join_order_ids": "SELECT DISTINCT o.order_id\nFROM public.orders AS o JOIN public.order_items AS i ON i.order_id = o.order_id\nWHERE o.created_at >= %s::timestamp AND o.created_at < %s::timestamp",
+        "candidate_order_ids": "SELECT o.order_id\nFROM public.orders AS o\nWHERE o.created_at >= %s::timestamp AND o.created_at < %s::timestamp AND EXISTS (SELECT 1 FROM public.order_items AS i WHERE i.order_id = o.order_id)"
+      },
+      "parameters": [
+        "2026-01-01 00:00:00",
+        "2026-01-02 00:00:00"
+      ],
+      "date_context": {
+        "target_date": "2026-01-01",
+        "start": "2026-01-01 00:00:00",
+        "end": "2026-01-02 00:00:00",
+        "timestamp_type": "timestamp without time zone"
+      },
+      "benchmark": {
+        "warmups_per_query": 1,
+        "samples_per_query": 7,
+        "execution_order": [
+          "original",
+          "rewritten",
+          "original",
+          "rewritten",
+          "original",
+          "rewritten",
+          "original",
+          "rewritten",
+          "original",
+          "rewritten",
+          "original",
+          "rewritten",
+          "original",
+          "rewritten"
+        ],
+        "execution_ms": {
+          "original": [
+            0.007,
+            0.007,
+            0.005,
+            0.005,
+            0.006,
+            0.006,
+            0.007
+          ],
+          "rewritten": [
+            0.008,
+            0.005,
+            0.004,
+            0.005,
+            0.008,
+            0.005,
+            0.004
+          ]
+        },
+        "median_ms": {
+          "original": 0.006,
+          "rewritten": 0.005
+        },
+        "rewritten_time_change_percent": -16.666666666666664,
+        "spread_range_over_median": {
+          "original": 0.3333333333333333,
+          "rewritten": 0.8
+        },
+        "variability_note": "较大波动：至少一组极差超过中位数的 50%",
+        "method": "Natural planner settings; warm-cache EXPLAIN server execution time, not client transfer time",
+        "plan_variants": {
+          "original": [
+            {
+              "nodes": [
+                {
+                  "Node Type": "Aggregate",
+                  "Parallel Aware": false,
+                  "Actual Rows": 1,
+                  "Actual Loops": 1,
+                  "Shared Hit Blocks": 3,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                },
+                {
+                  "Node Type": "Sort",
+                  "Parallel Aware": false,
+                  "Actual Rows": 0,
+                  "Actual Loops": 1,
+                  "Sort Key": [
+                    "o.order_id"
+                  ],
+                  "Sort Method": "quicksort",
+                  "Sort Space Used": 25,
+                  "Sort Space Type": "Memory",
+                  "Shared Hit Blocks": 3,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                },
+                {
+                  "Node Type": "Nested Loop",
+                  "Parallel Aware": false,
+                  "Join Type": "Inner",
+                  "Actual Rows": 0,
+                  "Actual Loops": 1,
+                  "Inner Unique": false,
+                  "Shared Hit Blocks": 3,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                },
+                {
+                  "Node Type": "Index Scan",
+                  "Parallel Aware": false,
+                  "Scan Direction": "Forward",
+                  "Index Name": "orders_created_at_idx",
+                  "Relation Name": "orders",
+                  "Actual Rows": 0,
+                  "Actual Loops": 1,
+                  "Index Cond": "((created_at >= '2026-01-01 00:00:00'::timestamp without time zone) AND (created_at < '2026-01-02 00:00:00'::timestamp without time zone))",
+                  "Shared Hit Blocks": 3,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                },
+                {
+                  "Node Type": "Index Only Scan",
+                  "Parallel Aware": false,
+                  "Scan Direction": "Forward",
+                  "Index Name": "order_items_order_id_idx",
+                  "Relation Name": "order_items",
+                  "Actual Rows": 0,
+                  "Actual Loops": 0,
+                  "Index Cond": "(order_id = o.order_id)",
+                  "Heap Fetches": 0,
+                  "Shared Hit Blocks": 0,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                }
+              ],
+              "sample_numbers": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7
+              ]
+            }
+          ],
+          "rewritten": [
+            {
+              "nodes": [
+                {
+                  "Node Type": "Aggregate",
+                  "Parallel Aware": false,
+                  "Actual Rows": 1,
+                  "Actual Loops": 1,
+                  "Shared Hit Blocks": 3,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                },
+                {
+                  "Node Type": "Nested Loop",
+                  "Parallel Aware": false,
+                  "Join Type": "Semi",
+                  "Actual Rows": 0,
+                  "Actual Loops": 1,
+                  "Inner Unique": false,
+                  "Shared Hit Blocks": 3,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                },
+                {
+                  "Node Type": "Index Scan",
+                  "Parallel Aware": false,
+                  "Scan Direction": "Forward",
+                  "Index Name": "orders_created_at_idx",
+                  "Relation Name": "orders",
+                  "Actual Rows": 0,
+                  "Actual Loops": 1,
+                  "Index Cond": "((created_at >= '2026-01-01 00:00:00'::timestamp without time zone) AND (created_at < '2026-01-02 00:00:00'::timestamp without time zone))",
+                  "Shared Hit Blocks": 3,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                },
+                {
+                  "Node Type": "Index Only Scan",
+                  "Parallel Aware": false,
+                  "Scan Direction": "Forward",
+                  "Index Name": "order_items_order_id_idx",
+                  "Relation Name": "order_items",
+                  "Actual Rows": 0,
+                  "Actual Loops": 0,
+                  "Index Cond": "(order_id = o.order_id)",
+                  "Heap Fetches": 0,
+                  "Shared Hit Blocks": 0,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                }
+              ],
+              "sample_numbers": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "summary": {
+    "completed_cases": 12,
+    "model_requests": 0,
+    "statuses": {
+      "completed": 12
+    },
+    "actions": {
+      "date_range": 6,
+      "exists": 6
+    },
+    "verified_rewrites": 12,
+    "kept_original": 0,
+    "repeated_groups": [
+      {
+        "scenario": "orders_date_filter_2025_06_15",
+        "date": "2025-06-15",
+        "completed_repeats": 2,
+        "actions": [
+          "date_range",
+          "date_range"
+        ],
+        "suggestion_changed": false,
+        "validation_changed": false
+      },
+      {
+        "scenario": "orders_date_filter_2025_06_15",
+        "date": "2025-06-16",
+        "completed_repeats": 2,
+        "actions": [
+          "date_range",
+          "date_range"
+        ],
+        "suggestion_changed": false,
+        "validation_changed": false
+      },
+      {
+        "scenario": "orders_date_filter_2025_06_15",
+        "date": "2026-01-01",
+        "completed_repeats": 2,
+        "actions": [
+          "date_range",
+          "date_range"
+        ],
+        "suggestion_changed": false,
+        "validation_changed": false
+      },
+      {
+        "scenario": "orders_with_items_count",
+        "date": "2025-06-15",
+        "completed_repeats": 2,
+        "actions": [
+          "exists",
+          "exists"
+        ],
+        "suggestion_changed": false,
+        "validation_changed": false
+      },
+      {
+        "scenario": "orders_with_items_count",
+        "date": "2025-06-16",
+        "completed_repeats": 2,
+        "actions": [
+          "exists",
+          "exists"
+        ],
+        "suggestion_changed": false,
+        "validation_changed": false
+      },
+      {
+        "scenario": "orders_with_items_count",
+        "date": "2026-01-01",
+        "completed_repeats": 2,
+        "actions": [
+          "exists",
+          "exists"
+        ],
+        "suggestion_changed": false,
+        "validation_changed": false
+      }
+    ]
+  },
+  "timing_notes": "model_request_ms measures one HTTP request including response parsing, excluding PostgreSQL; simulated requests are zero. SQL medians are EXPLAIN server execution times.",
+  "comparison_notes": "Repeated validation_changed compares reported validation outcomes, not cross-run database snapshots.",
+  "finished_at_utc": "2026-11-19T00:19:56.109166+00:00"
+}

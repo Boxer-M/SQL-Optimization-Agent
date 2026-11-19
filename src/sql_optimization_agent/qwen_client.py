@@ -3,21 +3,24 @@
 from collections.abc import Mapping
 from dataclasses import dataclass
 import json
+from time import perf_counter
 from urllib.parse import urlsplit
 
 import httpx
 
 
 class QwenFailure(RuntimeError):
-    def __init__(self, status: str, message: str):
+    def __init__(self, status: str, message: str, *, request_elapsed_ms=None):
         super().__init__(message)
         self.status = status
+        self.request_elapsed_ms = request_elapsed_ms
 
 
 @dataclass(frozen=True)
 class ModelReply:
     model: str
     content: str
+    request_elapsed_ms: float | None = None
 
 
 SYSTEM_PROMPT = """You advise on only the supplied PostgreSQL orders date-filter scenario.
@@ -61,6 +64,7 @@ def request_suggestion(context: dict, config: Mapping, *, transport=None, system
         "max_tokens": 1024,
         "stream": False,
     }
+    started = perf_counter()
     try:
         # No automatic retries, redirects or repair requests: one optimization = at most one POST.
         with httpx.Client(timeout=httpx.Timeout(30, connect=5), follow_redirects=False,
@@ -89,10 +93,13 @@ def request_suggestion(context: dict, config: Mapping, *, transport=None, system
                 if (choice.get("finish_reason") != "stop" or not isinstance(content, str)
                         or len(content) > 32768 or not isinstance(model, str) or not model.strip()):
                     raise QwenFailure("invalid_response", "Qwen returned incomplete or non-text content")
-                return ModelReply(model, content)
+                return ModelReply(model, content, round((perf_counter()-started)*1000,3))
+    except QwenFailure as error:
+        error.request_elapsed_ms = round((perf_counter()-started)*1000,3)
+        raise
     except httpx.TimeoutException:
-        raise QwenFailure("model_timeout", "Qwen request timed out; no retry attempted") from None
+        raise QwenFailure("model_timeout", "Qwen request timed out; no retry attempted", request_elapsed_ms=round((perf_counter()-started)*1000,3)) from None
     except httpx.HTTPError:
-        raise QwenFailure("network_error", "Qwen network request failed; no retry attempted") from None
+        raise QwenFailure("network_error", "Qwen network request failed; no retry attempted", request_elapsed_ms=round((perf_counter()-started)*1000,3)) from None
     except (ValueError, KeyError, IndexError, TypeError, RecursionError):
-        raise QwenFailure("invalid_response", "Qwen returned an invalid chat response envelope") from None
+        raise QwenFailure("invalid_response", "Qwen returned an invalid chat response envelope", request_elapsed_ms=round((perf_counter()-started)*1000,3)) from None

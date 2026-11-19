@@ -101,7 +101,7 @@ def run_workflow(config: Mapping, *, date_context: OrderDateContext, fixture: st
     report = {"source": "controlled_model_response" if fixture else "live_qwen",
               "fixture": fixture, "requested_model": config.get("QWEN_MODEL"),
               "measured_at_utc": datetime.now(timezone.utc).isoformat(), "model_requests": 0,
-              "benchmark": None, "stage": "diagnosis", "target_date": date_context.target.isoformat(),
+              "benchmark": None, "model_request_ms": 0.0, "stage": "diagnosis", "target_date": date_context.target.isoformat(),
               "date_context": date_context.as_dict()}
     try:
         context = diagnostic_context(config, date_context)
@@ -121,6 +121,7 @@ def run_workflow(config: Mapping, *, date_context: OrderDateContext, fixture: st
                 raise
         report["model_id"] = reply.model
         report["received_content"] = reply.content
+        report["model_request_ms"] = reply.request_elapsed_ms or 0.0
         report["stage"] = "suggestion_validation"
         suggestion, candidate = parse_suggestion(reply.content, date_context)
         report["suggestion"] = suggestion
@@ -151,6 +152,7 @@ def run_workflow(config: Mapping, *, date_context: OrderDateContext, fixture: st
                 else:
                     report.update(status="result_mismatch", reason="Full results differ; candidate benchmark skipped")
     except QwenFailure as error:
+        report["model_request_ms"] = error.request_elapsed_ms or 0.0
         report.update(status=error.status, reason=str(error))
     except (DatabaseConfigurationError, DatabaseConnectionError, BenchmarkValidationError, TableNotFoundError) as error:
         report.update(status="validation_error", reason=str(error))
