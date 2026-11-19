@@ -23,7 +23,7 @@ DEFAULT_ORDER_DATE = "2025-06-15"
 
 class OptimizationService:
     def __init__(self, config=None, *, fixture=None, enabled_scenarios=None,
-                 items_mode='controlled', items_fixture=None):
+                 items_mode='controlled', items_fixture=None, date_repair_enabled=False):
         if config is None:
             root = Path(__file__).resolve().parents[2]
             config = {**dotenv_values(root / ".env", interpolate=False), **os.environ}
@@ -31,9 +31,17 @@ class OptimizationService:
         self.fixture = fixture
         self.items_mode = items_mode
         self.items_fixture = items_fixture
+        self.date_repair_enabled = date_repair_enabled
         self.enabled_scenarios = (ORDERS_DATE_SCENARIO,ORDER_ITEMS_SCENARIO) if enabled_scenarios is None else enabled_scenarios
 
     def optimize(self, scenario: str, *, date: str | None = None, use_qwen: bool | None = None, repair_on_mismatch: bool = False) -> dict:
+        if scenario == ORDERS_DATE_SCENARIO:
+            if type(self.date_repair_enabled) is not bool:
+                return attach_recommendation(attach_assessment({
+                    "status":"invalid_config","stage":"configuration",
+                    "reason":"SQL_OPTIMIZATION_DATE_REPAIR must be true or false",
+                    "model_requests":0,"benchmark":None}))
+            repair_on_mismatch = repair_on_mismatch or self.date_repair_enabled
         return attach_recommendation(attach_assessment(self._optimize(scenario,date=date,use_qwen=use_qwen,repair_on_mismatch=repair_on_mismatch)))
 
     def _optimize(self, scenario: str, *, date: str | None = None, use_qwen: bool | None = None, repair_on_mismatch: bool = False) -> dict:
@@ -80,6 +88,8 @@ class OptimizationService:
 def configured_service() -> OptimizationService:
     """Fixtures are selected by the local server operator, never by request bodies."""
     # Mode and per-scenario fixtures are local operator settings, not request fields.
-    return OptimizationService(fixture=os.environ.get("SQL_OPTIMIZATION_MODEL_FIXTURE") or None,
+    setting = os.environ.get('SQL_OPTIMIZATION_DATE_REPAIR', 'false').strip().lower()
+    date_repair = {'true': True, 'false': False}.get(setting, setting)
+    return OptimizationService(date_repair_enabled=date_repair, fixture=os.environ.get("SQL_OPTIMIZATION_MODEL_FIXTURE") or None,
                                items_mode=os.environ.get('SQL_OPTIMIZATION_ITEMS_MODE','qwen'),
                                items_fixture=os.environ.get('SQL_OPTIMIZATION_ITEMS_FIXTURE') or None)

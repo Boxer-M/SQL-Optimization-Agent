@@ -1,0 +1,4774 @@
+{
+  "source": "Controlled model responses, actual loopback HTTP server and stdio MCP, real local synthetic PostgreSQL data",
+  "live_qwen_report_reused": {
+    "commit": "c0bd1e9d0dfd15b9a792f3269d1471e684d59b5d",
+    "url": "https://github.com/Boxer-M/SQL-Optimization-Agent/blob/c0bd1e9d0dfd15b9a792f3269d1471e684d59b5d/reports/date_repair_live_evaluation.json",
+    "new_live_requests": 0
+  },
+  "results": [
+    {
+      "path": "disabled",
+      "http": {
+        "source": "controlled_model_response",
+        "fixture": "repair-success",
+        "requested_model": "qwen3.7-plus",
+        "measured_at_utc": "2026-11-19T01:32:33.223849+00:00",
+        "model_requests": 0,
+        "benchmark": null,
+        "model_request_ms": 0.0,
+        "stage": "result_validation",
+        "target_date": "2025-06-15",
+        "date_context": {
+          "target_date": "2025-06-15",
+          "start": "2025-06-15 00:00:00",
+          "end": "2025-06-16 00:00:00",
+          "timestamp_type": "timestamp without time zone"
+        },
+        "repair_on_mismatch": false,
+        "max_model_requests": 1,
+        "attempts": [
+          {
+            "attempt": 1,
+            "kind": "initial",
+            "stage": "result_validation",
+            "benchmark": null,
+            "model_requests": 0,
+            "model_id": "controlled-fixture-not-a-real-model",
+            "received_content": "{\"action\": \"date_range\", \"start\": \"2025-06-15 00:00:00\", \"end\": \"2025-06-16 00:00:00\", \"start_inclusive\": true, \"end_inclusive\": true, \"reason\": \"Controlled date-window suggestion; wrong-upper deliberately includes next midnight.\"}",
+            "model_request_ms": 0.0,
+            "suggestion": {
+              "action": "date_range",
+              "start": "2025-06-15 00:00:00",
+              "end": "2025-06-16 00:00:00",
+              "start_inclusive": true,
+              "end_inclusive": true,
+              "reason": "Controlled date-window suggestion; wrong-upper deliberately includes next midnight."
+            },
+            "candidate": {
+              "sql": "SELECT customer_id, created_at, status, amount\nFROM public.orders\nWHERE created_at >= %s::timestamp without time zone\n  AND created_at <= %s::timestamp without time zone",
+              "parameters": [
+                "2025-06-15 00:00:00",
+                "2025-06-16 00:00:00"
+              ]
+            },
+            "connection": {
+              "database": "sql_optimization",
+              "user": "sql_optimization_reader",
+              "read_only": "on",
+              "isolation": "repeatable read",
+              "version": "PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit"
+            },
+            "comparison": {
+              "original_rows": 825,
+              "candidate_rows": 826,
+              "columns_equal": true,
+              "rows_and_multiplicities_equal": false,
+              "equivalent": false,
+              "reason": "Column metadata or full row multiplicities differ; performance test skipped",
+              "missing_from_candidate": [],
+              "extra_in_candidate": [
+                {
+                  "row": [
+                    10003,
+                    {
+                      "timestamp": "2025-06-16T00:00:00"
+                    },
+                    "pending",
+                    {
+                      "decimal": "345.67"
+                    }
+                  ],
+                  "copies": 1
+                }
+              ],
+              "columns": [
+                [
+                  "customer_id",
+                  23,
+                  4,
+                  null,
+                  null
+                ],
+                [
+                  "created_at",
+                  1114,
+                  8,
+                  null,
+                  null
+                ],
+                [
+                  "status",
+                  25,
+                  null,
+                  null,
+                  null
+                ],
+                [
+                  "amount",
+                  1700,
+                  null,
+                  12,
+                  2
+                ]
+              ]
+            },
+            "difference_summary": {
+              "original_rows": 825,
+              "candidate_rows": 826,
+              "missing_row_copies": 0,
+              "extra_row_copies": 1,
+              "columns_equal": true,
+              "equivalent": false
+            },
+            "status": "result_mismatch",
+            "reason": "Full results differ; candidate benchmark skipped"
+          }
+        ],
+        "diagnostic_context": {
+          "scenario": "orders_date_filter_2025_06_15",
+          "original_sql": "SELECT customer_id, created_at, status, amount\nFROM public.orders\nWHERE created_at::date = %s::date",
+          "original_parameters": [
+            "2025-06-15"
+          ],
+          "date_context": {
+            "target_date": "2025-06-15",
+            "start": "2025-06-15 00:00:00",
+            "end": "2025-06-16 00:00:00",
+            "timestamp_type": "timestamp without time zone"
+          },
+          "table": {
+            "schema": "public",
+            "table": "orders",
+            "columns": [
+              {
+                "name": "order_id",
+                "data_type": "bigint",
+                "nullable": false
+              },
+              {
+                "name": "customer_id",
+                "data_type": "integer",
+                "nullable": false
+              },
+              {
+                "name": "created_at",
+                "data_type": "timestamp without time zone",
+                "nullable": true
+              },
+              {
+                "name": "status",
+                "data_type": "text",
+                "nullable": false
+              },
+              {
+                "name": "amount",
+                "data_type": "numeric(12,2)",
+                "nullable": false
+              }
+            ],
+            "primary_key": [
+              "order_id"
+            ],
+            "indexes": [
+              {
+                "name": "orders_created_at_idx",
+                "definition": "CREATE INDEX orders_created_at_idx ON public.orders USING btree (created_at)"
+              },
+              {
+                "name": "orders_pkey",
+                "definition": "CREATE UNIQUE INDEX orders_pkey ON public.orders USING btree (order_id)"
+              }
+            ]
+          },
+          "estimated_plan": [
+            {
+              "Node Type": "Gather",
+              "Parallel Aware": false,
+              "Startup Cost": 1000.0,
+              "Total Cost": 6510.1,
+              "Plan Rows": 1500,
+              "Plan Width": 27
+            },
+            {
+              "Node Type": "Seq Scan",
+              "Parallel Aware": true,
+              "Relation Name": "orders",
+              "Startup Cost": 0.0,
+              "Total Cost": 5360.1,
+              "Plan Rows": 882,
+              "Plan Width": 27,
+              "Filter": "((created_at)::date = '2025-06-15'::date)"
+            }
+          ]
+        },
+        "model_id": "controlled-fixture-not-a-real-model",
+        "received_content": "{\"action\": \"date_range\", \"start\": \"2025-06-15 00:00:00\", \"end\": \"2025-06-16 00:00:00\", \"start_inclusive\": true, \"end_inclusive\": true, \"reason\": \"Controlled date-window suggestion; wrong-upper deliberately includes next midnight.\"}",
+        "suggestion": {
+          "action": "date_range",
+          "start": "2025-06-15 00:00:00",
+          "end": "2025-06-16 00:00:00",
+          "start_inclusive": true,
+          "end_inclusive": true,
+          "reason": "Controlled date-window suggestion; wrong-upper deliberately includes next midnight."
+        },
+        "candidate": {
+          "sql": "SELECT customer_id, created_at, status, amount\nFROM public.orders\nWHERE created_at >= %s::timestamp without time zone\n  AND created_at <= %s::timestamp without time zone",
+          "parameters": [
+            "2025-06-15 00:00:00",
+            "2025-06-16 00:00:00"
+          ]
+        },
+        "connection": {
+          "database": "sql_optimization",
+          "user": "sql_optimization_reader",
+          "read_only": "on",
+          "isolation": "repeatable read",
+          "version": "PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit"
+        },
+        "comparison": {
+          "original_rows": 825,
+          "candidate_rows": 826,
+          "columns_equal": true,
+          "rows_and_multiplicities_equal": false,
+          "equivalent": false,
+          "reason": "Column metadata or full row multiplicities differ; performance test skipped",
+          "missing_from_candidate": [],
+          "extra_in_candidate": [
+            {
+              "row": [
+                10003,
+                {
+                  "timestamp": "2025-06-16T00:00:00"
+                },
+                "pending",
+                {
+                  "decimal": "345.67"
+                }
+              ],
+              "copies": 1
+            }
+          ],
+          "columns": [
+            [
+              "customer_id",
+              23,
+              4,
+              null,
+              null
+            ],
+            [
+              "created_at",
+              1114,
+              8,
+              null,
+              null
+            ],
+            [
+              "status",
+              25,
+              null,
+              null,
+              null
+            ],
+            [
+              "amount",
+              1700,
+              null,
+              12,
+              2
+            ]
+          ]
+        },
+        "difference_summary": {
+          "original_rows": 825,
+          "candidate_rows": 826,
+          "missing_row_copies": 0,
+          "extra_row_copies": 1,
+          "columns_equal": true,
+          "equivalent": false
+        },
+        "status": "result_mismatch",
+        "reason": "Full results differ; candidate benchmark skipped",
+        "performance_assessment": null,
+        "performance_assessment_skipped": "result_not_verified_or_original_retained",
+        "recommendation": {
+          "decision": "keep_original",
+          "reason_code": "candidate_rejected",
+          "advisory_only": true
+        }
+      },
+      "mcp": {
+        "source": "controlled_model_response",
+        "fixture": "repair-success",
+        "requested_model": "qwen3.7-plus",
+        "measured_at_utc": "2026-11-19T01:32:33.773987+00:00",
+        "model_requests": 0,
+        "benchmark": null,
+        "model_request_ms": 0.0,
+        "stage": "result_validation",
+        "target_date": "2025-06-15",
+        "date_context": {
+          "target_date": "2025-06-15",
+          "start": "2025-06-15 00:00:00",
+          "end": "2025-06-16 00:00:00",
+          "timestamp_type": "timestamp without time zone"
+        },
+        "repair_on_mismatch": false,
+        "max_model_requests": 1,
+        "attempts": [
+          {
+            "attempt": 1,
+            "kind": "initial",
+            "stage": "result_validation",
+            "benchmark": null,
+            "model_requests": 0,
+            "model_id": "controlled-fixture-not-a-real-model",
+            "received_content": "{\"action\": \"date_range\", \"start\": \"2025-06-15 00:00:00\", \"end\": \"2025-06-16 00:00:00\", \"start_inclusive\": true, \"end_inclusive\": true, \"reason\": \"Controlled date-window suggestion; wrong-upper deliberately includes next midnight.\"}",
+            "model_request_ms": 0.0,
+            "suggestion": {
+              "action": "date_range",
+              "start": "2025-06-15 00:00:00",
+              "end": "2025-06-16 00:00:00",
+              "start_inclusive": true,
+              "end_inclusive": true,
+              "reason": "Controlled date-window suggestion; wrong-upper deliberately includes next midnight."
+            },
+            "candidate": {
+              "sql": "SELECT customer_id, created_at, status, amount\nFROM public.orders\nWHERE created_at >= %s::timestamp without time zone\n  AND created_at <= %s::timestamp without time zone",
+              "parameters": [
+                "2025-06-15 00:00:00",
+                "2025-06-16 00:00:00"
+              ]
+            },
+            "connection": {
+              "database": "sql_optimization",
+              "user": "sql_optimization_reader",
+              "read_only": "on",
+              "isolation": "repeatable read",
+              "version": "PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit"
+            },
+            "comparison": {
+              "original_rows": 825,
+              "candidate_rows": 826,
+              "columns_equal": true,
+              "rows_and_multiplicities_equal": false,
+              "equivalent": false,
+              "reason": "Column metadata or full row multiplicities differ; performance test skipped",
+              "missing_from_candidate": [],
+              "extra_in_candidate": [
+                {
+                  "row": [
+                    10003,
+                    {
+                      "timestamp": "2025-06-16T00:00:00"
+                    },
+                    "pending",
+                    {
+                      "decimal": "345.67"
+                    }
+                  ],
+                  "copies": 1
+                }
+              ],
+              "columns": [
+                [
+                  "customer_id",
+                  23,
+                  4,
+                  null,
+                  null
+                ],
+                [
+                  "created_at",
+                  1114,
+                  8,
+                  null,
+                  null
+                ],
+                [
+                  "status",
+                  25,
+                  null,
+                  null,
+                  null
+                ],
+                [
+                  "amount",
+                  1700,
+                  null,
+                  12,
+                  2
+                ]
+              ]
+            },
+            "difference_summary": {
+              "original_rows": 825,
+              "candidate_rows": 826,
+              "missing_row_copies": 0,
+              "extra_row_copies": 1,
+              "columns_equal": true,
+              "equivalent": false
+            },
+            "status": "result_mismatch",
+            "reason": "Full results differ; candidate benchmark skipped"
+          }
+        ],
+        "diagnostic_context": {
+          "scenario": "orders_date_filter_2025_06_15",
+          "original_sql": "SELECT customer_id, created_at, status, amount\nFROM public.orders\nWHERE created_at::date = %s::date",
+          "original_parameters": [
+            "2025-06-15"
+          ],
+          "date_context": {
+            "target_date": "2025-06-15",
+            "start": "2025-06-15 00:00:00",
+            "end": "2025-06-16 00:00:00",
+            "timestamp_type": "timestamp without time zone"
+          },
+          "table": {
+            "schema": "public",
+            "table": "orders",
+            "columns": [
+              {
+                "name": "order_id",
+                "data_type": "bigint",
+                "nullable": false
+              },
+              {
+                "name": "customer_id",
+                "data_type": "integer",
+                "nullable": false
+              },
+              {
+                "name": "created_at",
+                "data_type": "timestamp without time zone",
+                "nullable": true
+              },
+              {
+                "name": "status",
+                "data_type": "text",
+                "nullable": false
+              },
+              {
+                "name": "amount",
+                "data_type": "numeric(12,2)",
+                "nullable": false
+              }
+            ],
+            "primary_key": [
+              "order_id"
+            ],
+            "indexes": [
+              {
+                "name": "orders_created_at_idx",
+                "definition": "CREATE INDEX orders_created_at_idx ON public.orders USING btree (created_at)"
+              },
+              {
+                "name": "orders_pkey",
+                "definition": "CREATE UNIQUE INDEX orders_pkey ON public.orders USING btree (order_id)"
+              }
+            ]
+          },
+          "estimated_plan": [
+            {
+              "Node Type": "Gather",
+              "Parallel Aware": false,
+              "Startup Cost": 1000.0,
+              "Total Cost": 6510.1,
+              "Plan Rows": 1500,
+              "Plan Width": 27
+            },
+            {
+              "Node Type": "Seq Scan",
+              "Parallel Aware": true,
+              "Relation Name": "orders",
+              "Startup Cost": 0.0,
+              "Total Cost": 5360.1,
+              "Plan Rows": 882,
+              "Plan Width": 27,
+              "Filter": "((created_at)::date = '2025-06-15'::date)"
+            }
+          ]
+        },
+        "model_id": "controlled-fixture-not-a-real-model",
+        "received_content": "{\"action\": \"date_range\", \"start\": \"2025-06-15 00:00:00\", \"end\": \"2025-06-16 00:00:00\", \"start_inclusive\": true, \"end_inclusive\": true, \"reason\": \"Controlled date-window suggestion; wrong-upper deliberately includes next midnight.\"}",
+        "suggestion": {
+          "action": "date_range",
+          "start": "2025-06-15 00:00:00",
+          "end": "2025-06-16 00:00:00",
+          "start_inclusive": true,
+          "end_inclusive": true,
+          "reason": "Controlled date-window suggestion; wrong-upper deliberately includes next midnight."
+        },
+        "candidate": {
+          "sql": "SELECT customer_id, created_at, status, amount\nFROM public.orders\nWHERE created_at >= %s::timestamp without time zone\n  AND created_at <= %s::timestamp without time zone",
+          "parameters": [
+            "2025-06-15 00:00:00",
+            "2025-06-16 00:00:00"
+          ]
+        },
+        "connection": {
+          "database": "sql_optimization",
+          "user": "sql_optimization_reader",
+          "read_only": "on",
+          "isolation": "repeatable read",
+          "version": "PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit"
+        },
+        "comparison": {
+          "original_rows": 825,
+          "candidate_rows": 826,
+          "columns_equal": true,
+          "rows_and_multiplicities_equal": false,
+          "equivalent": false,
+          "reason": "Column metadata or full row multiplicities differ; performance test skipped",
+          "missing_from_candidate": [],
+          "extra_in_candidate": [
+            {
+              "row": [
+                10003,
+                {
+                  "timestamp": "2025-06-16T00:00:00"
+                },
+                "pending",
+                {
+                  "decimal": "345.67"
+                }
+              ],
+              "copies": 1
+            }
+          ],
+          "columns": [
+            [
+              "customer_id",
+              23,
+              4,
+              null,
+              null
+            ],
+            [
+              "created_at",
+              1114,
+              8,
+              null,
+              null
+            ],
+            [
+              "status",
+              25,
+              null,
+              null,
+              null
+            ],
+            [
+              "amount",
+              1700,
+              null,
+              12,
+              2
+            ]
+          ]
+        },
+        "difference_summary": {
+          "original_rows": 825,
+          "candidate_rows": 826,
+          "missing_row_copies": 0,
+          "extra_row_copies": 1,
+          "columns_equal": true,
+          "equivalent": false
+        },
+        "status": "result_mismatch",
+        "reason": "Full results differ; candidate benchmark skipped",
+        "performance_assessment": null,
+        "performance_assessment_skipped": "result_not_verified_or_original_retained",
+        "recommendation": {
+          "decision": "keep_original",
+          "reason_code": "candidate_rejected",
+          "advisory_only": true
+        }
+      },
+      "semantics_match": true
+    },
+    {
+      "path": "repair_success",
+      "http": {
+        "source": "controlled_model_response",
+        "fixture": "repair-success",
+        "requested_model": "qwen3.7-plus",
+        "measured_at_utc": "2026-11-19T01:32:34.171697+00:00",
+        "model_requests": 0,
+        "benchmark": {
+          "warmups_per_query": 1,
+          "samples_per_query": 7,
+          "execution_order": [
+            "original",
+            "rewritten",
+            "original",
+            "rewritten",
+            "original",
+            "rewritten",
+            "original",
+            "rewritten",
+            "original",
+            "rewritten",
+            "original",
+            "rewritten",
+            "original",
+            "rewritten"
+          ],
+          "execution_ms": {
+            "original": [
+              7.799,
+              6.91,
+              6.52,
+              6.344,
+              6.722,
+              6.095,
+              6.358
+            ],
+            "rewritten": [
+              0.083,
+              0.078,
+              0.073,
+              0.064,
+              0.063,
+              0.059,
+              0.056
+            ]
+          },
+          "median_ms": {
+            "original": 6.52,
+            "rewritten": 0.064
+          },
+          "rewritten_time_change_percent": -99.01840490797545,
+          "spread_range_over_median": {
+            "original": 0.26134969325153384,
+            "rewritten": 0.42187500000000006
+          },
+          "variability_note": "本次两组极差均不超过中位数的 50%",
+          "samples": {
+            "original": [
+              {
+                "execution_ms": 7.799,
+                "planning_ms": 0.012,
+                "nodes": [
+                  {
+                    "Node Type": "Gather",
+                    "Parallel Aware": false,
+                    "Startup Cost": 1000.0,
+                    "Total Cost": 6510.1,
+                    "Plan Rows": 1500,
+                    "Plan Width": 27,
+                    "Actual Rows": 825,
+                    "Actual Loops": 1,
+                    "Workers Planned": 1,
+                    "Workers Launched": 1,
+                    "Shared Hit Blocks": 2713,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0
+                  },
+                  {
+                    "Node Type": "Seq Scan",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": true,
+                    "Relation Name": "orders",
+                    "Alias": "orders",
+                    "Startup Cost": 0.0,
+                    "Total Cost": 5360.1,
+                    "Plan Rows": 882,
+                    "Plan Width": 27,
+                    "Actual Rows": 412,
+                    "Actual Loops": 2,
+                    "Filter": "((created_at)::date = '2025-06-15'::date)",
+                    "Rows Removed by Filter": 149590,
+                    "Shared Hit Blocks": 2713,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0
+                  }
+                ]
+              },
+              {
+                "execution_ms": 6.91,
+                "planning_ms": 0.007,
+                "nodes": [
+                  {
+                    "Node Type": "Gather",
+                    "Parallel Aware": false,
+                    "Startup Cost": 1000.0,
+                    "Total Cost": 6510.1,
+                    "Plan Rows": 1500,
+                    "Plan Width": 27,
+                    "Actual Rows": 825,
+                    "Actual Loops": 1,
+                    "Workers Planned": 1,
+                    "Workers Launched": 1,
+                    "Shared Hit Blocks": 2713,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0
+                  },
+                  {
+                    "Node Type": "Seq Scan",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": true,
+                    "Relation Name": "orders",
+                    "Alias": "orders",
+                    "Startup Cost": 0.0,
+                    "Total Cost": 5360.1,
+                    "Plan Rows": 882,
+                    "Plan Width": 27,
+                    "Actual Rows": 412,
+                    "Actual Loops": 2,
+                    "Filter": "((created_at)::date = '2025-06-15'::date)",
+                    "Rows Removed by Filter": 149590,
+                    "Shared Hit Blocks": 2713,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0
+                  }
+                ]
+              },
+              {
+                "execution_ms": 6.52,
+                "planning_ms": 0.012,
+                "nodes": [
+                  {
+                    "Node Type": "Gather",
+                    "Parallel Aware": false,
+                    "Startup Cost": 1000.0,
+                    "Total Cost": 6510.1,
+                    "Plan Rows": 1500,
+                    "Plan Width": 27,
+                    "Actual Rows": 825,
+                    "Actual Loops": 1,
+                    "Workers Planned": 1,
+                    "Workers Launched": 1,
+                    "Shared Hit Blocks": 2713,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0
+                  },
+                  {
+                    "Node Type": "Seq Scan",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": true,
+                    "Relation Name": "orders",
+                    "Alias": "orders",
+                    "Startup Cost": 0.0,
+                    "Total Cost": 5360.1,
+                    "Plan Rows": 882,
+                    "Plan Width": 27,
+                    "Actual Rows": 412,
+                    "Actual Loops": 2,
+                    "Filter": "((created_at)::date = '2025-06-15'::date)",
+                    "Rows Removed by Filter": 149590,
+                    "Shared Hit Blocks": 2713,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0
+                  }
+                ]
+              },
+              {
+                "execution_ms": 6.344,
+                "planning_ms": 0.009,
+                "nodes": [
+                  {
+                    "Node Type": "Gather",
+                    "Parallel Aware": false,
+                    "Startup Cost": 1000.0,
+                    "Total Cost": 6510.1,
+                    "Plan Rows": 1500,
+                    "Plan Width": 27,
+                    "Actual Rows": 825,
+                    "Actual Loops": 1,
+                    "Workers Planned": 1,
+                    "Workers Launched": 1,
+                    "Shared Hit Blocks": 2713,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0
+                  },
+                  {
+                    "Node Type": "Seq Scan",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": true,
+                    "Relation Name": "orders",
+                    "Alias": "orders",
+                    "Startup Cost": 0.0,
+                    "Total Cost": 5360.1,
+                    "Plan Rows": 882,
+                    "Plan Width": 27,
+                    "Actual Rows": 412,
+                    "Actual Loops": 2,
+                    "Filter": "((created_at)::date = '2025-06-15'::date)",
+                    "Rows Removed by Filter": 149590,
+                    "Shared Hit Blocks": 2713,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0
+                  }
+                ]
+              },
+              {
+                "execution_ms": 6.722,
+                "planning_ms": 0.007,
+                "nodes": [
+                  {
+                    "Node Type": "Gather",
+                    "Parallel Aware": false,
+                    "Startup Cost": 1000.0,
+                    "Total Cost": 6510.1,
+                    "Plan Rows": 1500,
+                    "Plan Width": 27,
+                    "Actual Rows": 825,
+                    "Actual Loops": 1,
+                    "Workers Planned": 1,
+                    "Workers Launched": 1,
+                    "Shared Hit Blocks": 2713,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0
+                  },
+                  {
+                    "Node Type": "Seq Scan",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": true,
+                    "Relation Name": "orders",
+                    "Alias": "orders",
+                    "Startup Cost": 0.0,
+                    "Total Cost": 5360.1,
+                    "Plan Rows": 882,
+                    "Plan Width": 27,
+                    "Actual Rows": 412,
+                    "Actual Loops": 2,
+                    "Filter": "((created_at)::date = '2025-06-15'::date)",
+                    "Rows Removed by Filter": 149590,
+                    "Shared Hit Blocks": 2713,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0
+                  }
+                ]
+              },
+              {
+                "execution_ms": 6.095,
+                "planning_ms": 0.008,
+                "nodes": [
+                  {
+                    "Node Type": "Gather",
+                    "Parallel Aware": false,
+                    "Startup Cost": 1000.0,
+                    "Total Cost": 6510.1,
+                    "Plan Rows": 1500,
+                    "Plan Width": 27,
+                    "Actual Rows": 825,
+                    "Actual Loops": 1,
+                    "Workers Planned": 1,
+                    "Workers Launched": 1,
+                    "Shared Hit Blocks": 2713,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0
+                  },
+                  {
+                    "Node Type": "Seq Scan",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": true,
+                    "Relation Name": "orders",
+                    "Alias": "orders",
+                    "Startup Cost": 0.0,
+                    "Total Cost": 5360.1,
+                    "Plan Rows": 882,
+                    "Plan Width": 27,
+                    "Actual Rows": 412,
+                    "Actual Loops": 2,
+                    "Filter": "((created_at)::date = '2025-06-15'::date)",
+                    "Rows Removed by Filter": 149590,
+                    "Shared Hit Blocks": 2713,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0
+                  }
+                ]
+              },
+              {
+                "execution_ms": 6.358,
+                "planning_ms": 0.007,
+                "nodes": [
+                  {
+                    "Node Type": "Gather",
+                    "Parallel Aware": false,
+                    "Startup Cost": 1000.0,
+                    "Total Cost": 6510.1,
+                    "Plan Rows": 1500,
+                    "Plan Width": 27,
+                    "Actual Rows": 825,
+                    "Actual Loops": 1,
+                    "Workers Planned": 1,
+                    "Workers Launched": 1,
+                    "Shared Hit Blocks": 2713,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0
+                  },
+                  {
+                    "Node Type": "Seq Scan",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": true,
+                    "Relation Name": "orders",
+                    "Alias": "orders",
+                    "Startup Cost": 0.0,
+                    "Total Cost": 5360.1,
+                    "Plan Rows": 882,
+                    "Plan Width": 27,
+                    "Actual Rows": 412,
+                    "Actual Loops": 2,
+                    "Filter": "((created_at)::date = '2025-06-15'::date)",
+                    "Rows Removed by Filter": 149590,
+                    "Shared Hit Blocks": 2713,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0
+                  }
+                ]
+              }
+            ],
+            "rewritten": [
+              {
+                "execution_ms": 0.083,
+                "planning_ms": 0.017,
+                "nodes": [
+                  {
+                    "Node Type": "Index Scan",
+                    "Parallel Aware": false,
+                    "Scan Direction": "Forward",
+                    "Index Name": "orders_created_at_idx",
+                    "Relation Name": "orders",
+                    "Alias": "orders",
+                    "Startup Cost": 0.42,
+                    "Total Cost": 39.5,
+                    "Plan Rows": 804,
+                    "Plan Width": 27,
+                    "Actual Rows": 825,
+                    "Actual Loops": 1,
+                    "Index Cond": "((created_at >= '2025-06-15 00:00:00'::timestamp without time zone) AND (created_at < '2025-06-16 00:00:00'::timestamp without time zone))",
+                    "Shared Hit Blocks": 16,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0
+                  }
+                ]
+              },
+              {
+                "execution_ms": 0.078,
+                "planning_ms": 0.019,
+                "nodes": [
+                  {
+                    "Node Type": "Index Scan",
+                    "Parallel Aware": false,
+                    "Scan Direction": "Forward",
+                    "Index Name": "orders_created_at_idx",
+                    "Relation Name": "orders",
+                    "Alias": "orders",
+                    "Startup Cost": 0.42,
+                    "Total Cost": 39.5,
+                    "Plan Rows": 804,
+                    "Plan Width": 27,
+                    "Actual Rows": 825,
+                    "Actual Loops": 1,
+                    "Index Cond": "((created_at >= '2025-06-15 00:00:00'::timestamp without time zone) AND (created_at < '2025-06-16 00:00:00'::timestamp without time zone))",
+                    "Shared Hit Blocks": 16,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0
+                  }
+                ]
+              },
+              {
+                "execution_ms": 0.073,
+                "planning_ms": 0.031,
+                "nodes": [
+                  {
+                    "Node Type": "Index Scan",
+                    "Parallel Aware": false,
+                    "Scan Direction": "Forward",
+                    "Index Name": "orders_created_at_idx",
+                    "Relation Name": "orders",
+                    "Alias": "orders",
+                    "Startup Cost": 0.42,
+                    "Total Cost": 39.5,
+                    "Plan Rows": 804,
+                    "Plan Width": 27,
+                    "Actual Rows": 825,
+                    "Actual Loops": 1,
+                    "Index Cond": "((created_at >= '2025-06-15 00:00:00'::timestamp without time zone) AND (created_at < '2025-06-16 00:00:00'::timestamp without time zone))",
+                    "Shared Hit Blocks": 16,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0
+                  }
+                ]
+              },
+              {
+                "execution_ms": 0.064,
+                "planning_ms": 0.017,
+                "nodes": [
+                  {
+                    "Node Type": "Index Scan",
+                    "Parallel Aware": false,
+                    "Scan Direction": "Forward",
+                    "Index Name": "orders_created_at_idx",
+                    "Relation Name": "orders",
+                    "Alias": "orders",
+                    "Startup Cost": 0.42,
+                    "Total Cost": 39.5,
+                    "Plan Rows": 804,
+                    "Plan Width": 27,
+                    "Actual Rows": 825,
+                    "Actual Loops": 1,
+                    "Index Cond": "((created_at >= '2025-06-15 00:00:00'::timestamp without time zone) AND (created_at < '2025-06-16 00:00:00'::timestamp without time zone))",
+                    "Shared Hit Blocks": 16,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0
+                  }
+                ]
+              },
+              {
+                "execution_ms": 0.063,
+                "planning_ms": 0.017,
+                "nodes": [
+                  {
+                    "Node Type": "Index Scan",
+                    "Parallel Aware": false,
+                    "Scan Direction": "Forward",
+                    "Index Name": "orders_created_at_idx",
+                    "Relation Name": "orders",
+                    "Alias": "orders",
+                    "Startup Cost": 0.42,
+                    "Total Cost": 39.5,
+                    "Plan Rows": 804,
+                    "Plan Width": 27,
+                    "Actual Rows": 825,
+                    "Actual Loops": 1,
+                    "Index Cond": "((created_at >= '2025-06-15 00:00:00'::timestamp without time zone) AND (created_at < '2025-06-16 00:00:00'::timestamp without time zone))",
+                    "Shared Hit Blocks": 16,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0
+                  }
+                ]
+              },
+              {
+                "execution_ms": 0.059,
+                "planning_ms": 0.014,
+                "nodes": [
+                  {
+                    "Node Type": "Index Scan",
+                    "Parallel Aware": false,
+                    "Scan Direction": "Forward",
+                    "Index Name": "orders_created_at_idx",
+                    "Relation Name": "orders",
+                    "Alias": "orders",
+                    "Startup Cost": 0.42,
+                    "Total Cost": 39.5,
+                    "Plan Rows": 804,
+                    "Plan Width": 27,
+                    "Actual Rows": 825,
+                    "Actual Loops": 1,
+                    "Index Cond": "((created_at >= '2025-06-15 00:00:00'::timestamp without time zone) AND (created_at < '2025-06-16 00:00:00'::timestamp without time zone))",
+                    "Shared Hit Blocks": 16,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0
+                  }
+                ]
+              },
+              {
+                "execution_ms": 0.056,
+                "planning_ms": 0.019,
+                "nodes": [
+                  {
+                    "Node Type": "Index Scan",
+                    "Parallel Aware": false,
+                    "Scan Direction": "Forward",
+                    "Index Name": "orders_created_at_idx",
+                    "Relation Name": "orders",
+                    "Alias": "orders",
+                    "Startup Cost": 0.42,
+                    "Total Cost": 39.5,
+                    "Plan Rows": 804,
+                    "Plan Width": 27,
+                    "Actual Rows": 825,
+                    "Actual Loops": 1,
+                    "Index Cond": "((created_at >= '2025-06-15 00:00:00'::timestamp without time zone) AND (created_at < '2025-06-16 00:00:00'::timestamp without time zone))",
+                    "Shared Hit Blocks": 16,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0
+                  }
+                ]
+              }
+            ]
+          },
+          "method": "Natural planner settings; warm-cache EXPLAIN server execution time, not client transfer time"
+        },
+        "model_request_ms": 0.0,
+        "stage": "complete",
+        "target_date": "2025-06-15",
+        "date_context": {
+          "target_date": "2025-06-15",
+          "start": "2025-06-15 00:00:00",
+          "end": "2025-06-16 00:00:00",
+          "timestamp_type": "timestamp without time zone"
+        },
+        "repair_on_mismatch": true,
+        "max_model_requests": 2,
+        "attempts": [
+          {
+            "attempt": 1,
+            "kind": "initial",
+            "stage": "result_validation",
+            "benchmark": null,
+            "model_requests": 0,
+            "model_id": "controlled-fixture-not-a-real-model",
+            "received_content": "{\"action\": \"date_range\", \"start\": \"2025-06-15 00:00:00\", \"end\": \"2025-06-16 00:00:00\", \"start_inclusive\": true, \"end_inclusive\": true, \"reason\": \"Controlled date-window suggestion; wrong-upper deliberately includes next midnight.\"}",
+            "model_request_ms": 0.0,
+            "suggestion": {
+              "action": "date_range",
+              "start": "2025-06-15 00:00:00",
+              "end": "2025-06-16 00:00:00",
+              "start_inclusive": true,
+              "end_inclusive": true,
+              "reason": "Controlled date-window suggestion; wrong-upper deliberately includes next midnight."
+            },
+            "candidate": {
+              "sql": "SELECT customer_id, created_at, status, amount\nFROM public.orders\nWHERE created_at >= %s::timestamp without time zone\n  AND created_at <= %s::timestamp without time zone",
+              "parameters": [
+                "2025-06-15 00:00:00",
+                "2025-06-16 00:00:00"
+              ]
+            },
+            "connection": {
+              "database": "sql_optimization",
+              "user": "sql_optimization_reader",
+              "read_only": "on",
+              "isolation": "repeatable read",
+              "version": "PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit"
+            },
+            "comparison": {
+              "original_rows": 825,
+              "candidate_rows": 826,
+              "columns_equal": true,
+              "rows_and_multiplicities_equal": false,
+              "equivalent": false,
+              "reason": "Column metadata or full row multiplicities differ; performance test skipped",
+              "missing_from_candidate": [],
+              "extra_in_candidate": [
+                {
+                  "row": [
+                    10003,
+                    {
+                      "timestamp": "2025-06-16T00:00:00"
+                    },
+                    "pending",
+                    {
+                      "decimal": "345.67"
+                    }
+                  ],
+                  "copies": 1
+                }
+              ],
+              "columns": [
+                [
+                  "customer_id",
+                  23,
+                  4,
+                  null,
+                  null
+                ],
+                [
+                  "created_at",
+                  1114,
+                  8,
+                  null,
+                  null
+                ],
+                [
+                  "status",
+                  25,
+                  null,
+                  null,
+                  null
+                ],
+                [
+                  "amount",
+                  1700,
+                  null,
+                  12,
+                  2
+                ]
+              ]
+            },
+            "difference_summary": {
+              "original_rows": 825,
+              "candidate_rows": 826,
+              "missing_row_copies": 0,
+              "extra_row_copies": 1,
+              "columns_equal": true,
+              "equivalent": false
+            },
+            "status": "result_mismatch",
+            "reason": "Full results differ; candidate benchmark skipped"
+          },
+          {
+            "attempt": 2,
+            "kind": "repair",
+            "stage": "complete",
+            "benchmark": {
+              "warmups_per_query": 1,
+              "samples_per_query": 7,
+              "execution_order": [
+                "original",
+                "rewritten",
+                "original",
+                "rewritten",
+                "original",
+                "rewritten",
+                "original",
+                "rewritten",
+                "original",
+                "rewritten",
+                "original",
+                "rewritten",
+                "original",
+                "rewritten"
+              ],
+              "execution_ms": {
+                "original": [
+                  7.799,
+                  6.91,
+                  6.52,
+                  6.344,
+                  6.722,
+                  6.095,
+                  6.358
+                ],
+                "rewritten": [
+                  0.083,
+                  0.078,
+                  0.073,
+                  0.064,
+                  0.063,
+                  0.059,
+                  0.056
+                ]
+              },
+              "median_ms": {
+                "original": 6.52,
+                "rewritten": 0.064
+              },
+              "rewritten_time_change_percent": -99.01840490797545,
+              "spread_range_over_median": {
+                "original": 0.26134969325153384,
+                "rewritten": 0.42187500000000006
+              },
+              "variability_note": "本次两组极差均不超过中位数的 50%",
+              "samples": {
+                "original": [
+                  {
+                    "execution_ms": 7.799,
+                    "planning_ms": 0.012,
+                    "nodes": [
+                      {
+                        "Node Type": "Gather",
+                        "Parallel Aware": false,
+                        "Startup Cost": 1000.0,
+                        "Total Cost": 6510.1,
+                        "Plan Rows": 1500,
+                        "Plan Width": 27,
+                        "Actual Rows": 825,
+                        "Actual Loops": 1,
+                        "Workers Planned": 1,
+                        "Workers Launched": 1,
+                        "Shared Hit Blocks": 2713,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0
+                      },
+                      {
+                        "Node Type": "Seq Scan",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": true,
+                        "Relation Name": "orders",
+                        "Alias": "orders",
+                        "Startup Cost": 0.0,
+                        "Total Cost": 5360.1,
+                        "Plan Rows": 882,
+                        "Plan Width": 27,
+                        "Actual Rows": 412,
+                        "Actual Loops": 2,
+                        "Filter": "((created_at)::date = '2025-06-15'::date)",
+                        "Rows Removed by Filter": 149590,
+                        "Shared Hit Blocks": 2713,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0
+                      }
+                    ]
+                  },
+                  {
+                    "execution_ms": 6.91,
+                    "planning_ms": 0.007,
+                    "nodes": [
+                      {
+                        "Node Type": "Gather",
+                        "Parallel Aware": false,
+                        "Startup Cost": 1000.0,
+                        "Total Cost": 6510.1,
+                        "Plan Rows": 1500,
+                        "Plan Width": 27,
+                        "Actual Rows": 825,
+                        "Actual Loops": 1,
+                        "Workers Planned": 1,
+                        "Workers Launched": 1,
+                        "Shared Hit Blocks": 2713,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0
+                      },
+                      {
+                        "Node Type": "Seq Scan",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": true,
+                        "Relation Name": "orders",
+                        "Alias": "orders",
+                        "Startup Cost": 0.0,
+                        "Total Cost": 5360.1,
+                        "Plan Rows": 882,
+                        "Plan Width": 27,
+                        "Actual Rows": 412,
+                        "Actual Loops": 2,
+                        "Filter": "((created_at)::date = '2025-06-15'::date)",
+                        "Rows Removed by Filter": 149590,
+                        "Shared Hit Blocks": 2713,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0
+                      }
+                    ]
+                  },
+                  {
+                    "execution_ms": 6.52,
+                    "planning_ms": 0.012,
+                    "nodes": [
+                      {
+                        "Node Type": "Gather",
+                        "Parallel Aware": false,
+                        "Startup Cost": 1000.0,
+                        "Total Cost": 6510.1,
+                        "Plan Rows": 1500,
+                        "Plan Width": 27,
+                        "Actual Rows": 825,
+                        "Actual Loops": 1,
+                        "Workers Planned": 1,
+                        "Workers Launched": 1,
+                        "Shared Hit Blocks": 2713,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0
+                      },
+                      {
+                        "Node Type": "Seq Scan",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": true,
+                        "Relation Name": "orders",
+                        "Alias": "orders",
+                        "Startup Cost": 0.0,
+                        "Total Cost": 5360.1,
+                        "Plan Rows": 882,
+                        "Plan Width": 27,
+                        "Actual Rows": 412,
+                        "Actual Loops": 2,
+                        "Filter": "((created_at)::date = '2025-06-15'::date)",
+                        "Rows Removed by Filter": 149590,
+                        "Shared Hit Blocks": 2713,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0
+                      }
+                    ]
+                  },
+                  {
+                    "execution_ms": 6.344,
+                    "planning_ms": 0.009,
+                    "nodes": [
+                      {
+                        "Node Type": "Gather",
+                        "Parallel Aware": false,
+                        "Startup Cost": 1000.0,
+                        "Total Cost": 6510.1,
+                        "Plan Rows": 1500,
+                        "Plan Width": 27,
+                        "Actual Rows": 825,
+                        "Actual Loops": 1,
+                        "Workers Planned": 1,
+                        "Workers Launched": 1,
+                        "Shared Hit Blocks": 2713,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0
+                      },
+                      {
+                        "Node Type": "Seq Scan",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": true,
+                        "Relation Name": "orders",
+                        "Alias": "orders",
+                        "Startup Cost": 0.0,
+                        "Total Cost": 5360.1,
+                        "Plan Rows": 882,
+                        "Plan Width": 27,
+                        "Actual Rows": 412,
+                        "Actual Loops": 2,
+                        "Filter": "((created_at)::date = '2025-06-15'::date)",
+                        "Rows Removed by Filter": 149590,
+                        "Shared Hit Blocks": 2713,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0
+                      }
+                    ]
+                  },
+                  {
+                    "execution_ms": 6.722,
+                    "planning_ms": 0.007,
+                    "nodes": [
+                      {
+                        "Node Type": "Gather",
+                        "Parallel Aware": false,
+                        "Startup Cost": 1000.0,
+                        "Total Cost": 6510.1,
+                        "Plan Rows": 1500,
+                        "Plan Width": 27,
+                        "Actual Rows": 825,
+                        "Actual Loops": 1,
+                        "Workers Planned": 1,
+                        "Workers Launched": 1,
+                        "Shared Hit Blocks": 2713,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0
+                      },
+                      {
+                        "Node Type": "Seq Scan",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": true,
+                        "Relation Name": "orders",
+                        "Alias": "orders",
+                        "Startup Cost": 0.0,
+                        "Total Cost": 5360.1,
+                        "Plan Rows": 882,
+                        "Plan Width": 27,
+                        "Actual Rows": 412,
+                        "Actual Loops": 2,
+                        "Filter": "((created_at)::date = '2025-06-15'::date)",
+                        "Rows Removed by Filter": 149590,
+                        "Shared Hit Blocks": 2713,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0
+                      }
+                    ]
+                  },
+                  {
+                    "execution_ms": 6.095,
+                    "planning_ms": 0.008,
+                    "nodes": [
+                      {
+                        "Node Type": "Gather",
+                        "Parallel Aware": false,
+                        "Startup Cost": 1000.0,
+                        "Total Cost": 6510.1,
+                        "Plan Rows": 1500,
+                        "Plan Width": 27,
+                        "Actual Rows": 825,
+                        "Actual Loops": 1,
+                        "Workers Planned": 1,
+                        "Workers Launched": 1,
+                        "Shared Hit Blocks": 2713,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0
+                      },
+                      {
+                        "Node Type": "Seq Scan",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": true,
+                        "Relation Name": "orders",
+                        "Alias": "orders",
+                        "Startup Cost": 0.0,
+                        "Total Cost": 5360.1,
+                        "Plan Rows": 882,
+                        "Plan Width": 27,
+                        "Actual Rows": 412,
+                        "Actual Loops": 2,
+                        "Filter": "((created_at)::date = '2025-06-15'::date)",
+                        "Rows Removed by Filter": 149590,
+                        "Shared Hit Blocks": 2713,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0
+                      }
+                    ]
+                  },
+                  {
+                    "execution_ms": 6.358,
+                    "planning_ms": 0.007,
+                    "nodes": [
+                      {
+                        "Node Type": "Gather",
+                        "Parallel Aware": false,
+                        "Startup Cost": 1000.0,
+                        "Total Cost": 6510.1,
+                        "Plan Rows": 1500,
+                        "Plan Width": 27,
+                        "Actual Rows": 825,
+                        "Actual Loops": 1,
+                        "Workers Planned": 1,
+                        "Workers Launched": 1,
+                        "Shared Hit Blocks": 2713,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0
+                      },
+                      {
+                        "Node Type": "Seq Scan",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": true,
+                        "Relation Name": "orders",
+                        "Alias": "orders",
+                        "Startup Cost": 0.0,
+                        "Total Cost": 5360.1,
+                        "Plan Rows": 882,
+                        "Plan Width": 27,
+                        "Actual Rows": 412,
+                        "Actual Loops": 2,
+                        "Filter": "((created_at)::date = '2025-06-15'::date)",
+                        "Rows Removed by Filter": 149590,
+                        "Shared Hit Blocks": 2713,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0
+                      }
+                    ]
+                  }
+                ],
+                "rewritten": [
+                  {
+                    "execution_ms": 0.083,
+                    "planning_ms": 0.017,
+                    "nodes": [
+                      {
+                        "Node Type": "Index Scan",
+                        "Parallel Aware": false,
+                        "Scan Direction": "Forward",
+                        "Index Name": "orders_created_at_idx",
+                        "Relation Name": "orders",
+                        "Alias": "orders",
+                        "Startup Cost": 0.42,
+                        "Total Cost": 39.5,
+                        "Plan Rows": 804,
+                        "Plan Width": 27,
+                        "Actual Rows": 825,
+                        "Actual Loops": 1,
+                        "Index Cond": "((created_at >= '2025-06-15 00:00:00'::timestamp without time zone) AND (created_at < '2025-06-16 00:00:00'::timestamp without time zone))",
+                        "Shared Hit Blocks": 16,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0
+                      }
+                    ]
+                  },
+                  {
+                    "execution_ms": 0.078,
+                    "planning_ms": 0.019,
+                    "nodes": [
+                      {
+                        "Node Type": "Index Scan",
+                        "Parallel Aware": false,
+                        "Scan Direction": "Forward",
+                        "Index Name": "orders_created_at_idx",
+                        "Relation Name": "orders",
+                        "Alias": "orders",
+                        "Startup Cost": 0.42,
+                        "Total Cost": 39.5,
+                        "Plan Rows": 804,
+                        "Plan Width": 27,
+                        "Actual Rows": 825,
+                        "Actual Loops": 1,
+                        "Index Cond": "((created_at >= '2025-06-15 00:00:00'::timestamp without time zone) AND (created_at < '2025-06-16 00:00:00'::timestamp without time zone))",
+                        "Shared Hit Blocks": 16,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0
+                      }
+                    ]
+                  },
+                  {
+                    "execution_ms": 0.073,
+                    "planning_ms": 0.031,
+                    "nodes": [
+                      {
+                        "Node Type": "Index Scan",
+                        "Parallel Aware": false,
+                        "Scan Direction": "Forward",
+                        "Index Name": "orders_created_at_idx",
+                        "Relation Name": "orders",
+                        "Alias": "orders",
+                        "Startup Cost": 0.42,
+                        "Total Cost": 39.5,
+                        "Plan Rows": 804,
+                        "Plan Width": 27,
+                        "Actual Rows": 825,
+                        "Actual Loops": 1,
+                        "Index Cond": "((created_at >= '2025-06-15 00:00:00'::timestamp without time zone) AND (created_at < '2025-06-16 00:00:00'::timestamp without time zone))",
+                        "Shared Hit Blocks": 16,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0
+                      }
+                    ]
+                  },
+                  {
+                    "execution_ms": 0.064,
+                    "planning_ms": 0.017,
+                    "nodes": [
+                      {
+                        "Node Type": "Index Scan",
+                        "Parallel Aware": false,
+                        "Scan Direction": "Forward",
+                        "Index Name": "orders_created_at_idx",
+                        "Relation Name": "orders",
+                        "Alias": "orders",
+                        "Startup Cost": 0.42,
+                        "Total Cost": 39.5,
+                        "Plan Rows": 804,
+                        "Plan Width": 27,
+                        "Actual Rows": 825,
+                        "Actual Loops": 1,
+                        "Index Cond": "((created_at >= '2025-06-15 00:00:00'::timestamp without time zone) AND (created_at < '2025-06-16 00:00:00'::timestamp without time zone))",
+                        "Shared Hit Blocks": 16,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0
+                      }
+                    ]
+                  },
+                  {
+                    "execution_ms": 0.063,
+                    "planning_ms": 0.017,
+                    "nodes": [
+                      {
+                        "Node Type": "Index Scan",
+                        "Parallel Aware": false,
+                        "Scan Direction": "Forward",
+                        "Index Name": "orders_created_at_idx",
+                        "Relation Name": "orders",
+                        "Alias": "orders",
+                        "Startup Cost": 0.42,
+                        "Total Cost": 39.5,
+                        "Plan Rows": 804,
+                        "Plan Width": 27,
+                        "Actual Rows": 825,
+                        "Actual Loops": 1,
+                        "Index Cond": "((created_at >= '2025-06-15 00:00:00'::timestamp without time zone) AND (created_at < '2025-06-16 00:00:00'::timestamp without time zone))",
+                        "Shared Hit Blocks": 16,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0
+                      }
+                    ]
+                  },
+                  {
+                    "execution_ms": 0.059,
+                    "planning_ms": 0.014,
+                    "nodes": [
+                      {
+                        "Node Type": "Index Scan",
+                        "Parallel Aware": false,
+                        "Scan Direction": "Forward",
+                        "Index Name": "orders_created_at_idx",
+                        "Relation Name": "orders",
+                        "Alias": "orders",
+                        "Startup Cost": 0.42,
+                        "Total Cost": 39.5,
+                        "Plan Rows": 804,
+                        "Plan Width": 27,
+                        "Actual Rows": 825,
+                        "Actual Loops": 1,
+                        "Index Cond": "((created_at >= '2025-06-15 00:00:00'::timestamp without time zone) AND (created_at < '2025-06-16 00:00:00'::timestamp without time zone))",
+                        "Shared Hit Blocks": 16,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0
+                      }
+                    ]
+                  },
+                  {
+                    "execution_ms": 0.056,
+                    "planning_ms": 0.019,
+                    "nodes": [
+                      {
+                        "Node Type": "Index Scan",
+                        "Parallel Aware": false,
+                        "Scan Direction": "Forward",
+                        "Index Name": "orders_created_at_idx",
+                        "Relation Name": "orders",
+                        "Alias": "orders",
+                        "Startup Cost": 0.42,
+                        "Total Cost": 39.5,
+                        "Plan Rows": 804,
+                        "Plan Width": 27,
+                        "Actual Rows": 825,
+                        "Actual Loops": 1,
+                        "Index Cond": "((created_at >= '2025-06-15 00:00:00'::timestamp without time zone) AND (created_at < '2025-06-16 00:00:00'::timestamp without time zone))",
+                        "Shared Hit Blocks": 16,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0
+                      }
+                    ]
+                  }
+                ]
+              },
+              "method": "Natural planner settings; warm-cache EXPLAIN server execution time, not client transfer time"
+            },
+            "model_requests": 0,
+            "model_id": "controlled-fixture-not-a-real-model",
+            "received_content": "{\"action\": \"date_range\", \"start\": \"2025-06-15 00:00:00\", \"end\": \"2025-06-16 00:00:00\", \"start_inclusive\": true, \"end_inclusive\": false, \"reason\": \"Use the timestamp B-tree with inclusive start and exclusive end.\"}",
+            "model_request_ms": 0.0,
+            "suggestion": {
+              "action": "date_range",
+              "start": "2025-06-15 00:00:00",
+              "end": "2025-06-16 00:00:00",
+              "start_inclusive": true,
+              "end_inclusive": false,
+              "reason": "Use the timestamp B-tree with inclusive start and exclusive end."
+            },
+            "candidate": {
+              "sql": "SELECT customer_id, created_at, status, amount\nFROM public.orders\nWHERE created_at >= %s::timestamp without time zone\n  AND created_at < %s::timestamp without time zone",
+              "parameters": [
+                "2025-06-15 00:00:00",
+                "2025-06-16 00:00:00"
+              ]
+            },
+            "connection": {
+              "database": "sql_optimization",
+              "user": "sql_optimization_reader",
+              "read_only": "on",
+              "isolation": "repeatable read",
+              "version": "PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit"
+            },
+            "comparison": {
+              "original_rows": 825,
+              "candidate_rows": 825,
+              "columns_equal": true,
+              "rows_and_multiplicities_equal": true,
+              "equivalent": true,
+              "reason": "在本次测试数据上结果一致",
+              "missing_from_candidate": [],
+              "extra_in_candidate": [],
+              "columns": [
+                [
+                  "customer_id",
+                  23,
+                  4,
+                  null,
+                  null
+                ],
+                [
+                  "created_at",
+                  1114,
+                  8,
+                  null,
+                  null
+                ],
+                [
+                  "status",
+                  25,
+                  null,
+                  null,
+                  null
+                ],
+                [
+                  "amount",
+                  1700,
+                  null,
+                  12,
+                  2
+                ]
+              ]
+            },
+            "difference_summary": {
+              "original_rows": 825,
+              "candidate_rows": 825,
+              "missing_row_copies": 0,
+              "extra_row_copies": 0,
+              "columns_equal": true,
+              "equivalent": true
+            },
+            "status": "completed",
+            "reason": "在本次测试数据上结果一致"
+          }
+        ],
+        "diagnostic_context": {
+          "scenario": "orders_date_filter_2025_06_15",
+          "original_sql": "SELECT customer_id, created_at, status, amount\nFROM public.orders\nWHERE created_at::date = %s::date",
+          "original_parameters": [
+            "2025-06-15"
+          ],
+          "date_context": {
+            "target_date": "2025-06-15",
+            "start": "2025-06-15 00:00:00",
+            "end": "2025-06-16 00:00:00",
+            "timestamp_type": "timestamp without time zone"
+          },
+          "table": {
+            "schema": "public",
+            "table": "orders",
+            "columns": [
+              {
+                "name": "order_id",
+                "data_type": "bigint",
+                "nullable": false
+              },
+              {
+                "name": "customer_id",
+                "data_type": "integer",
+                "nullable": false
+              },
+              {
+                "name": "created_at",
+                "data_type": "timestamp without time zone",
+                "nullable": true
+              },
+              {
+                "name": "status",
+                "data_type": "text",
+                "nullable": false
+              },
+              {
+                "name": "amount",
+                "data_type": "numeric(12,2)",
+                "nullable": false
+              }
+            ],
+            "primary_key": [
+              "order_id"
+            ],
+            "indexes": [
+              {
+                "name": "orders_created_at_idx",
+                "definition": "CREATE INDEX orders_created_at_idx ON public.orders USING btree (created_at)"
+              },
+              {
+                "name": "orders_pkey",
+                "definition": "CREATE UNIQUE INDEX orders_pkey ON public.orders USING btree (order_id)"
+              }
+            ]
+          },
+          "estimated_plan": [
+            {
+              "Node Type": "Gather",
+              "Parallel Aware": false,
+              "Startup Cost": 1000.0,
+              "Total Cost": 6510.1,
+              "Plan Rows": 1500,
+              "Plan Width": 27
+            },
+            {
+              "Node Type": "Seq Scan",
+              "Parallel Aware": true,
+              "Relation Name": "orders",
+              "Startup Cost": 0.0,
+              "Total Cost": 5360.1,
+              "Plan Rows": 882,
+              "Plan Width": 27,
+              "Filter": "((created_at)::date = '2025-06-15'::date)"
+            }
+          ]
+        },
+        "repair_feedback": {
+          "target_date": "2025-06-15",
+          "candidate_boundaries": {
+            "start": "2025-06-15 00:00:00",
+            "end": "2025-06-16 00:00:00",
+            "start_inclusive": true,
+            "end_inclusive": true
+          },
+          "difference_summary": {
+            "original_rows": 825,
+            "candidate_rows": 826,
+            "missing_row_copies": 0,
+            "extra_row_copies": 1,
+            "columns_equal": true,
+            "equivalent": false
+          },
+          "instruction": "Repair the date boundaries using the same structured contract, or return no_suggestion."
+        },
+        "model_id": "controlled-fixture-not-a-real-model",
+        "received_content": "{\"action\": \"date_range\", \"start\": \"2025-06-15 00:00:00\", \"end\": \"2025-06-16 00:00:00\", \"start_inclusive\": true, \"end_inclusive\": false, \"reason\": \"Use the timestamp B-tree with inclusive start and exclusive end.\"}",
+        "suggestion": {
+          "action": "date_range",
+          "start": "2025-06-15 00:00:00",
+          "end": "2025-06-16 00:00:00",
+          "start_inclusive": true,
+          "end_inclusive": false,
+          "reason": "Use the timestamp B-tree with inclusive start and exclusive end."
+        },
+        "candidate": {
+          "sql": "SELECT customer_id, created_at, status, amount\nFROM public.orders\nWHERE created_at >= %s::timestamp without time zone\n  AND created_at < %s::timestamp without time zone",
+          "parameters": [
+            "2025-06-15 00:00:00",
+            "2025-06-16 00:00:00"
+          ]
+        },
+        "connection": {
+          "database": "sql_optimization",
+          "user": "sql_optimization_reader",
+          "read_only": "on",
+          "isolation": "repeatable read",
+          "version": "PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit"
+        },
+        "comparison": {
+          "original_rows": 825,
+          "candidate_rows": 825,
+          "columns_equal": true,
+          "rows_and_multiplicities_equal": true,
+          "equivalent": true,
+          "reason": "在本次测试数据上结果一致",
+          "missing_from_candidate": [],
+          "extra_in_candidate": [],
+          "columns": [
+            [
+              "customer_id",
+              23,
+              4,
+              null,
+              null
+            ],
+            [
+              "created_at",
+              1114,
+              8,
+              null,
+              null
+            ],
+            [
+              "status",
+              25,
+              null,
+              null,
+              null
+            ],
+            [
+              "amount",
+              1700,
+              null,
+              12,
+              2
+            ]
+          ]
+        },
+        "difference_summary": {
+          "original_rows": 825,
+          "candidate_rows": 825,
+          "missing_row_copies": 0,
+          "extra_row_copies": 0,
+          "columns_equal": true,
+          "equivalent": true
+        },
+        "status": "completed",
+        "reason": "在本次测试数据上结果一致",
+        "performance_assessment": {
+          "verdict": "improved",
+          "rule": "strict_sample_interval_separation",
+          "original_range_ms": {
+            "min": 6.095,
+            "max": 7.799
+          },
+          "candidate_range_ms": {
+            "min": 0.056,
+            "max": 0.083
+          },
+          "median_ms": {
+            "original": 6.52,
+            "rewritten": 0.064
+          },
+          "median_difference_ms": -6.456,
+          "median_change_percent": -99.01840490797545,
+          "sample_counts": {
+            "original": 7,
+            "rewritten": 7
+          },
+          "scope": "This sampling run only; not a general performance guarantee"
+        },
+        "recommendation": {
+          "decision": "use_candidate",
+          "reason_code": "validated_and_improved",
+          "advisory_only": true
+        }
+      },
+      "mcp": {
+        "source": "controlled_model_response",
+        "fixture": "repair-success",
+        "requested_model": "qwen3.7-plus",
+        "measured_at_utc": "2026-11-19T01:32:34.761553+00:00",
+        "model_requests": 0,
+        "benchmark": {
+          "warmups_per_query": 1,
+          "samples_per_query": 7,
+          "execution_order": [
+            "original",
+            "rewritten",
+            "original",
+            "rewritten",
+            "original",
+            "rewritten",
+            "original",
+            "rewritten",
+            "original",
+            "rewritten",
+            "original",
+            "rewritten",
+            "original",
+            "rewritten"
+          ],
+          "execution_ms": {
+            "original": [
+              7.628,
+              6.925,
+              6.494,
+              6.281,
+              6.273,
+              6.348,
+              6.22
+            ],
+            "rewritten": [
+              0.072,
+              0.067,
+              0.061,
+              0.069,
+              0.06,
+              0.068,
+              0.056
+            ]
+          },
+          "median_ms": {
+            "original": 6.348,
+            "rewritten": 0.067
+          },
+          "rewritten_time_change_percent": -98.94454946439824,
+          "spread_range_over_median": {
+            "original": 0.2218021424070574,
+            "rewritten": 0.23880597014925362
+          },
+          "variability_note": "本次两组极差均不超过中位数的 50%",
+          "samples": {
+            "original": [
+              {
+                "execution_ms": 7.628,
+                "planning_ms": 0.012,
+                "nodes": [
+                  {
+                    "Node Type": "Gather",
+                    "Parallel Aware": false,
+                    "Startup Cost": 1000.0,
+                    "Total Cost": 6510.1,
+                    "Plan Rows": 1500,
+                    "Plan Width": 27,
+                    "Actual Rows": 825,
+                    "Actual Loops": 1,
+                    "Workers Planned": 1,
+                    "Workers Launched": 1,
+                    "Shared Hit Blocks": 2713,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0
+                  },
+                  {
+                    "Node Type": "Seq Scan",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": true,
+                    "Relation Name": "orders",
+                    "Alias": "orders",
+                    "Startup Cost": 0.0,
+                    "Total Cost": 5360.1,
+                    "Plan Rows": 882,
+                    "Plan Width": 27,
+                    "Actual Rows": 412,
+                    "Actual Loops": 2,
+                    "Filter": "((created_at)::date = '2025-06-15'::date)",
+                    "Rows Removed by Filter": 149590,
+                    "Shared Hit Blocks": 2713,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0
+                  }
+                ]
+              },
+              {
+                "execution_ms": 6.925,
+                "planning_ms": 0.011,
+                "nodes": [
+                  {
+                    "Node Type": "Gather",
+                    "Parallel Aware": false,
+                    "Startup Cost": 1000.0,
+                    "Total Cost": 6510.1,
+                    "Plan Rows": 1500,
+                    "Plan Width": 27,
+                    "Actual Rows": 825,
+                    "Actual Loops": 1,
+                    "Workers Planned": 1,
+                    "Workers Launched": 1,
+                    "Shared Hit Blocks": 2713,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0
+                  },
+                  {
+                    "Node Type": "Seq Scan",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": true,
+                    "Relation Name": "orders",
+                    "Alias": "orders",
+                    "Startup Cost": 0.0,
+                    "Total Cost": 5360.1,
+                    "Plan Rows": 882,
+                    "Plan Width": 27,
+                    "Actual Rows": 412,
+                    "Actual Loops": 2,
+                    "Filter": "((created_at)::date = '2025-06-15'::date)",
+                    "Rows Removed by Filter": 149590,
+                    "Shared Hit Blocks": 2713,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0
+                  }
+                ]
+              },
+              {
+                "execution_ms": 6.494,
+                "planning_ms": 0.008,
+                "nodes": [
+                  {
+                    "Node Type": "Gather",
+                    "Parallel Aware": false,
+                    "Startup Cost": 1000.0,
+                    "Total Cost": 6510.1,
+                    "Plan Rows": 1500,
+                    "Plan Width": 27,
+                    "Actual Rows": 825,
+                    "Actual Loops": 1,
+                    "Workers Planned": 1,
+                    "Workers Launched": 1,
+                    "Shared Hit Blocks": 2713,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0
+                  },
+                  {
+                    "Node Type": "Seq Scan",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": true,
+                    "Relation Name": "orders",
+                    "Alias": "orders",
+                    "Startup Cost": 0.0,
+                    "Total Cost": 5360.1,
+                    "Plan Rows": 882,
+                    "Plan Width": 27,
+                    "Actual Rows": 412,
+                    "Actual Loops": 2,
+                    "Filter": "((created_at)::date = '2025-06-15'::date)",
+                    "Rows Removed by Filter": 149590,
+                    "Shared Hit Blocks": 2713,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0
+                  }
+                ]
+              },
+              {
+                "execution_ms": 6.281,
+                "planning_ms": 0.007,
+                "nodes": [
+                  {
+                    "Node Type": "Gather",
+                    "Parallel Aware": false,
+                    "Startup Cost": 1000.0,
+                    "Total Cost": 6510.1,
+                    "Plan Rows": 1500,
+                    "Plan Width": 27,
+                    "Actual Rows": 825,
+                    "Actual Loops": 1,
+                    "Workers Planned": 1,
+                    "Workers Launched": 1,
+                    "Shared Hit Blocks": 2713,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0
+                  },
+                  {
+                    "Node Type": "Seq Scan",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": true,
+                    "Relation Name": "orders",
+                    "Alias": "orders",
+                    "Startup Cost": 0.0,
+                    "Total Cost": 5360.1,
+                    "Plan Rows": 882,
+                    "Plan Width": 27,
+                    "Actual Rows": 412,
+                    "Actual Loops": 2,
+                    "Filter": "((created_at)::date = '2025-06-15'::date)",
+                    "Rows Removed by Filter": 149590,
+                    "Shared Hit Blocks": 2713,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0
+                  }
+                ]
+              },
+              {
+                "execution_ms": 6.273,
+                "planning_ms": 0.01,
+                "nodes": [
+                  {
+                    "Node Type": "Gather",
+                    "Parallel Aware": false,
+                    "Startup Cost": 1000.0,
+                    "Total Cost": 6510.1,
+                    "Plan Rows": 1500,
+                    "Plan Width": 27,
+                    "Actual Rows": 825,
+                    "Actual Loops": 1,
+                    "Workers Planned": 1,
+                    "Workers Launched": 1,
+                    "Shared Hit Blocks": 2713,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0
+                  },
+                  {
+                    "Node Type": "Seq Scan",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": true,
+                    "Relation Name": "orders",
+                    "Alias": "orders",
+                    "Startup Cost": 0.0,
+                    "Total Cost": 5360.1,
+                    "Plan Rows": 882,
+                    "Plan Width": 27,
+                    "Actual Rows": 412,
+                    "Actual Loops": 2,
+                    "Filter": "((created_at)::date = '2025-06-15'::date)",
+                    "Rows Removed by Filter": 149590,
+                    "Shared Hit Blocks": 2713,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0
+                  }
+                ]
+              },
+              {
+                "execution_ms": 6.348,
+                "planning_ms": 0.008,
+                "nodes": [
+                  {
+                    "Node Type": "Gather",
+                    "Parallel Aware": false,
+                    "Startup Cost": 1000.0,
+                    "Total Cost": 6510.1,
+                    "Plan Rows": 1500,
+                    "Plan Width": 27,
+                    "Actual Rows": 825,
+                    "Actual Loops": 1,
+                    "Workers Planned": 1,
+                    "Workers Launched": 1,
+                    "Shared Hit Blocks": 2713,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0
+                  },
+                  {
+                    "Node Type": "Seq Scan",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": true,
+                    "Relation Name": "orders",
+                    "Alias": "orders",
+                    "Startup Cost": 0.0,
+                    "Total Cost": 5360.1,
+                    "Plan Rows": 882,
+                    "Plan Width": 27,
+                    "Actual Rows": 412,
+                    "Actual Loops": 2,
+                    "Filter": "((created_at)::date = '2025-06-15'::date)",
+                    "Rows Removed by Filter": 149590,
+                    "Shared Hit Blocks": 2713,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0
+                  }
+                ]
+              },
+              {
+                "execution_ms": 6.22,
+                "planning_ms": 0.013,
+                "nodes": [
+                  {
+                    "Node Type": "Gather",
+                    "Parallel Aware": false,
+                    "Startup Cost": 1000.0,
+                    "Total Cost": 6510.1,
+                    "Plan Rows": 1500,
+                    "Plan Width": 27,
+                    "Actual Rows": 825,
+                    "Actual Loops": 1,
+                    "Workers Planned": 1,
+                    "Workers Launched": 1,
+                    "Shared Hit Blocks": 2713,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0
+                  },
+                  {
+                    "Node Type": "Seq Scan",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": true,
+                    "Relation Name": "orders",
+                    "Alias": "orders",
+                    "Startup Cost": 0.0,
+                    "Total Cost": 5360.1,
+                    "Plan Rows": 882,
+                    "Plan Width": 27,
+                    "Actual Rows": 412,
+                    "Actual Loops": 2,
+                    "Filter": "((created_at)::date = '2025-06-15'::date)",
+                    "Rows Removed by Filter": 149590,
+                    "Shared Hit Blocks": 2713,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0
+                  }
+                ]
+              }
+            ],
+            "rewritten": [
+              {
+                "execution_ms": 0.072,
+                "planning_ms": 0.024,
+                "nodes": [
+                  {
+                    "Node Type": "Index Scan",
+                    "Parallel Aware": false,
+                    "Scan Direction": "Forward",
+                    "Index Name": "orders_created_at_idx",
+                    "Relation Name": "orders",
+                    "Alias": "orders",
+                    "Startup Cost": 0.42,
+                    "Total Cost": 39.5,
+                    "Plan Rows": 804,
+                    "Plan Width": 27,
+                    "Actual Rows": 825,
+                    "Actual Loops": 1,
+                    "Index Cond": "((created_at >= '2025-06-15 00:00:00'::timestamp without time zone) AND (created_at < '2025-06-16 00:00:00'::timestamp without time zone))",
+                    "Shared Hit Blocks": 16,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0
+                  }
+                ]
+              },
+              {
+                "execution_ms": 0.067,
+                "planning_ms": 0.018,
+                "nodes": [
+                  {
+                    "Node Type": "Index Scan",
+                    "Parallel Aware": false,
+                    "Scan Direction": "Forward",
+                    "Index Name": "orders_created_at_idx",
+                    "Relation Name": "orders",
+                    "Alias": "orders",
+                    "Startup Cost": 0.42,
+                    "Total Cost": 39.5,
+                    "Plan Rows": 804,
+                    "Plan Width": 27,
+                    "Actual Rows": 825,
+                    "Actual Loops": 1,
+                    "Index Cond": "((created_at >= '2025-06-15 00:00:00'::timestamp without time zone) AND (created_at < '2025-06-16 00:00:00'::timestamp without time zone))",
+                    "Shared Hit Blocks": 16,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0
+                  }
+                ]
+              },
+              {
+                "execution_ms": 0.061,
+                "planning_ms": 0.014,
+                "nodes": [
+                  {
+                    "Node Type": "Index Scan",
+                    "Parallel Aware": false,
+                    "Scan Direction": "Forward",
+                    "Index Name": "orders_created_at_idx",
+                    "Relation Name": "orders",
+                    "Alias": "orders",
+                    "Startup Cost": 0.42,
+                    "Total Cost": 39.5,
+                    "Plan Rows": 804,
+                    "Plan Width": 27,
+                    "Actual Rows": 825,
+                    "Actual Loops": 1,
+                    "Index Cond": "((created_at >= '2025-06-15 00:00:00'::timestamp without time zone) AND (created_at < '2025-06-16 00:00:00'::timestamp without time zone))",
+                    "Shared Hit Blocks": 16,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0
+                  }
+                ]
+              },
+              {
+                "execution_ms": 0.069,
+                "planning_ms": 0.026,
+                "nodes": [
+                  {
+                    "Node Type": "Index Scan",
+                    "Parallel Aware": false,
+                    "Scan Direction": "Forward",
+                    "Index Name": "orders_created_at_idx",
+                    "Relation Name": "orders",
+                    "Alias": "orders",
+                    "Startup Cost": 0.42,
+                    "Total Cost": 39.5,
+                    "Plan Rows": 804,
+                    "Plan Width": 27,
+                    "Actual Rows": 825,
+                    "Actual Loops": 1,
+                    "Index Cond": "((created_at >= '2025-06-15 00:00:00'::timestamp without time zone) AND (created_at < '2025-06-16 00:00:00'::timestamp without time zone))",
+                    "Shared Hit Blocks": 16,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0
+                  }
+                ]
+              },
+              {
+                "execution_ms": 0.06,
+                "planning_ms": 0.017,
+                "nodes": [
+                  {
+                    "Node Type": "Index Scan",
+                    "Parallel Aware": false,
+                    "Scan Direction": "Forward",
+                    "Index Name": "orders_created_at_idx",
+                    "Relation Name": "orders",
+                    "Alias": "orders",
+                    "Startup Cost": 0.42,
+                    "Total Cost": 39.5,
+                    "Plan Rows": 804,
+                    "Plan Width": 27,
+                    "Actual Rows": 825,
+                    "Actual Loops": 1,
+                    "Index Cond": "((created_at >= '2025-06-15 00:00:00'::timestamp without time zone) AND (created_at < '2025-06-16 00:00:00'::timestamp without time zone))",
+                    "Shared Hit Blocks": 16,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0
+                  }
+                ]
+              },
+              {
+                "execution_ms": 0.068,
+                "planning_ms": 0.027,
+                "nodes": [
+                  {
+                    "Node Type": "Index Scan",
+                    "Parallel Aware": false,
+                    "Scan Direction": "Forward",
+                    "Index Name": "orders_created_at_idx",
+                    "Relation Name": "orders",
+                    "Alias": "orders",
+                    "Startup Cost": 0.42,
+                    "Total Cost": 39.5,
+                    "Plan Rows": 804,
+                    "Plan Width": 27,
+                    "Actual Rows": 825,
+                    "Actual Loops": 1,
+                    "Index Cond": "((created_at >= '2025-06-15 00:00:00'::timestamp without time zone) AND (created_at < '2025-06-16 00:00:00'::timestamp without time zone))",
+                    "Shared Hit Blocks": 16,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0
+                  }
+                ]
+              },
+              {
+                "execution_ms": 0.056,
+                "planning_ms": 0.013,
+                "nodes": [
+                  {
+                    "Node Type": "Index Scan",
+                    "Parallel Aware": false,
+                    "Scan Direction": "Forward",
+                    "Index Name": "orders_created_at_idx",
+                    "Relation Name": "orders",
+                    "Alias": "orders",
+                    "Startup Cost": 0.42,
+                    "Total Cost": 39.5,
+                    "Plan Rows": 804,
+                    "Plan Width": 27,
+                    "Actual Rows": 825,
+                    "Actual Loops": 1,
+                    "Index Cond": "((created_at >= '2025-06-15 00:00:00'::timestamp without time zone) AND (created_at < '2025-06-16 00:00:00'::timestamp without time zone))",
+                    "Shared Hit Blocks": 16,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0
+                  }
+                ]
+              }
+            ]
+          },
+          "method": "Natural planner settings; warm-cache EXPLAIN server execution time, not client transfer time"
+        },
+        "model_request_ms": 0.0,
+        "stage": "complete",
+        "target_date": "2025-06-15",
+        "date_context": {
+          "target_date": "2025-06-15",
+          "start": "2025-06-15 00:00:00",
+          "end": "2025-06-16 00:00:00",
+          "timestamp_type": "timestamp without time zone"
+        },
+        "repair_on_mismatch": true,
+        "max_model_requests": 2,
+        "attempts": [
+          {
+            "attempt": 1,
+            "kind": "initial",
+            "stage": "result_validation",
+            "benchmark": null,
+            "model_requests": 0,
+            "model_id": "controlled-fixture-not-a-real-model",
+            "received_content": "{\"action\": \"date_range\", \"start\": \"2025-06-15 00:00:00\", \"end\": \"2025-06-16 00:00:00\", \"start_inclusive\": true, \"end_inclusive\": true, \"reason\": \"Controlled date-window suggestion; wrong-upper deliberately includes next midnight.\"}",
+            "model_request_ms": 0.0,
+            "suggestion": {
+              "action": "date_range",
+              "start": "2025-06-15 00:00:00",
+              "end": "2025-06-16 00:00:00",
+              "start_inclusive": true,
+              "end_inclusive": true,
+              "reason": "Controlled date-window suggestion; wrong-upper deliberately includes next midnight."
+            },
+            "candidate": {
+              "sql": "SELECT customer_id, created_at, status, amount\nFROM public.orders\nWHERE created_at >= %s::timestamp without time zone\n  AND created_at <= %s::timestamp without time zone",
+              "parameters": [
+                "2025-06-15 00:00:00",
+                "2025-06-16 00:00:00"
+              ]
+            },
+            "connection": {
+              "database": "sql_optimization",
+              "user": "sql_optimization_reader",
+              "read_only": "on",
+              "isolation": "repeatable read",
+              "version": "PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit"
+            },
+            "comparison": {
+              "original_rows": 825,
+              "candidate_rows": 826,
+              "columns_equal": true,
+              "rows_and_multiplicities_equal": false,
+              "equivalent": false,
+              "reason": "Column metadata or full row multiplicities differ; performance test skipped",
+              "missing_from_candidate": [],
+              "extra_in_candidate": [
+                {
+                  "row": [
+                    10003,
+                    {
+                      "timestamp": "2025-06-16T00:00:00"
+                    },
+                    "pending",
+                    {
+                      "decimal": "345.67"
+                    }
+                  ],
+                  "copies": 1
+                }
+              ],
+              "columns": [
+                [
+                  "customer_id",
+                  23,
+                  4,
+                  null,
+                  null
+                ],
+                [
+                  "created_at",
+                  1114,
+                  8,
+                  null,
+                  null
+                ],
+                [
+                  "status",
+                  25,
+                  null,
+                  null,
+                  null
+                ],
+                [
+                  "amount",
+                  1700,
+                  null,
+                  12,
+                  2
+                ]
+              ]
+            },
+            "difference_summary": {
+              "original_rows": 825,
+              "candidate_rows": 826,
+              "missing_row_copies": 0,
+              "extra_row_copies": 1,
+              "columns_equal": true,
+              "equivalent": false
+            },
+            "status": "result_mismatch",
+            "reason": "Full results differ; candidate benchmark skipped"
+          },
+          {
+            "attempt": 2,
+            "kind": "repair",
+            "stage": "complete",
+            "benchmark": {
+              "warmups_per_query": 1,
+              "samples_per_query": 7,
+              "execution_order": [
+                "original",
+                "rewritten",
+                "original",
+                "rewritten",
+                "original",
+                "rewritten",
+                "original",
+                "rewritten",
+                "original",
+                "rewritten",
+                "original",
+                "rewritten",
+                "original",
+                "rewritten"
+              ],
+              "execution_ms": {
+                "original": [
+                  7.628,
+                  6.925,
+                  6.494,
+                  6.281,
+                  6.273,
+                  6.348,
+                  6.22
+                ],
+                "rewritten": [
+                  0.072,
+                  0.067,
+                  0.061,
+                  0.069,
+                  0.06,
+                  0.068,
+                  0.056
+                ]
+              },
+              "median_ms": {
+                "original": 6.348,
+                "rewritten": 0.067
+              },
+              "rewritten_time_change_percent": -98.94454946439824,
+              "spread_range_over_median": {
+                "original": 0.2218021424070574,
+                "rewritten": 0.23880597014925362
+              },
+              "variability_note": "本次两组极差均不超过中位数的 50%",
+              "samples": {
+                "original": [
+                  {
+                    "execution_ms": 7.628,
+                    "planning_ms": 0.012,
+                    "nodes": [
+                      {
+                        "Node Type": "Gather",
+                        "Parallel Aware": false,
+                        "Startup Cost": 1000.0,
+                        "Total Cost": 6510.1,
+                        "Plan Rows": 1500,
+                        "Plan Width": 27,
+                        "Actual Rows": 825,
+                        "Actual Loops": 1,
+                        "Workers Planned": 1,
+                        "Workers Launched": 1,
+                        "Shared Hit Blocks": 2713,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0
+                      },
+                      {
+                        "Node Type": "Seq Scan",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": true,
+                        "Relation Name": "orders",
+                        "Alias": "orders",
+                        "Startup Cost": 0.0,
+                        "Total Cost": 5360.1,
+                        "Plan Rows": 882,
+                        "Plan Width": 27,
+                        "Actual Rows": 412,
+                        "Actual Loops": 2,
+                        "Filter": "((created_at)::date = '2025-06-15'::date)",
+                        "Rows Removed by Filter": 149590,
+                        "Shared Hit Blocks": 2713,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0
+                      }
+                    ]
+                  },
+                  {
+                    "execution_ms": 6.925,
+                    "planning_ms": 0.011,
+                    "nodes": [
+                      {
+                        "Node Type": "Gather",
+                        "Parallel Aware": false,
+                        "Startup Cost": 1000.0,
+                        "Total Cost": 6510.1,
+                        "Plan Rows": 1500,
+                        "Plan Width": 27,
+                        "Actual Rows": 825,
+                        "Actual Loops": 1,
+                        "Workers Planned": 1,
+                        "Workers Launched": 1,
+                        "Shared Hit Blocks": 2713,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0
+                      },
+                      {
+                        "Node Type": "Seq Scan",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": true,
+                        "Relation Name": "orders",
+                        "Alias": "orders",
+                        "Startup Cost": 0.0,
+                        "Total Cost": 5360.1,
+                        "Plan Rows": 882,
+                        "Plan Width": 27,
+                        "Actual Rows": 412,
+                        "Actual Loops": 2,
+                        "Filter": "((created_at)::date = '2025-06-15'::date)",
+                        "Rows Removed by Filter": 149590,
+                        "Shared Hit Blocks": 2713,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0
+                      }
+                    ]
+                  },
+                  {
+                    "execution_ms": 6.494,
+                    "planning_ms": 0.008,
+                    "nodes": [
+                      {
+                        "Node Type": "Gather",
+                        "Parallel Aware": false,
+                        "Startup Cost": 1000.0,
+                        "Total Cost": 6510.1,
+                        "Plan Rows": 1500,
+                        "Plan Width": 27,
+                        "Actual Rows": 825,
+                        "Actual Loops": 1,
+                        "Workers Planned": 1,
+                        "Workers Launched": 1,
+                        "Shared Hit Blocks": 2713,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0
+                      },
+                      {
+                        "Node Type": "Seq Scan",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": true,
+                        "Relation Name": "orders",
+                        "Alias": "orders",
+                        "Startup Cost": 0.0,
+                        "Total Cost": 5360.1,
+                        "Plan Rows": 882,
+                        "Plan Width": 27,
+                        "Actual Rows": 412,
+                        "Actual Loops": 2,
+                        "Filter": "((created_at)::date = '2025-06-15'::date)",
+                        "Rows Removed by Filter": 149590,
+                        "Shared Hit Blocks": 2713,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0
+                      }
+                    ]
+                  },
+                  {
+                    "execution_ms": 6.281,
+                    "planning_ms": 0.007,
+                    "nodes": [
+                      {
+                        "Node Type": "Gather",
+                        "Parallel Aware": false,
+                        "Startup Cost": 1000.0,
+                        "Total Cost": 6510.1,
+                        "Plan Rows": 1500,
+                        "Plan Width": 27,
+                        "Actual Rows": 825,
+                        "Actual Loops": 1,
+                        "Workers Planned": 1,
+                        "Workers Launched": 1,
+                        "Shared Hit Blocks": 2713,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0
+                      },
+                      {
+                        "Node Type": "Seq Scan",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": true,
+                        "Relation Name": "orders",
+                        "Alias": "orders",
+                        "Startup Cost": 0.0,
+                        "Total Cost": 5360.1,
+                        "Plan Rows": 882,
+                        "Plan Width": 27,
+                        "Actual Rows": 412,
+                        "Actual Loops": 2,
+                        "Filter": "((created_at)::date = '2025-06-15'::date)",
+                        "Rows Removed by Filter": 149590,
+                        "Shared Hit Blocks": 2713,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0
+                      }
+                    ]
+                  },
+                  {
+                    "execution_ms": 6.273,
+                    "planning_ms": 0.01,
+                    "nodes": [
+                      {
+                        "Node Type": "Gather",
+                        "Parallel Aware": false,
+                        "Startup Cost": 1000.0,
+                        "Total Cost": 6510.1,
+                        "Plan Rows": 1500,
+                        "Plan Width": 27,
+                        "Actual Rows": 825,
+                        "Actual Loops": 1,
+                        "Workers Planned": 1,
+                        "Workers Launched": 1,
+                        "Shared Hit Blocks": 2713,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0
+                      },
+                      {
+                        "Node Type": "Seq Scan",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": true,
+                        "Relation Name": "orders",
+                        "Alias": "orders",
+                        "Startup Cost": 0.0,
+                        "Total Cost": 5360.1,
+                        "Plan Rows": 882,
+                        "Plan Width": 27,
+                        "Actual Rows": 412,
+                        "Actual Loops": 2,
+                        "Filter": "((created_at)::date = '2025-06-15'::date)",
+                        "Rows Removed by Filter": 149590,
+                        "Shared Hit Blocks": 2713,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0
+                      }
+                    ]
+                  },
+                  {
+                    "execution_ms": 6.348,
+                    "planning_ms": 0.008,
+                    "nodes": [
+                      {
+                        "Node Type": "Gather",
+                        "Parallel Aware": false,
+                        "Startup Cost": 1000.0,
+                        "Total Cost": 6510.1,
+                        "Plan Rows": 1500,
+                        "Plan Width": 27,
+                        "Actual Rows": 825,
+                        "Actual Loops": 1,
+                        "Workers Planned": 1,
+                        "Workers Launched": 1,
+                        "Shared Hit Blocks": 2713,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0
+                      },
+                      {
+                        "Node Type": "Seq Scan",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": true,
+                        "Relation Name": "orders",
+                        "Alias": "orders",
+                        "Startup Cost": 0.0,
+                        "Total Cost": 5360.1,
+                        "Plan Rows": 882,
+                        "Plan Width": 27,
+                        "Actual Rows": 412,
+                        "Actual Loops": 2,
+                        "Filter": "((created_at)::date = '2025-06-15'::date)",
+                        "Rows Removed by Filter": 149590,
+                        "Shared Hit Blocks": 2713,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0
+                      }
+                    ]
+                  },
+                  {
+                    "execution_ms": 6.22,
+                    "planning_ms": 0.013,
+                    "nodes": [
+                      {
+                        "Node Type": "Gather",
+                        "Parallel Aware": false,
+                        "Startup Cost": 1000.0,
+                        "Total Cost": 6510.1,
+                        "Plan Rows": 1500,
+                        "Plan Width": 27,
+                        "Actual Rows": 825,
+                        "Actual Loops": 1,
+                        "Workers Planned": 1,
+                        "Workers Launched": 1,
+                        "Shared Hit Blocks": 2713,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0
+                      },
+                      {
+                        "Node Type": "Seq Scan",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": true,
+                        "Relation Name": "orders",
+                        "Alias": "orders",
+                        "Startup Cost": 0.0,
+                        "Total Cost": 5360.1,
+                        "Plan Rows": 882,
+                        "Plan Width": 27,
+                        "Actual Rows": 412,
+                        "Actual Loops": 2,
+                        "Filter": "((created_at)::date = '2025-06-15'::date)",
+                        "Rows Removed by Filter": 149590,
+                        "Shared Hit Blocks": 2713,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0
+                      }
+                    ]
+                  }
+                ],
+                "rewritten": [
+                  {
+                    "execution_ms": 0.072,
+                    "planning_ms": 0.024,
+                    "nodes": [
+                      {
+                        "Node Type": "Index Scan",
+                        "Parallel Aware": false,
+                        "Scan Direction": "Forward",
+                        "Index Name": "orders_created_at_idx",
+                        "Relation Name": "orders",
+                        "Alias": "orders",
+                        "Startup Cost": 0.42,
+                        "Total Cost": 39.5,
+                        "Plan Rows": 804,
+                        "Plan Width": 27,
+                        "Actual Rows": 825,
+                        "Actual Loops": 1,
+                        "Index Cond": "((created_at >= '2025-06-15 00:00:00'::timestamp without time zone) AND (created_at < '2025-06-16 00:00:00'::timestamp without time zone))",
+                        "Shared Hit Blocks": 16,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0
+                      }
+                    ]
+                  },
+                  {
+                    "execution_ms": 0.067,
+                    "planning_ms": 0.018,
+                    "nodes": [
+                      {
+                        "Node Type": "Index Scan",
+                        "Parallel Aware": false,
+                        "Scan Direction": "Forward",
+                        "Index Name": "orders_created_at_idx",
+                        "Relation Name": "orders",
+                        "Alias": "orders",
+                        "Startup Cost": 0.42,
+                        "Total Cost": 39.5,
+                        "Plan Rows": 804,
+                        "Plan Width": 27,
+                        "Actual Rows": 825,
+                        "Actual Loops": 1,
+                        "Index Cond": "((created_at >= '2025-06-15 00:00:00'::timestamp without time zone) AND (created_at < '2025-06-16 00:00:00'::timestamp without time zone))",
+                        "Shared Hit Blocks": 16,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0
+                      }
+                    ]
+                  },
+                  {
+                    "execution_ms": 0.061,
+                    "planning_ms": 0.014,
+                    "nodes": [
+                      {
+                        "Node Type": "Index Scan",
+                        "Parallel Aware": false,
+                        "Scan Direction": "Forward",
+                        "Index Name": "orders_created_at_idx",
+                        "Relation Name": "orders",
+                        "Alias": "orders",
+                        "Startup Cost": 0.42,
+                        "Total Cost": 39.5,
+                        "Plan Rows": 804,
+                        "Plan Width": 27,
+                        "Actual Rows": 825,
+                        "Actual Loops": 1,
+                        "Index Cond": "((created_at >= '2025-06-15 00:00:00'::timestamp without time zone) AND (created_at < '2025-06-16 00:00:00'::timestamp without time zone))",
+                        "Shared Hit Blocks": 16,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0
+                      }
+                    ]
+                  },
+                  {
+                    "execution_ms": 0.069,
+                    "planning_ms": 0.026,
+                    "nodes": [
+                      {
+                        "Node Type": "Index Scan",
+                        "Parallel Aware": false,
+                        "Scan Direction": "Forward",
+                        "Index Name": "orders_created_at_idx",
+                        "Relation Name": "orders",
+                        "Alias": "orders",
+                        "Startup Cost": 0.42,
+                        "Total Cost": 39.5,
+                        "Plan Rows": 804,
+                        "Plan Width": 27,
+                        "Actual Rows": 825,
+                        "Actual Loops": 1,
+                        "Index Cond": "((created_at >= '2025-06-15 00:00:00'::timestamp without time zone) AND (created_at < '2025-06-16 00:00:00'::timestamp without time zone))",
+                        "Shared Hit Blocks": 16,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0
+                      }
+                    ]
+                  },
+                  {
+                    "execution_ms": 0.06,
+                    "planning_ms": 0.017,
+                    "nodes": [
+                      {
+                        "Node Type": "Index Scan",
+                        "Parallel Aware": false,
+                        "Scan Direction": "Forward",
+                        "Index Name": "orders_created_at_idx",
+                        "Relation Name": "orders",
+                        "Alias": "orders",
+                        "Startup Cost": 0.42,
+                        "Total Cost": 39.5,
+                        "Plan Rows": 804,
+                        "Plan Width": 27,
+                        "Actual Rows": 825,
+                        "Actual Loops": 1,
+                        "Index Cond": "((created_at >= '2025-06-15 00:00:00'::timestamp without time zone) AND (created_at < '2025-06-16 00:00:00'::timestamp without time zone))",
+                        "Shared Hit Blocks": 16,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0
+                      }
+                    ]
+                  },
+                  {
+                    "execution_ms": 0.068,
+                    "planning_ms": 0.027,
+                    "nodes": [
+                      {
+                        "Node Type": "Index Scan",
+                        "Parallel Aware": false,
+                        "Scan Direction": "Forward",
+                        "Index Name": "orders_created_at_idx",
+                        "Relation Name": "orders",
+                        "Alias": "orders",
+                        "Startup Cost": 0.42,
+                        "Total Cost": 39.5,
+                        "Plan Rows": 804,
+                        "Plan Width": 27,
+                        "Actual Rows": 825,
+                        "Actual Loops": 1,
+                        "Index Cond": "((created_at >= '2025-06-15 00:00:00'::timestamp without time zone) AND (created_at < '2025-06-16 00:00:00'::timestamp without time zone))",
+                        "Shared Hit Blocks": 16,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0
+                      }
+                    ]
+                  },
+                  {
+                    "execution_ms": 0.056,
+                    "planning_ms": 0.013,
+                    "nodes": [
+                      {
+                        "Node Type": "Index Scan",
+                        "Parallel Aware": false,
+                        "Scan Direction": "Forward",
+                        "Index Name": "orders_created_at_idx",
+                        "Relation Name": "orders",
+                        "Alias": "orders",
+                        "Startup Cost": 0.42,
+                        "Total Cost": 39.5,
+                        "Plan Rows": 804,
+                        "Plan Width": 27,
+                        "Actual Rows": 825,
+                        "Actual Loops": 1,
+                        "Index Cond": "((created_at >= '2025-06-15 00:00:00'::timestamp without time zone) AND (created_at < '2025-06-16 00:00:00'::timestamp without time zone))",
+                        "Shared Hit Blocks": 16,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0
+                      }
+                    ]
+                  }
+                ]
+              },
+              "method": "Natural planner settings; warm-cache EXPLAIN server execution time, not client transfer time"
+            },
+            "model_requests": 0,
+            "model_id": "controlled-fixture-not-a-real-model",
+            "received_content": "{\"action\": \"date_range\", \"start\": \"2025-06-15 00:00:00\", \"end\": \"2025-06-16 00:00:00\", \"start_inclusive\": true, \"end_inclusive\": false, \"reason\": \"Use the timestamp B-tree with inclusive start and exclusive end.\"}",
+            "model_request_ms": 0.0,
+            "suggestion": {
+              "action": "date_range",
+              "start": "2025-06-15 00:00:00",
+              "end": "2025-06-16 00:00:00",
+              "start_inclusive": true,
+              "end_inclusive": false,
+              "reason": "Use the timestamp B-tree with inclusive start and exclusive end."
+            },
+            "candidate": {
+              "sql": "SELECT customer_id, created_at, status, amount\nFROM public.orders\nWHERE created_at >= %s::timestamp without time zone\n  AND created_at < %s::timestamp without time zone",
+              "parameters": [
+                "2025-06-15 00:00:00",
+                "2025-06-16 00:00:00"
+              ]
+            },
+            "connection": {
+              "database": "sql_optimization",
+              "user": "sql_optimization_reader",
+              "read_only": "on",
+              "isolation": "repeatable read",
+              "version": "PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit"
+            },
+            "comparison": {
+              "original_rows": 825,
+              "candidate_rows": 825,
+              "columns_equal": true,
+              "rows_and_multiplicities_equal": true,
+              "equivalent": true,
+              "reason": "在本次测试数据上结果一致",
+              "missing_from_candidate": [],
+              "extra_in_candidate": [],
+              "columns": [
+                [
+                  "customer_id",
+                  23,
+                  4,
+                  null,
+                  null
+                ],
+                [
+                  "created_at",
+                  1114,
+                  8,
+                  null,
+                  null
+                ],
+                [
+                  "status",
+                  25,
+                  null,
+                  null,
+                  null
+                ],
+                [
+                  "amount",
+                  1700,
+                  null,
+                  12,
+                  2
+                ]
+              ]
+            },
+            "difference_summary": {
+              "original_rows": 825,
+              "candidate_rows": 825,
+              "missing_row_copies": 0,
+              "extra_row_copies": 0,
+              "columns_equal": true,
+              "equivalent": true
+            },
+            "status": "completed",
+            "reason": "在本次测试数据上结果一致"
+          }
+        ],
+        "diagnostic_context": {
+          "scenario": "orders_date_filter_2025_06_15",
+          "original_sql": "SELECT customer_id, created_at, status, amount\nFROM public.orders\nWHERE created_at::date = %s::date",
+          "original_parameters": [
+            "2025-06-15"
+          ],
+          "date_context": {
+            "target_date": "2025-06-15",
+            "start": "2025-06-15 00:00:00",
+            "end": "2025-06-16 00:00:00",
+            "timestamp_type": "timestamp without time zone"
+          },
+          "table": {
+            "schema": "public",
+            "table": "orders",
+            "columns": [
+              {
+                "name": "order_id",
+                "data_type": "bigint",
+                "nullable": false
+              },
+              {
+                "name": "customer_id",
+                "data_type": "integer",
+                "nullable": false
+              },
+              {
+                "name": "created_at",
+                "data_type": "timestamp without time zone",
+                "nullable": true
+              },
+              {
+                "name": "status",
+                "data_type": "text",
+                "nullable": false
+              },
+              {
+                "name": "amount",
+                "data_type": "numeric(12,2)",
+                "nullable": false
+              }
+            ],
+            "primary_key": [
+              "order_id"
+            ],
+            "indexes": [
+              {
+                "name": "orders_created_at_idx",
+                "definition": "CREATE INDEX orders_created_at_idx ON public.orders USING btree (created_at)"
+              },
+              {
+                "name": "orders_pkey",
+                "definition": "CREATE UNIQUE INDEX orders_pkey ON public.orders USING btree (order_id)"
+              }
+            ]
+          },
+          "estimated_plan": [
+            {
+              "Node Type": "Gather",
+              "Parallel Aware": false,
+              "Startup Cost": 1000.0,
+              "Total Cost": 6510.1,
+              "Plan Rows": 1500,
+              "Plan Width": 27
+            },
+            {
+              "Node Type": "Seq Scan",
+              "Parallel Aware": true,
+              "Relation Name": "orders",
+              "Startup Cost": 0.0,
+              "Total Cost": 5360.1,
+              "Plan Rows": 882,
+              "Plan Width": 27,
+              "Filter": "((created_at)::date = '2025-06-15'::date)"
+            }
+          ]
+        },
+        "repair_feedback": {
+          "target_date": "2025-06-15",
+          "candidate_boundaries": {
+            "start": "2025-06-15 00:00:00",
+            "end": "2025-06-16 00:00:00",
+            "start_inclusive": true,
+            "end_inclusive": true
+          },
+          "difference_summary": {
+            "original_rows": 825,
+            "candidate_rows": 826,
+            "missing_row_copies": 0,
+            "extra_row_copies": 1,
+            "columns_equal": true,
+            "equivalent": false
+          },
+          "instruction": "Repair the date boundaries using the same structured contract, or return no_suggestion."
+        },
+        "model_id": "controlled-fixture-not-a-real-model",
+        "received_content": "{\"action\": \"date_range\", \"start\": \"2025-06-15 00:00:00\", \"end\": \"2025-06-16 00:00:00\", \"start_inclusive\": true, \"end_inclusive\": false, \"reason\": \"Use the timestamp B-tree with inclusive start and exclusive end.\"}",
+        "suggestion": {
+          "action": "date_range",
+          "start": "2025-06-15 00:00:00",
+          "end": "2025-06-16 00:00:00",
+          "start_inclusive": true,
+          "end_inclusive": false,
+          "reason": "Use the timestamp B-tree with inclusive start and exclusive end."
+        },
+        "candidate": {
+          "sql": "SELECT customer_id, created_at, status, amount\nFROM public.orders\nWHERE created_at >= %s::timestamp without time zone\n  AND created_at < %s::timestamp without time zone",
+          "parameters": [
+            "2025-06-15 00:00:00",
+            "2025-06-16 00:00:00"
+          ]
+        },
+        "connection": {
+          "database": "sql_optimization",
+          "user": "sql_optimization_reader",
+          "read_only": "on",
+          "isolation": "repeatable read",
+          "version": "PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit"
+        },
+        "comparison": {
+          "original_rows": 825,
+          "candidate_rows": 825,
+          "columns_equal": true,
+          "rows_and_multiplicities_equal": true,
+          "equivalent": true,
+          "reason": "在本次测试数据上结果一致",
+          "missing_from_candidate": [],
+          "extra_in_candidate": [],
+          "columns": [
+            [
+              "customer_id",
+              23,
+              4,
+              null,
+              null
+            ],
+            [
+              "created_at",
+              1114,
+              8,
+              null,
+              null
+            ],
+            [
+              "status",
+              25,
+              null,
+              null,
+              null
+            ],
+            [
+              "amount",
+              1700,
+              null,
+              12,
+              2
+            ]
+          ]
+        },
+        "difference_summary": {
+          "original_rows": 825,
+          "candidate_rows": 825,
+          "missing_row_copies": 0,
+          "extra_row_copies": 0,
+          "columns_equal": true,
+          "equivalent": true
+        },
+        "status": "completed",
+        "reason": "在本次测试数据上结果一致",
+        "performance_assessment": {
+          "verdict": "improved",
+          "rule": "strict_sample_interval_separation",
+          "original_range_ms": {
+            "min": 6.22,
+            "max": 7.628
+          },
+          "candidate_range_ms": {
+            "min": 0.056,
+            "max": 0.072
+          },
+          "median_ms": {
+            "original": 6.348,
+            "rewritten": 0.067
+          },
+          "median_difference_ms": -6.281,
+          "median_change_percent": -98.94454946439824,
+          "sample_counts": {
+            "original": 7,
+            "rewritten": 7
+          },
+          "scope": "This sampling run only; not a general performance guarantee"
+        },
+        "recommendation": {
+          "decision": "use_candidate",
+          "reason_code": "validated_and_improved",
+          "advisory_only": true
+        }
+      },
+      "semantics_match": true
+    },
+    {
+      "path": "repair_failure",
+      "http": {
+        "source": "controlled_model_response",
+        "fixture": "repair-failure",
+        "requested_model": "qwen3.7-plus",
+        "measured_at_utc": "2026-11-19T01:32:35.196437+00:00",
+        "model_requests": 0,
+        "benchmark": null,
+        "model_request_ms": 0.0,
+        "stage": "result_validation",
+        "target_date": "2025-06-15",
+        "date_context": {
+          "target_date": "2025-06-15",
+          "start": "2025-06-15 00:00:00",
+          "end": "2025-06-16 00:00:00",
+          "timestamp_type": "timestamp without time zone"
+        },
+        "repair_on_mismatch": true,
+        "max_model_requests": 2,
+        "attempts": [
+          {
+            "attempt": 1,
+            "kind": "initial",
+            "stage": "result_validation",
+            "benchmark": null,
+            "model_requests": 0,
+            "model_id": "controlled-fixture-not-a-real-model",
+            "received_content": "{\"action\": \"date_range\", \"start\": \"2025-06-15 00:00:00\", \"end\": \"2025-06-16 00:00:00\", \"start_inclusive\": true, \"end_inclusive\": true, \"reason\": \"Controlled date-window suggestion; wrong-upper deliberately includes next midnight.\"}",
+            "model_request_ms": 0.0,
+            "suggestion": {
+              "action": "date_range",
+              "start": "2025-06-15 00:00:00",
+              "end": "2025-06-16 00:00:00",
+              "start_inclusive": true,
+              "end_inclusive": true,
+              "reason": "Controlled date-window suggestion; wrong-upper deliberately includes next midnight."
+            },
+            "candidate": {
+              "sql": "SELECT customer_id, created_at, status, amount\nFROM public.orders\nWHERE created_at >= %s::timestamp without time zone\n  AND created_at <= %s::timestamp without time zone",
+              "parameters": [
+                "2025-06-15 00:00:00",
+                "2025-06-16 00:00:00"
+              ]
+            },
+            "connection": {
+              "database": "sql_optimization",
+              "user": "sql_optimization_reader",
+              "read_only": "on",
+              "isolation": "repeatable read",
+              "version": "PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit"
+            },
+            "comparison": {
+              "original_rows": 825,
+              "candidate_rows": 826,
+              "columns_equal": true,
+              "rows_and_multiplicities_equal": false,
+              "equivalent": false,
+              "reason": "Column metadata or full row multiplicities differ; performance test skipped",
+              "missing_from_candidate": [],
+              "extra_in_candidate": [
+                {
+                  "row": [
+                    10003,
+                    {
+                      "timestamp": "2025-06-16T00:00:00"
+                    },
+                    "pending",
+                    {
+                      "decimal": "345.67"
+                    }
+                  ],
+                  "copies": 1
+                }
+              ],
+              "columns": [
+                [
+                  "customer_id",
+                  23,
+                  4,
+                  null,
+                  null
+                ],
+                [
+                  "created_at",
+                  1114,
+                  8,
+                  null,
+                  null
+                ],
+                [
+                  "status",
+                  25,
+                  null,
+                  null,
+                  null
+                ],
+                [
+                  "amount",
+                  1700,
+                  null,
+                  12,
+                  2
+                ]
+              ]
+            },
+            "difference_summary": {
+              "original_rows": 825,
+              "candidate_rows": 826,
+              "missing_row_copies": 0,
+              "extra_row_copies": 1,
+              "columns_equal": true,
+              "equivalent": false
+            },
+            "status": "result_mismatch",
+            "reason": "Full results differ; candidate benchmark skipped"
+          },
+          {
+            "attempt": 2,
+            "kind": "repair",
+            "stage": "result_validation",
+            "benchmark": null,
+            "model_requests": 0,
+            "model_id": "controlled-fixture-not-a-real-model",
+            "received_content": "{\"action\": \"date_range\", \"start\": \"2025-06-15 00:00:00\", \"end\": \"2025-06-16 00:00:00\", \"start_inclusive\": true, \"end_inclusive\": true, \"reason\": \"Controlled date-window suggestion; wrong-upper deliberately includes next midnight.\"}",
+            "model_request_ms": 0.0,
+            "suggestion": {
+              "action": "date_range",
+              "start": "2025-06-15 00:00:00",
+              "end": "2025-06-16 00:00:00",
+              "start_inclusive": true,
+              "end_inclusive": true,
+              "reason": "Controlled date-window suggestion; wrong-upper deliberately includes next midnight."
+            },
+            "candidate": {
+              "sql": "SELECT customer_id, created_at, status, amount\nFROM public.orders\nWHERE created_at >= %s::timestamp without time zone\n  AND created_at <= %s::timestamp without time zone",
+              "parameters": [
+                "2025-06-15 00:00:00",
+                "2025-06-16 00:00:00"
+              ]
+            },
+            "connection": {
+              "database": "sql_optimization",
+              "user": "sql_optimization_reader",
+              "read_only": "on",
+              "isolation": "repeatable read",
+              "version": "PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit"
+            },
+            "comparison": {
+              "original_rows": 825,
+              "candidate_rows": 826,
+              "columns_equal": true,
+              "rows_and_multiplicities_equal": false,
+              "equivalent": false,
+              "reason": "Column metadata or full row multiplicities differ; performance test skipped",
+              "missing_from_candidate": [],
+              "extra_in_candidate": [
+                {
+                  "row": [
+                    10003,
+                    {
+                      "timestamp": "2025-06-16T00:00:00"
+                    },
+                    "pending",
+                    {
+                      "decimal": "345.67"
+                    }
+                  ],
+                  "copies": 1
+                }
+              ],
+              "columns": [
+                [
+                  "customer_id",
+                  23,
+                  4,
+                  null,
+                  null
+                ],
+                [
+                  "created_at",
+                  1114,
+                  8,
+                  null,
+                  null
+                ],
+                [
+                  "status",
+                  25,
+                  null,
+                  null,
+                  null
+                ],
+                [
+                  "amount",
+                  1700,
+                  null,
+                  12,
+                  2
+                ]
+              ]
+            },
+            "difference_summary": {
+              "original_rows": 825,
+              "candidate_rows": 826,
+              "missing_row_copies": 0,
+              "extra_row_copies": 1,
+              "columns_equal": true,
+              "equivalent": false
+            },
+            "status": "result_mismatch",
+            "reason": "Full results differ; candidate benchmark skipped"
+          }
+        ],
+        "diagnostic_context": {
+          "scenario": "orders_date_filter_2025_06_15",
+          "original_sql": "SELECT customer_id, created_at, status, amount\nFROM public.orders\nWHERE created_at::date = %s::date",
+          "original_parameters": [
+            "2025-06-15"
+          ],
+          "date_context": {
+            "target_date": "2025-06-15",
+            "start": "2025-06-15 00:00:00",
+            "end": "2025-06-16 00:00:00",
+            "timestamp_type": "timestamp without time zone"
+          },
+          "table": {
+            "schema": "public",
+            "table": "orders",
+            "columns": [
+              {
+                "name": "order_id",
+                "data_type": "bigint",
+                "nullable": false
+              },
+              {
+                "name": "customer_id",
+                "data_type": "integer",
+                "nullable": false
+              },
+              {
+                "name": "created_at",
+                "data_type": "timestamp without time zone",
+                "nullable": true
+              },
+              {
+                "name": "status",
+                "data_type": "text",
+                "nullable": false
+              },
+              {
+                "name": "amount",
+                "data_type": "numeric(12,2)",
+                "nullable": false
+              }
+            ],
+            "primary_key": [
+              "order_id"
+            ],
+            "indexes": [
+              {
+                "name": "orders_created_at_idx",
+                "definition": "CREATE INDEX orders_created_at_idx ON public.orders USING btree (created_at)"
+              },
+              {
+                "name": "orders_pkey",
+                "definition": "CREATE UNIQUE INDEX orders_pkey ON public.orders USING btree (order_id)"
+              }
+            ]
+          },
+          "estimated_plan": [
+            {
+              "Node Type": "Gather",
+              "Parallel Aware": false,
+              "Startup Cost": 1000.0,
+              "Total Cost": 6510.1,
+              "Plan Rows": 1500,
+              "Plan Width": 27
+            },
+            {
+              "Node Type": "Seq Scan",
+              "Parallel Aware": true,
+              "Relation Name": "orders",
+              "Startup Cost": 0.0,
+              "Total Cost": 5360.1,
+              "Plan Rows": 882,
+              "Plan Width": 27,
+              "Filter": "((created_at)::date = '2025-06-15'::date)"
+            }
+          ]
+        },
+        "repair_feedback": {
+          "target_date": "2025-06-15",
+          "candidate_boundaries": {
+            "start": "2025-06-15 00:00:00",
+            "end": "2025-06-16 00:00:00",
+            "start_inclusive": true,
+            "end_inclusive": true
+          },
+          "difference_summary": {
+            "original_rows": 825,
+            "candidate_rows": 826,
+            "missing_row_copies": 0,
+            "extra_row_copies": 1,
+            "columns_equal": true,
+            "equivalent": false
+          },
+          "instruction": "Repair the date boundaries using the same structured contract, or return no_suggestion."
+        },
+        "model_id": "controlled-fixture-not-a-real-model",
+        "received_content": "{\"action\": \"date_range\", \"start\": \"2025-06-15 00:00:00\", \"end\": \"2025-06-16 00:00:00\", \"start_inclusive\": true, \"end_inclusive\": true, \"reason\": \"Controlled date-window suggestion; wrong-upper deliberately includes next midnight.\"}",
+        "suggestion": {
+          "action": "date_range",
+          "start": "2025-06-15 00:00:00",
+          "end": "2025-06-16 00:00:00",
+          "start_inclusive": true,
+          "end_inclusive": true,
+          "reason": "Controlled date-window suggestion; wrong-upper deliberately includes next midnight."
+        },
+        "candidate": {
+          "sql": "SELECT customer_id, created_at, status, amount\nFROM public.orders\nWHERE created_at >= %s::timestamp without time zone\n  AND created_at <= %s::timestamp without time zone",
+          "parameters": [
+            "2025-06-15 00:00:00",
+            "2025-06-16 00:00:00"
+          ]
+        },
+        "connection": {
+          "database": "sql_optimization",
+          "user": "sql_optimization_reader",
+          "read_only": "on",
+          "isolation": "repeatable read",
+          "version": "PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit"
+        },
+        "comparison": {
+          "original_rows": 825,
+          "candidate_rows": 826,
+          "columns_equal": true,
+          "rows_and_multiplicities_equal": false,
+          "equivalent": false,
+          "reason": "Column metadata or full row multiplicities differ; performance test skipped",
+          "missing_from_candidate": [],
+          "extra_in_candidate": [
+            {
+              "row": [
+                10003,
+                {
+                  "timestamp": "2025-06-16T00:00:00"
+                },
+                "pending",
+                {
+                  "decimal": "345.67"
+                }
+              ],
+              "copies": 1
+            }
+          ],
+          "columns": [
+            [
+              "customer_id",
+              23,
+              4,
+              null,
+              null
+            ],
+            [
+              "created_at",
+              1114,
+              8,
+              null,
+              null
+            ],
+            [
+              "status",
+              25,
+              null,
+              null,
+              null
+            ],
+            [
+              "amount",
+              1700,
+              null,
+              12,
+              2
+            ]
+          ]
+        },
+        "difference_summary": {
+          "original_rows": 825,
+          "candidate_rows": 826,
+          "missing_row_copies": 0,
+          "extra_row_copies": 1,
+          "columns_equal": true,
+          "equivalent": false
+        },
+        "status": "result_mismatch",
+        "reason": "Full results differ; candidate benchmark skipped",
+        "performance_assessment": null,
+        "performance_assessment_skipped": "result_not_verified_or_original_retained",
+        "recommendation": {
+          "decision": "keep_original",
+          "reason_code": "candidate_rejected",
+          "advisory_only": true
+        }
+      },
+      "mcp": {
+        "source": "controlled_model_response",
+        "fixture": "repair-failure",
+        "requested_model": "qwen3.7-plus",
+        "measured_at_utc": "2026-11-19T01:32:35.720582+00:00",
+        "model_requests": 0,
+        "benchmark": null,
+        "model_request_ms": 0.0,
+        "stage": "result_validation",
+        "target_date": "2025-06-15",
+        "date_context": {
+          "target_date": "2025-06-15",
+          "start": "2025-06-15 00:00:00",
+          "end": "2025-06-16 00:00:00",
+          "timestamp_type": "timestamp without time zone"
+        },
+        "repair_on_mismatch": true,
+        "max_model_requests": 2,
+        "attempts": [
+          {
+            "attempt": 1,
+            "kind": "initial",
+            "stage": "result_validation",
+            "benchmark": null,
+            "model_requests": 0,
+            "model_id": "controlled-fixture-not-a-real-model",
+            "received_content": "{\"action\": \"date_range\", \"start\": \"2025-06-15 00:00:00\", \"end\": \"2025-06-16 00:00:00\", \"start_inclusive\": true, \"end_inclusive\": true, \"reason\": \"Controlled date-window suggestion; wrong-upper deliberately includes next midnight.\"}",
+            "model_request_ms": 0.0,
+            "suggestion": {
+              "action": "date_range",
+              "start": "2025-06-15 00:00:00",
+              "end": "2025-06-16 00:00:00",
+              "start_inclusive": true,
+              "end_inclusive": true,
+              "reason": "Controlled date-window suggestion; wrong-upper deliberately includes next midnight."
+            },
+            "candidate": {
+              "sql": "SELECT customer_id, created_at, status, amount\nFROM public.orders\nWHERE created_at >= %s::timestamp without time zone\n  AND created_at <= %s::timestamp without time zone",
+              "parameters": [
+                "2025-06-15 00:00:00",
+                "2025-06-16 00:00:00"
+              ]
+            },
+            "connection": {
+              "database": "sql_optimization",
+              "user": "sql_optimization_reader",
+              "read_only": "on",
+              "isolation": "repeatable read",
+              "version": "PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit"
+            },
+            "comparison": {
+              "original_rows": 825,
+              "candidate_rows": 826,
+              "columns_equal": true,
+              "rows_and_multiplicities_equal": false,
+              "equivalent": false,
+              "reason": "Column metadata or full row multiplicities differ; performance test skipped",
+              "missing_from_candidate": [],
+              "extra_in_candidate": [
+                {
+                  "row": [
+                    10003,
+                    {
+                      "timestamp": "2025-06-16T00:00:00"
+                    },
+                    "pending",
+                    {
+                      "decimal": "345.67"
+                    }
+                  ],
+                  "copies": 1
+                }
+              ],
+              "columns": [
+                [
+                  "customer_id",
+                  23,
+                  4,
+                  null,
+                  null
+                ],
+                [
+                  "created_at",
+                  1114,
+                  8,
+                  null,
+                  null
+                ],
+                [
+                  "status",
+                  25,
+                  null,
+                  null,
+                  null
+                ],
+                [
+                  "amount",
+                  1700,
+                  null,
+                  12,
+                  2
+                ]
+              ]
+            },
+            "difference_summary": {
+              "original_rows": 825,
+              "candidate_rows": 826,
+              "missing_row_copies": 0,
+              "extra_row_copies": 1,
+              "columns_equal": true,
+              "equivalent": false
+            },
+            "status": "result_mismatch",
+            "reason": "Full results differ; candidate benchmark skipped"
+          },
+          {
+            "attempt": 2,
+            "kind": "repair",
+            "stage": "result_validation",
+            "benchmark": null,
+            "model_requests": 0,
+            "model_id": "controlled-fixture-not-a-real-model",
+            "received_content": "{\"action\": \"date_range\", \"start\": \"2025-06-15 00:00:00\", \"end\": \"2025-06-16 00:00:00\", \"start_inclusive\": true, \"end_inclusive\": true, \"reason\": \"Controlled date-window suggestion; wrong-upper deliberately includes next midnight.\"}",
+            "model_request_ms": 0.0,
+            "suggestion": {
+              "action": "date_range",
+              "start": "2025-06-15 00:00:00",
+              "end": "2025-06-16 00:00:00",
+              "start_inclusive": true,
+              "end_inclusive": true,
+              "reason": "Controlled date-window suggestion; wrong-upper deliberately includes next midnight."
+            },
+            "candidate": {
+              "sql": "SELECT customer_id, created_at, status, amount\nFROM public.orders\nWHERE created_at >= %s::timestamp without time zone\n  AND created_at <= %s::timestamp without time zone",
+              "parameters": [
+                "2025-06-15 00:00:00",
+                "2025-06-16 00:00:00"
+              ]
+            },
+            "connection": {
+              "database": "sql_optimization",
+              "user": "sql_optimization_reader",
+              "read_only": "on",
+              "isolation": "repeatable read",
+              "version": "PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit"
+            },
+            "comparison": {
+              "original_rows": 825,
+              "candidate_rows": 826,
+              "columns_equal": true,
+              "rows_and_multiplicities_equal": false,
+              "equivalent": false,
+              "reason": "Column metadata or full row multiplicities differ; performance test skipped",
+              "missing_from_candidate": [],
+              "extra_in_candidate": [
+                {
+                  "row": [
+                    10003,
+                    {
+                      "timestamp": "2025-06-16T00:00:00"
+                    },
+                    "pending",
+                    {
+                      "decimal": "345.67"
+                    }
+                  ],
+                  "copies": 1
+                }
+              ],
+              "columns": [
+                [
+                  "customer_id",
+                  23,
+                  4,
+                  null,
+                  null
+                ],
+                [
+                  "created_at",
+                  1114,
+                  8,
+                  null,
+                  null
+                ],
+                [
+                  "status",
+                  25,
+                  null,
+                  null,
+                  null
+                ],
+                [
+                  "amount",
+                  1700,
+                  null,
+                  12,
+                  2
+                ]
+              ]
+            },
+            "difference_summary": {
+              "original_rows": 825,
+              "candidate_rows": 826,
+              "missing_row_copies": 0,
+              "extra_row_copies": 1,
+              "columns_equal": true,
+              "equivalent": false
+            },
+            "status": "result_mismatch",
+            "reason": "Full results differ; candidate benchmark skipped"
+          }
+        ],
+        "diagnostic_context": {
+          "scenario": "orders_date_filter_2025_06_15",
+          "original_sql": "SELECT customer_id, created_at, status, amount\nFROM public.orders\nWHERE created_at::date = %s::date",
+          "original_parameters": [
+            "2025-06-15"
+          ],
+          "date_context": {
+            "target_date": "2025-06-15",
+            "start": "2025-06-15 00:00:00",
+            "end": "2025-06-16 00:00:00",
+            "timestamp_type": "timestamp without time zone"
+          },
+          "table": {
+            "schema": "public",
+            "table": "orders",
+            "columns": [
+              {
+                "name": "order_id",
+                "data_type": "bigint",
+                "nullable": false
+              },
+              {
+                "name": "customer_id",
+                "data_type": "integer",
+                "nullable": false
+              },
+              {
+                "name": "created_at",
+                "data_type": "timestamp without time zone",
+                "nullable": true
+              },
+              {
+                "name": "status",
+                "data_type": "text",
+                "nullable": false
+              },
+              {
+                "name": "amount",
+                "data_type": "numeric(12,2)",
+                "nullable": false
+              }
+            ],
+            "primary_key": [
+              "order_id"
+            ],
+            "indexes": [
+              {
+                "name": "orders_created_at_idx",
+                "definition": "CREATE INDEX orders_created_at_idx ON public.orders USING btree (created_at)"
+              },
+              {
+                "name": "orders_pkey",
+                "definition": "CREATE UNIQUE INDEX orders_pkey ON public.orders USING btree (order_id)"
+              }
+            ]
+          },
+          "estimated_plan": [
+            {
+              "Node Type": "Gather",
+              "Parallel Aware": false,
+              "Startup Cost": 1000.0,
+              "Total Cost": 6510.1,
+              "Plan Rows": 1500,
+              "Plan Width": 27
+            },
+            {
+              "Node Type": "Seq Scan",
+              "Parallel Aware": true,
+              "Relation Name": "orders",
+              "Startup Cost": 0.0,
+              "Total Cost": 5360.1,
+              "Plan Rows": 882,
+              "Plan Width": 27,
+              "Filter": "((created_at)::date = '2025-06-15'::date)"
+            }
+          ]
+        },
+        "repair_feedback": {
+          "target_date": "2025-06-15",
+          "candidate_boundaries": {
+            "start": "2025-06-15 00:00:00",
+            "end": "2025-06-16 00:00:00",
+            "start_inclusive": true,
+            "end_inclusive": true
+          },
+          "difference_summary": {
+            "original_rows": 825,
+            "candidate_rows": 826,
+            "missing_row_copies": 0,
+            "extra_row_copies": 1,
+            "columns_equal": true,
+            "equivalent": false
+          },
+          "instruction": "Repair the date boundaries using the same structured contract, or return no_suggestion."
+        },
+        "model_id": "controlled-fixture-not-a-real-model",
+        "received_content": "{\"action\": \"date_range\", \"start\": \"2025-06-15 00:00:00\", \"end\": \"2025-06-16 00:00:00\", \"start_inclusive\": true, \"end_inclusive\": true, \"reason\": \"Controlled date-window suggestion; wrong-upper deliberately includes next midnight.\"}",
+        "suggestion": {
+          "action": "date_range",
+          "start": "2025-06-15 00:00:00",
+          "end": "2025-06-16 00:00:00",
+          "start_inclusive": true,
+          "end_inclusive": true,
+          "reason": "Controlled date-window suggestion; wrong-upper deliberately includes next midnight."
+        },
+        "candidate": {
+          "sql": "SELECT customer_id, created_at, status, amount\nFROM public.orders\nWHERE created_at >= %s::timestamp without time zone\n  AND created_at <= %s::timestamp without time zone",
+          "parameters": [
+            "2025-06-15 00:00:00",
+            "2025-06-16 00:00:00"
+          ]
+        },
+        "connection": {
+          "database": "sql_optimization",
+          "user": "sql_optimization_reader",
+          "read_only": "on",
+          "isolation": "repeatable read",
+          "version": "PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit"
+        },
+        "comparison": {
+          "original_rows": 825,
+          "candidate_rows": 826,
+          "columns_equal": true,
+          "rows_and_multiplicities_equal": false,
+          "equivalent": false,
+          "reason": "Column metadata or full row multiplicities differ; performance test skipped",
+          "missing_from_candidate": [],
+          "extra_in_candidate": [
+            {
+              "row": [
+                10003,
+                {
+                  "timestamp": "2025-06-16T00:00:00"
+                },
+                "pending",
+                {
+                  "decimal": "345.67"
+                }
+              ],
+              "copies": 1
+            }
+          ],
+          "columns": [
+            [
+              "customer_id",
+              23,
+              4,
+              null,
+              null
+            ],
+            [
+              "created_at",
+              1114,
+              8,
+              null,
+              null
+            ],
+            [
+              "status",
+              25,
+              null,
+              null,
+              null
+            ],
+            [
+              "amount",
+              1700,
+              null,
+              12,
+              2
+            ]
+          ]
+        },
+        "difference_summary": {
+          "original_rows": 825,
+          "candidate_rows": 826,
+          "missing_row_copies": 0,
+          "extra_row_copies": 1,
+          "columns_equal": true,
+          "equivalent": false
+        },
+        "status": "result_mismatch",
+        "reason": "Full results differ; candidate benchmark skipped",
+        "performance_assessment": null,
+        "performance_assessment_skipped": "result_not_verified_or_original_retained",
+        "recommendation": {
+          "decision": "keep_original",
+          "reason_code": "candidate_rejected",
+          "advisory_only": true
+        }
+      },
+      "semantics_match": true
+    }
+  ]
+}
