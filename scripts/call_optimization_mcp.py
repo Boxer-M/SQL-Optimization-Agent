@@ -17,7 +17,7 @@ async def call(date: str | None = None, scenario: str = ORDERS_DATE_SCENARIO):
     parameters = StdioServerParameters(command=sys.executable,
                                       args=["-m", "sql_optimization_agent.mcp_server"],
                                       env={key: value for key, value in os.environ.items()
-                                           if key in {"SQL_OPTIMIZATION_MODEL_FIXTURE", "SQL_OPTIMIZATION_ITEMS_MODE",
+                                           if key in {"SQL_OPTIMIZATION_DATE_REPAIR", "SQL_OPTIMIZATION_MODEL_FIXTURE", "SQL_OPTIMIZATION_ITEMS_MODE",
                                                       "SQL_OPTIMIZATION_ITEMS_FIXTURE", "QWEN_API_KEY", "QWEN_BASE_URL",
                                                       "QWEN_MODEL", "POSTGRES_PORT", "POSTGRES_READER_USER",
                                                       "POSTGRES_READER_PASSWORD"}})

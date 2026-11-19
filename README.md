@@ -1045,3 +1045,50 @@ PY
 | 3 | 4516.042 | 7.325 | 0.073 | 仅修复后 | improved / use_candidate |
 
 三例自然计划均由原查询的并行顺序扫描变为候选的 `orders_created_at_idx` 索引扫描。这是本机、本次数据与采样的结果，不是其他数据和负载下的性能保证。真实建议理由各自保存在报告中，未用模拟回复替代。完整报告分别为 `reports/date_repair_live_evaluation.json` 和 `reports/date_repair_simulated_evaluation.json`。
+
+## HTTP 与 MCP 的日期定向修复
+
+两个入口使用同一公共服务和服务端环境变量 `SQL_OPTIMIZATION_DATE_REPAIR`：省略或 `false` 时关闭，`true` 时允许日期场景在首次结构合法但完整结果不一致后修复一次。非法值返回 `invalid_config`，不会调用模型。开关不改变明细计数场景；客户端不能通过 HTTP JSON 或 MCP 工具参数修改开关。原 CLI 的 `--repair-on-mismatch` 保持不变，不受该服务端设置影响。
+
+```bash
+# HTTP：默认关闭（同样可显式 export SQL_OPTIMIZATION_DATE_REPAIR=false）
+SQL_OPTIMIZATION_MODEL_FIXTURE=repair-success \
+  .venv/bin/python -m uvicorn sql_optimization_agent.api:app --host 127.0.0.1 --port 8000
+
+# HTTP：开启修复，模拟错误上界 → 正确上界，实际使用本地 PostgreSQL
+SQL_OPTIMIZATION_DATE_REPAIR=true SQL_OPTIMIZATION_MODEL_FIXTURE=repair-success \
+  .venv/bin/python -m uvicorn sql_optimization_agent.api:app --host 127.0.0.1 --port 8000
+
+# 在另一个终端调用；date 可省略，沿用公共服务的 2025-06-15
+curl -sS http://127.0.0.1:8000/optimize -H 'Content-Type: application/json' \
+  -d '{"scenario":"orders_date_filter_2025_06_15","date":"2025-06-15"}'
+
+# stdio MCP：工具发现及实际调用，服务端开关由子进程环境继承
+SQL_OPTIMIZATION_DATE_REPAIR=true SQL_OPTIMIZATION_MODEL_FIXTURE=repair-success \
+  .venv/bin/python scripts/call_optimization_mcp.py --date 2025-06-15
+
+# stdio MCP 服务器启动命令；客户端调用 optimize_orders_date
+SQL_OPTIMIZATION_DATE_REPAIR=true SQL_OPTIMIZATION_MODEL_FIXTURE=repair-success \
+  .venv/bin/python -m sql_optimization_agent.mcp_server
+```
+
+同一端口的 HTTP 启动示例需分别运行并在切换配置前停止旧进程。模拟失败链路将 fixture 改为 `repair-failure`；关闭链路则取消环境变量或设为 `false`。真实模型模式由服务端取消 `SQL_OPTIMIZATION_MODEL_FIXTURE` 并沿用本机千问配置；开启时最多两次模型 POST、关闭时最多一次，无自动重试。修复反馈仅有日期边界与差异汇总；结果校验、只读事务、超时及取数预算保持原规则。
+
+可复现的实际 HTTP + stdio MCP 验收入口（模拟回复，真实本地 PostgreSQL）：
+
+```bash
+.venv/bin/python scripts/check_date_repair_interfaces.py \
+  --output reports/date_repair_interfaces_rerun.json
+```
+
+脚本为每条路径启动独立的真实 loopback HTTP 服务及 stdio MCP 子进程，验收后关闭；输出路径必须不存在。报告 `reports/date_repair_interfaces_acceptance.json` 中，两入口同一路径的尝试记录和推荐语义一致：
+
+| 路径 | 两入口比较结果 | 计时与推荐 |
+|---|---|---|
+| 默认关闭 | 仅一次，825/826 | 不计时，keep_original / candidate_rejected |
+| 开启、修复成功 | 第一次 825/826，第二次 825/825 | 仅第二次计时；两入口本次均 improved / use_candidate |
+| 开启、修复失败 | 两次均 825/826 | 两次均不计时，keep_original / candidate_rejected |
+
+成功路径的实际中位数：HTTP `6.520 → 0.064 ms`，MCP `6.348 → 0.067 ms`。推荐来自各自实际样本的既有判定规则；两入口独立采样，不要求耗时相同。测试环境为本机 PostgreSQL 16.15、合成订单数据、应用只读账号。六次接口调用全部使用模拟模型回复，实际模型请求为 0；传输层测试通过 MockTransport 核对开启最多两次 POST、关闭最多一次，并经过两个适配器调用公共服务。
+
+本轮没有重新请求真实千问。上一轮真实修复报告复用自已推送提交 [`c0bd1e9` 的真实报告](https://github.com/Boxer-M/SQL-Optimization-Agent/blob/c0bd1e9d0dfd15b9a792f3269d1471e684d59b5d/reports/date_repair_live_evaluation.json)：3 次真实请求、3/3 修复通过。该报告现已随最新主分支合入，可在 `reports/date_repair_live_evaluation.json` 查看；固定提交链接保留用于追溯，不把它标记为本轮接口实测。
