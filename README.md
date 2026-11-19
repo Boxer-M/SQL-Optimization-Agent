@@ -889,3 +889,61 @@ git diff --check
 | 2 | 0.010 / 0.008 | -0.002 | inconclusive | keep_original / performance_inconclusive |
 
 本轮未再调用真实千问。133 项 pytest 测试通过（另含 11 个子测试），覆盖提升、退化、重叠/相接、候选拒绝、模型保留、错误状态、缺失证据/计时，以及真实历史样本的两个 inconclusive 用例；`pip check`、`git diff --check` 和报告凭据排除检查通过。推荐和性能结论均只针对本次测试数据与采样，不能保证其他负载收益。
+
+## 离线 EXPLAIN JSON 诊断
+
+此独立 CLI 只读取指定文件，不加载 `.env`，不连接 PostgreSQL，也不请求千问：
+
+```bash
+.venv/bin/python scripts/diagnose_plan.py reports/explain_plans/date_original.json
+.venv/bin/python scripts/diagnose_plan.py reports/explain_plans/date_candidate.json
+.venv/bin/python scripts/diagnose_plan.py reports/explain_plans/items_original.json
+.venv/bin/python scripts/diagnose_plan.py reports/explain_plans/items_candidate.json
+.venv/bin/python scripts/diagnose_plan.py reports/explain_plans/date_original_estimated.json
+```
+
+支持 PostgreSQL `EXPLAIN (FORMAT JSON)` 和 `EXPLAIN (ANALYZE, FORMAT JSON)` 的数组输出，也接受单个含 `Plan` 的对象。`root.children` 保留计划树及节点顺序，`node_id` / `parent_id` 保留父子关系。输出扫描方式、表与索引、过滤和索引条件、连接类型、排序信息，以及原始估算值和实际行数、循环次数。无实际数据的节点标记 `estimated_only`；`Actual Rows` 是每次循环的平均值，程序不据此推算精确总行数。缺失 schema 时输出 `null`，不推断 schema。
+
+顺序扫描和排序仅作为 `observations` 展示，不能单凭节点名称判定瓶颈。输入限 8 MiB，计划树限 128 层、每份计划 10,000 节点。非法 JSON、缺少 `Plan`、非法节点或预算超限时，stderr 输出结构化错误，退出码为 1；成功时 stdout 输出 JSON，退出码为 0。
+
+### 从本地基准库重新导出计划
+
+以下导出步骤会连接数据库，与离线诊断命令分开执行。只使用现有应用只读账号；保留 PostgreSQL 自然选择的计划，不修改规划器开关。查询固定为 2025-06-15 的既有基准模板：
+
+```bash
+.venv/bin/python - <<'PY'
+import json
+from pathlib import Path
+from datetime import datetime
+from dotenv import dotenv_values
+from sql_optimization_agent.db import readonly_connection
+from sql_optimization_agent.tools.sql_benchmark import ORIGINAL, REWRITTEN
+from sql_optimization_agent.tools.order_items_benchmark import JOIN_COUNT, EXISTS_COUNT
+
+out = Path('reports/explain_plans')
+out.mkdir(parents=True, exist_ok=True)
+bounds = (datetime(2025, 6, 15), datetime(2025, 6, 16))
+cases = [
+    ('date_original', ORIGINAL, None),
+    ('date_candidate', REWRITTEN, None),
+    ('items_original', JOIN_COUNT, bounds),
+    ('items_candidate', EXISTS_COUNT, bounds),
+    ('date_original_estimated', ORIGINAL, None),
+]
+with readonly_connection(dotenv_values('.env')) as connection:
+    connection.execute('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ')
+    connection.execute("SET LOCAL statement_timeout = '5s'")
+    for name, sql, params in cases:
+        options = ('VERBOSE, FORMAT JSON' if name.endswith('estimated') else
+                   'ANALYZE, BUFFERS, TIMING OFF, VERBOSE, FORMAT JSON')
+        plan = connection.execute(f'EXPLAIN ({options}) ' + sql, params).fetchone()[0]
+        (out / f'{name}.json').write_text(json.dumps(plan, indent=2) + '\n')
+PY
+```
+
+本次 PostgreSQL 16.15、本地合成基准数据验收结果保存于 `reports/explain_plan_diagnosis_acceptance.json`，原始计划保存于 `reports/explain_plans/`：
+
+- 日期原查询：`Gather → Parallel Seq Scan`，返回 825 行；候选：`Index Scan`，使用 `orders_created_at_idx`，返回 825 行。原计划扫描节点实际行数为每循环平均 412、循环 2 次。
+- 明细原查询：`Aggregate → Sort → Nested Loop (Inner)`，排序及连接节点 1,103 行；候选：`Aggregate → Nested Loop (Semi)`，半连接 551 行，无排序节点。两边均发现订单日期索引及明细订单 ID 索引。
+- 估算输入标记 `estimated_only`，不生成实际行数或循环次数；非法 JSON 和缺根节点分别返回 `invalid_json`、`missing_plan_root`。
+- 单独导出阶段使用 1 次数据库连接；诊断 CLI 验收阶段数据库连接、千问请求、socket 连接均为 0，通过调用拦截计数验证。测试还验证独立 CLI 不导入 psycopg、httpx 或 dotenv。

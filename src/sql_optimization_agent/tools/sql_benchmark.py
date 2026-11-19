@@ -13,6 +13,7 @@ from time import monotonic
 import psycopg
 
 from sql_optimization_agent.db import readonly_connection
+from sql_optimization_agent.tools.plan_fields import plan_node_fields
 
 
 ORIGINAL = """SELECT customer_id, created_at, status, amount
@@ -102,12 +103,7 @@ def _compare(left: QueryResult, right: QueryResult) -> dict:
 
 
 def _plan_nodes(node: dict) -> list[dict]:
-    fields = ("Node Type", "Relation Name", "Index Name", "Scan Direction", "Join Type", "Inner Unique",
-              "Heap Fetches", "Sort Key", "Sort Method", "Sort Space Used", "Sort Space Type",
-              "Filter", "Index Cond", "Recheck Cond", "Rows Removed by Filter",
-              "Actual Rows", "Actual Loops", "Parallel Aware")
-    result = [{key: value for key, value in node.items()
-               if key in fields or "Blocks" in key}]
+    result = [plan_node_fields(node)]
     for child in node.get("Plans", []):
         result.extend(_plan_nodes(child))
     return result

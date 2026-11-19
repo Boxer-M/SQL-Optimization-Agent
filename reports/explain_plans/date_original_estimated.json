@@ -1,0 +1,43 @@
+[
+  {
+    "Plan": {
+      "Node Type": "Gather",
+      "Parallel Aware": false,
+      "Async Capable": false,
+      "Startup Cost": 1000.0,
+      "Total Cost": 6510.1,
+      "Plan Rows": 1500,
+      "Plan Width": 27,
+      "Output": [
+        "customer_id",
+        "created_at",
+        "status",
+        "amount"
+      ],
+      "Workers Planned": 1,
+      "Single Copy": false,
+      "Plans": [
+        {
+          "Node Type": "Seq Scan",
+          "Parent Relationship": "Outer",
+          "Parallel Aware": true,
+          "Async Capable": false,
+          "Relation Name": "orders",
+          "Schema": "public",
+          "Alias": "orders",
+          "Startup Cost": 0.0,
+          "Total Cost": 5360.1,
+          "Plan Rows": 882,
+          "Plan Width": 27,
+          "Output": [
+            "customer_id",
+            "created_at",
+            "status",
+            "amount"
+          ],
+          "Filter": "((orders.created_at)::date = '2025-06-15'::date)"
+        }
+      ]
+    }
+  }
+]

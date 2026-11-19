@@ -1,0 +1,101 @@
+[
+  {
+    "Plan": {
+      "Node Type": "Gather",
+      "Parallel Aware": false,
+      "Async Capable": false,
+      "Startup Cost": 1000.0,
+      "Total Cost": 6510.1,
+      "Plan Rows": 1500,
+      "Plan Width": 27,
+      "Actual Rows": 825,
+      "Actual Loops": 1,
+      "Output": [
+        "customer_id",
+        "created_at",
+        "status",
+        "amount"
+      ],
+      "Workers Planned": 1,
+      "Workers Launched": 1,
+      "Single Copy": false,
+      "Shared Hit Blocks": 2713,
+      "Shared Read Blocks": 0,
+      "Shared Dirtied Blocks": 0,
+      "Shared Written Blocks": 0,
+      "Local Hit Blocks": 0,
+      "Local Read Blocks": 0,
+      "Local Dirtied Blocks": 0,
+      "Local Written Blocks": 0,
+      "Temp Read Blocks": 0,
+      "Temp Written Blocks": 0,
+      "Plans": [
+        {
+          "Node Type": "Seq Scan",
+          "Parent Relationship": "Outer",
+          "Parallel Aware": true,
+          "Async Capable": false,
+          "Relation Name": "orders",
+          "Schema": "public",
+          "Alias": "orders",
+          "Startup Cost": 0.0,
+          "Total Cost": 5360.1,
+          "Plan Rows": 882,
+          "Plan Width": 27,
+          "Actual Rows": 412,
+          "Actual Loops": 2,
+          "Output": [
+            "customer_id",
+            "created_at",
+            "status",
+            "amount"
+          ],
+          "Filter": "((orders.created_at)::date = '2025-06-15'::date)",
+          "Rows Removed by Filter": 149590,
+          "Shared Hit Blocks": 2713,
+          "Shared Read Blocks": 0,
+          "Shared Dirtied Blocks": 0,
+          "Shared Written Blocks": 0,
+          "Local Hit Blocks": 0,
+          "Local Read Blocks": 0,
+          "Local Dirtied Blocks": 0,
+          "Local Written Blocks": 0,
+          "Temp Read Blocks": 0,
+          "Temp Written Blocks": 0,
+          "Workers": [
+            {
+              "Worker Number": 0,
+              "Actual Rows": 438,
+              "Actual Loops": 1,
+              "Shared Hit Blocks": 1329,
+              "Shared Read Blocks": 0,
+              "Shared Dirtied Blocks": 0,
+              "Shared Written Blocks": 0,
+              "Local Hit Blocks": 0,
+              "Local Read Blocks": 0,
+              "Local Dirtied Blocks": 0,
+              "Local Written Blocks": 0,
+              "Temp Read Blocks": 0,
+              "Temp Written Blocks": 0
+            }
+          ]
+        }
+      ]
+    },
+    "Planning": {
+      "Shared Hit Blocks": 85,
+      "Shared Read Blocks": 0,
+      "Shared Dirtied Blocks": 0,
+      "Shared Written Blocks": 0,
+      "Local Hit Blocks": 0,
+      "Local Read Blocks": 0,
+      "Local Dirtied Blocks": 0,
+      "Local Written Blocks": 0,
+      "Temp Read Blocks": 0,
+      "Temp Written Blocks": 0
+    },
+    "Planning Time": 0.625,
+    "Triggers": [],
+    "Execution Time": 24.578
+  }
+]
