@@ -1256,3 +1256,35 @@ v2 脱敏验收报告：`reports/v2_release_acceptance.json`。本地 PostgreSQL
 全部正常完成退出 0；任一项拒绝或失败时，处理完其余文件并打印完整报告后退出 1；参数冲突退出 2。每项单独复用现有只读快照、超时、结果预算及性能采样，不声称整批共享同一个快照。自然性能采样可能推荐保留原查询，不影响完成分类。
 
 实际本地 PostgreSQL 混合批次报告：`reports/batch_sql_diagnosis_acceptance.json`。5 项中完成 3、拒绝 2、失败 0；有效结果为 825/825、551/551（双向 ID 差集 0/0）、1648/1648。报告保存实际采样、推荐和每项识别阶段的零数据库/模型调用计数；错误项后仍继续执行。另有测试覆盖单条执行异常后继续，以及 `keep_original` 正常完成。本轮新增真实千问请求为 0。
+
+## 本地批次历史与离线人工审核
+
+独立 CLI `scripts/batch_history.py` 只读取本地 JSON 和归档目录，不加载数据库配置、不连接数据库、不请求模型，也不执行或自动采用 SQL。默认存储为项目根目录 `.batch-history/`（已 Git 忽略）；可用全局 `--store PATH` 指定其他本地位置。
+
+```bash
+# 生成批次报告；若包含拒绝项，退出 1 但 batch-report.json 仍完整
+.venv/bin/python scripts/optimize_orders.py --sql-files \
+  sql/examples/unsupported_select.sql \
+  sql/examples/orders_date_2025_06_15.sql \
+  sql/examples/orders_with_items_2025_06_15.sql --fixture normal > batch-report.json
+
+# 导入也可直接使用仓库已有的混合批次报告（兼容 da89a94）
+.venv/bin/python scripts/batch_history.py import reports/batch_sql_diagnosis_acceptance.json
+.venv/bin/python scripts/batch_history.py list
+# 将下方 <batch-id> 换成 import/list 输出的完整 ID
+.venv/bin/python scripts/batch_history.py show <batch-id>
+.venv/bin/python scripts/batch_history.py show <batch-id> --entry 2
+.venv/bin/python scripts/batch_history.py review <batch-id> 2 defer --reviewer local-user --reason '需要进一步核对'
+.venv/bin/python scripts/batch_history.py review <batch-id> 2 accept --reviewer local-user --reason '已核对完整结果和性能证据'
+.venv/bin/python scripts/batch_history.py show <batch-id> --entry 2
+# 拒绝决定使用 reject，重新审核会追加记录
+.venv/bin/python scripts/batch_history.py review <batch-id> 2 reject --reviewer local-user --reason '暂不采用此候选'
+```
+
+批次 ID 为完整 JSON 内容规范化后的 SHA-256，不依赖路径、键顺序或缩进。原始报告中的时间或其他内容变化会产生新批次。重复导入同一内容返回已有记录，并保留首次导入的原始字节；不会覆盖为后来格式不同的文件。支持最多 32 MiB 报告，校验批次状态、条目编号及分类、汇总计数；拒绝重复 JSON 键和损坏 JSON。读取归档时重新核对内容摘要。
+
+每个批次保存 `report.json` 原始报告；详情完整展示条目状态、SQL Diff、校验结果、性能证据和系统推荐。人工审核以独立 `reviews/<review-id>.json` 事件追加存储，包含批次、条目编号、`accept`（采纳）/`defer`（暂缓）/`reject`（拒绝）、审核者、理由及 UTC 时间。详情按时间展示全部事件，不覆盖旧决定，也不改变原报告或系统推荐。只有完成项存在候选 SQL 且通过现有完整结果校验（明细场景同时核查 ID 差集及计数）才能采纳；人工采纳不等于执行 SQL，也不强制改写系统的 keep_original 推荐。
+
+所有命令成功退出 0，损坏报告、非法或不存在的批次/条目、禁止采纳和存储错误输出 JSON 错误并退出 1；参数错误退出 2。默认归档是本地文件而非签名证据或多人服务，不应手动修改；自定义存储路径应自行保护，归档保留原始内容并不会自动脱敏。不要把含敏感内容的原始报告提交到 Git。
+
+离线验收报告：`reports/batch_review_history_acceptance.json`。使用已有混合报告，导入两次后历史仅一条；完成项和拒绝项均可查看；条目 2 的 defer → accept 两条事件可追溯；条目 1 采纳被阻止；损坏报告及不存在的批次、条目均报错。原始字节保持不变，数据库连接和模型请求均为 0。
