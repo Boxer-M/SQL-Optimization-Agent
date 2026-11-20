@@ -10,11 +10,11 @@ def error_report(status,reason,stage):
         'status':status,'stage':stage,'reason':reason,'model_requests':0,'benchmark':None})))
 
 
-def run_batch(paths, *, service_factory, fixture=None, use_qwen=False, repair_on_mismatch=False):
+def run_batch(paths, *, service_factory, fixture=None, use_qwen=False, repair_on_mismatch=False, query_reader=None):
     results=[]
     for index,path in enumerate(paths,1):
         try:
-            scenario,date=read_query(path)
+            scenario,date=(query_reader or read_query)(path)
         except SQLIntakeError as error:
             category='rejected'
             detail=error_report(error.status,str(error),'sql_intake')

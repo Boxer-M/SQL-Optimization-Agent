@@ -13,6 +13,7 @@ def main():
         with psycopg.connect(host=os.environ['REVIEW_DB_HOST'],port=os.environ['REVIEW_DB_PORT'],dbname='review_store',user='postgres',password=os.environ['REVIEW_ADMIN_PASSWORD'],connect_timeout=5) as c:
             c.execute(sql.SQL('CREATE ROLE review_app LOGIN PASSWORD {}').format(sql.Literal(os.environ['REVIEW_DB_PASSWORD'])))
             c.execute((Path(__file__).resolve().parents[1]/'sql/init_review_store.sql').read_text())
+            c.execute((Path(__file__).resolve().parents[1]/'sql/init_batch_jobs.sql').read_text())
         print('Review store initialized; application uses review_app, not postgres');return 0
     except psycopg.Error:
         print('Review initialization failed; inspect dedicated database/configuration (no reset attempted)');return 1

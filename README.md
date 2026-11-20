@@ -1369,3 +1369,42 @@ curl -sS -X POST "http://127.0.0.1:8000/reviews/batches/$BATCH/entries/2/reviews
 切换条目会清空前一条目的理由，避免把决定误用于其他条目。查看原始报告及系统推荐不会因人工审核而改变；发生请求失败时显示错误，不伪造成功状态。
 
 本轮实际浏览器验收使用三个 IAB 页面会话、真实 FastAPI 和独立 PostgreSQL `review_store`，复用团队版实际混合批次。证据位于 `reports/review_workbench_acceptance.json` 与 `reports/review_workbench_browser.jpg`：上传成功；viewer 查看及下载成功，原始 SHA-256 为 `ba8f78afad3d1c2a5d819ace4a54f99e514605e39171a674e534492b0c7cc126`；拒绝项禁用采纳且服务器返回 400；Alice 暂缓成功、Bob 旧版本触发 409，理由保留，再次确认后成为版本 2；两条历史及原始报告完整性通过核对。刷新后令牌消失。验收服务中央连接守卫禁止任何非审核库连接，模型传输也被阻止；本轮优化目标库连接和真实千问请求均为 0。
+
+## 工作台后台批量诊断任务
+
+`/workbench` 增加“批量诊断任务”。reviewer 可选择多个 `.sql` 文件提交，viewer 只能查看任务及报告；权限由服务端 Bearer 认证强制执行。任务 POST 只验证大小及文件元信息并持久化，返回 **202 + job_id**，不在 HTTP 请求内执行优化。内容在独立 worker 中逐项复用 CLI 的 AST 识别、参数化模板和公共优化服务；不支持的文件在连接优化库或模型前拒绝，后续文件继续。
+
+### 初始化与启动
+
+全新审核库执行 `scripts/init_review_store.py` 时已同时创建任务表。**已有审核库**仅需在原审核管理员环境执行一次迁移，不清空报告/审核：
+
+```bash
+.venv/bin/python scripts/init_batch_jobs.py
+```
+
+API 与 worker 都需要既有 `REVIEW_DB_HOST/PORT/NAME/USER/PASSWORD` 配置；管理员密码只用于初始化/迁移。worker 额外使用现有优化库应用只读凭据 `POSTGRES_PORT/POSTGRES_READER_USER/POSTGRES_READER_PASSWORD`（项目 `.env` 或环境变量），不能把优化库与审核库设为同一个库。
+
+```bash
+# 终端 A：模拟模型模式是默认；模式来自服务端，不能由提交者指定
+export BATCH_JOB_MODEL_MODE=simulated
+.venv/bin/python -m uvicorn sql_optimization_agent.api:app --host 127.0.0.1 --port 8000
+
+# 终端 B：继承/配置同一审核库凭据和优化只读凭据，启动独立 worker
+.venv/bin/python scripts/batch_worker.py
+# 或只扫描恢复状态并处理最多一个任务
+.venv/bin/python scripts/batch_worker.py --once
+```
+
+打开工作台并以 reviewer 登录，选择单日、明细计数、区间和 `unsupported_select.sql` 四份示例，点击“提交后台诊断”。点击“刷新任务”查看进度；刷新整个页面后重新输入令牌，任务仍可读取。点击完成任务会直接打开自动归档报告，支持原始下载、SQL Diff、验证/性能证据和人工审核。手动上传既有报告及原 CLI 入口保持可用。
+
+接口：`POST /reviews/jobs` 接收 `{"files":[{"name":"example.sql","content":"..."}]}`；`GET /reviews/jobs` 返回最近 100 项，`GET /reviews/jobs/{id}` 可按 ID 查看；reviewer 可 `POST /reviews/jobs/{id}/resubmit` 人工重提中断/失败项。提交体不能指定模型、凭据、预算或文件路径。最多 10 个文件，每文件 64 KiB、内容合计 256 KiB，请求 JSON 上限 2 MiB；文件名只允许普通 `.sql` 名称，不接受路径。每个文件独立识别，重复名称仍通过条目编号区分。
+
+模式与预算由服务端设置并随任务保存：默认 `simulated`，日期使用 `normal` 模拟建议、明细使用 `items-exists`，区间完全确定性。显式将 API 服务端 `BATCH_JOB_MODEL_MODE=live` 才会创建真实模型任务，worker 使用其本机 QWEN 配置；最多每文件一次、整批最多 10 次，不启用修复/重试。保持既有每查询 10000 行/16 MiB、5 秒语句超时、取数预算及各 7 次计时的固定上限，不能由浏览器放宽。仅结果验证通过才计时，实际推荐不以提升为前提。
+
+### 任务状态与中断
+
+`queued → running → completed`；completed 表示处理结束并已归档，报告中仍可能存在拒绝/失败项。归档与写入任务 batch_id 在同一数据库事务完成。异常为 `failed`，SIGTERM/KeyboardInterrupt 为 `interrupted`。worker 使用 `FOR UPDATE SKIP LOCKED` 原子认领并持有数据库 session advisory lock，两个 worker 不会同时执行同一任务。
+
+SIGKILL 等非正常退出后，下一次 worker 扫描会检查锁已释放，将遗留 running 标记 interrupted；不会自动重新执行。若全部 worker 都停止，需先运行一次 `--once` 恢复扫描。网络断开尚未被 PostgreSQL 感知时需等待连接释放，不能盲目重提仍显示 running 的任务。reviewer 点击“人工重提”后生成新 job_id，parent_id 指向原任务，旧记录保留。可在专用测试环境中终止已认领任务的 worker，重启 worker 扫描，再通过浏览器重提；不要终止其他生产进程。viewer 不能提交或重提。
+
+实际浏览器及两套隔离 PostgreSQL 的验收报告为 `reports/workbench_batch_jobs_acceptance.json`，截图为 `reports/workbench_batch_jobs_browser.jpg`：4 个文件，3 完成、1 拒绝，计数分别 825/825、551/551（ID 差集 0/0）、1648/1648；刷新后可查任务，完成后打开归档并成功提交人工暂缓。两个真实 worker 仅一次认领；另一个已认领 worker 被实际 SIGKILL 后恢复为中断，浏览器人工重提并完成新任务；viewer 页面无写入口，HTTP 提交返回 403。本轮真实千问请求为 0。任务处理会连接隔离优化库，这是诊断所必需；报告查看和人工审核只访问审核库。
