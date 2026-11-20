@@ -116,3 +116,8 @@ def submit(batch:str,entry:int,body:Decision,user=Depends(writer)):
         row=c.execute('INSERT INTO review_events(batch,entry,version,decision,reviewer,reason) VALUES (%s,%s,%s,%s,%s,%s) RETURNING created_at',
             (batch,entry,version+1,body.decision,user['name'],body.reason)).fetchone()
     return {'version':version+1,'reviewer':user['name'],'decision':body.decision,'time':row[0]}
+
+
+@router.get("/me")
+def current_identity(user=Depends(identity)):
+    return {"name":user["name"],"role":user["role"]}
