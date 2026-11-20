@@ -5,6 +5,7 @@ from fastapi.responses import JSONResponse, FileResponse
 from pathlib import Path
 from pydantic import BaseModel, ConfigDict, Field
 
+from sql_optimization_agent.batch_jobs import router as jobs_router
 from sql_optimization_agent.service import configured_service
 from sql_optimization_agent.shared_review import router as review_router
 
@@ -18,6 +19,7 @@ class OptimizeRequest(BaseModel):
 def create_app(service=None) -> FastAPI:
     application = FastAPI(title="SQL Optimization Agent")
     application.include_router(review_router)
+    application.include_router(jobs_router)
     application.state.optimization_service = service if service is not None else configured_service()
 
     @application.get("/workbench", include_in_schema=False)
