@@ -1,0 +1,43 @@
+{
+  "baseline_sha": "b4e5b6551137eae497b8c4f167d600bafad04fac",
+  "python": "3.12.13",
+  "source": "Actual IAB browser sessions + FastAPI + isolated PostgreSQL review_store; team release original mixed batch",
+  "browser_cases": {
+    "reviewer_upload": "passed; batch created via browser file chooser",
+    "viewer_read": "passed; upload and review controls absent",
+    "viewer_download": "passed; actual downloaded file bytes equal upload",
+    "rejected_accept": "browser accept option disabled; server HTTP 400",
+    "two_sessions": "alice and bob each loaded entry 2 version 0; alice submitted defer, bob received visible 409 and version 1 history",
+    "conflict_reason_retained": "Bob：已核对结果，冲突后保留此理由并再次确认",
+    "explicit_retry": "bob clicked submit again; version 2 with both events",
+    "refresh_clears_token": "viewer page reload returned to empty login form",
+    "SQL_diff": "opened in actual browser; parameter placeholders retained"
+  },
+  "batch_id": "c27ff3e73732409e3c246124ed55b6b97152b7f3458d89f398487ee4dbc12d66",
+  "raw_sha256": "ba8f78afad3d1c2a5d819ace4a54f99e514605e39171a674e534492b0c7cc126",
+  "raw_report_unchanged": true,
+  "system_recommendation_unchanged": true,
+  "history": [
+    {
+      "version": 1,
+      "decision": "defer",
+      "reviewer": "alice",
+      "reason": "Alice：先暂缓核对本地合成数据证据",
+      "time": "2026-11-20T02:08:18.771136+00:00"
+    },
+    {
+      "version": 2,
+      "decision": "accept",
+      "reviewer": "bob",
+      "reason": "Bob：已核对结果，冲突后保留此理由并再次确认",
+      "time": "2026-11-20T02:09:21.833911+00:00"
+    }
+  ],
+  "isolated_container": "sql-agent-workbench-acceptance",
+  "target_database_connections": 0,
+  "new_real_model_requests": 0,
+  "guards": "Server psycopg.connect rejects any dbname other than review_store; HTTP model transport raises if called",
+  "screenshot": "reports/review_workbench_browser.jpg",
+  "tests": "........................................................................ [ 23%]\n........................................................................ [ 47%]\n..................................................................................................................................... [ 91%]\n.........................                                                [100%]\n=============================== warnings summary ===============================\n.venv/lib/python3.12/site-packages/fastapi/testclient.py:1\n  /Users/yxz/Documents/SQL Optimization Agent/.venv/lib/python3.12/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.\n    from starlette.testclient import TestClient as TestClient  # noqa\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n302 passed, 1 warning, 11 subtests passed in 1.21s\n",
+  "pip_check": "No broken requirements found"
+}

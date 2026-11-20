@@ -1342,3 +1342,30 @@ curl -sS -X POST "http://127.0.0.1:8000/reviews/batches/$BATCH/entries/2/reviews
 ```
 
 脚本创建独立临时容器及受限账号，随机注入环境凭据，不访问目标库或模型；结束后停止容器并保留数据，已有报告时不覆盖。脱敏报告为 `reports/shared_batch_review_acceptance.json`：401、403、并发导入仅一条；两个审核者同版本提交恰好一次 200、一次 409；冲突方重读后提交得到版本 2，两次决定可追溯；拒绝项采纳被阻止，原始字节及系统推荐未修改。新增真实千问请求和优化目标库连接均为 0。
+
+## 浏览器审核工作台
+
+同一 FastAPI 服务提供 `/workbench`，复用 `/reviews` API 和独立审核库，不执行优化任务。先按“单团队共享审核 API”初始化 `compose.review.yaml`、`review_app` 并配置 `REVIEW_DB_*` 和 `REVIEW_TOKENS`，再启动：
+
+```bash
+.venv/bin/python -m pip install -e '.[test]'
+.venv/bin/python -m uvicorn sql_optimization_agent.api:app --host 127.0.0.1 --port 8000
+# 浏览器打开 http://127.0.0.1:8000/workbench
+```
+
+在登录框输入对应令牌；页面通过认证的 `GET /reviews/me` 获取身份与角色。令牌只保留在当前页面 JavaScript 闭包内存，提交登录后立即清空密码输入框，不写入 URL、cookie、localStorage 或 sessionStorage。刷新、关闭或退出后需重新输入。页面和资源不缓存，不引入第三方脚本，报告文本按纯文本显示。鉴权与写权限仍由后端强制执行，隐藏控件不替代权限检查。
+
+工作台支持批次列表、完整报告、条目状态、原始 JSON 下载及 SHA-256、SQL Diff、完整结果校验、性能判定、自然计划/原始样本、系统推荐和审核历史。viewer 只读；reviewer 可选择现有批次 JSON 上传，并记录采纳/暂缓/拒绝及理由。没有已验证候选的条目禁用“采纳”，后端仍复用完整采纳规则。审核仅记录决定，不执行、替换或部署 SQL。
+
+### 两人审核与版本冲突复现
+
+1. 准备一份已有混合批次报告，例如 `reports/batch_sql_diagnosis_acceptance.json`；也可使用团队验收报告内 `batch_original_json` 恢复原始上传文件。
+2. 使用两个独立浏览器窗口或标签页，各自打开 `/workbench`，分别用 Alice、Bob 的 reviewer 令牌登录。令牌为页面内存状态，两个页面互不覆盖。
+3. Alice 上传报告；Bob 点击“刷新批次”后打开相同批次。两人都选择同一完成项，例如条目 2，确认显示相同版本 0。
+4. Alice 输入理由并提交“暂缓”，得到版本 1。Bob 保持旧页面，输入自己的理由并提交“采纳”。
+5. Bob 收到 **409 冲突提示**，页面自动刷新到版本 1 和最新历史，保留已输入理由与决定，不自动重新提交。Bob 重新核对后再次点击“提交决定”，表示确认基于新版本提交。
+6. 历史显示版本 1、2 的两位审核者与理由。用 viewer 登录第三页，可查看与下载原报告，但看不到上传和审核控件；下载摘要应与首次上传一致。
+
+切换条目会清空前一条目的理由，避免把决定误用于其他条目。查看原始报告及系统推荐不会因人工审核而改变；发生请求失败时显示错误，不伪造成功状态。
+
+本轮实际浏览器验收使用三个 IAB 页面会话、真实 FastAPI 和独立 PostgreSQL `review_store`，复用团队版实际混合批次。证据位于 `reports/review_workbench_acceptance.json` 与 `reports/review_workbench_browser.jpg`：上传成功；viewer 查看及下载成功，原始 SHA-256 为 `ba8f78afad3d1c2a5d819ace4a54f99e514605e39171a674e534492b0c7cc126`；拒绝项禁用采纳且服务器返回 400；Alice 暂缓成功、Bob 旧版本触发 409，理由保留，再次确认后成为版本 2；两条历史及原始报告完整性通过核对。刷新后令牌消失。验收服务中央连接守卫禁止任何非审核库连接，模型传输也被阻止；本轮优化目标库连接和真实千问请求均为 0。
