@@ -46,6 +46,8 @@ jobs:
           load: true
           tags: sql-optimization-agent:smoke
           platforms: linux/${{ matrix.platform }}
+      - name: Pull database image for Compose dependencies
+        run: docker pull postgres:16
       - run: python scripts/smoke_compose.py --image sql-optimization-agent:smoke --report compose-smoke.json
       - uses: actions/upload-artifact@v4
         with:
