@@ -1484,3 +1484,44 @@ dc stop                  # 保留全部数据和容器
 升级库由真正的 `v0.1.0` SQL 与 API 初始化，先保存原报告及两条审核事件，再运行新版迁移。旧报告 SHA-256 `ba8f78afad3d1c2a5d819ace4a54f99e514605e39171a674e534492b0c7cc126`、版本 2 和两条历史在首次迁移、重复迁移、应用重启及最终 0.2.0 镜像替换后均不变；升级后新任务也完成 3、拒绝 1。浏览器截图为 `reports/v020_fresh_browser.jpg`、`reports/v020_upgrade_browser.jpg`。测试使用各自独立的 Compose 项目和卷，未重置原库。
 
 全量 313 项测试及 11 个子测试通过，主机与容器 `pip check`、JS 语法和差异检查通过。容器使用模拟模型响应，未注入百炼密钥，本轮真实千问请求为 0。首次依赖下载遭遇网络/DNS 失败，网络恢复后重试成功，最终镜像已重新构建并验证包版本 0.2.0。
+
+### 容器镜像 CI 与 GHCR 发布
+
+PR 保留 Python 测试，并在原生 Linux amd64、arm64 runner 上构建镜像与运行
+Compose 冒烟测试：迁移退出 0、工作台可访问、worker 完成模拟任务并归档报告，
+迁移/API/worker 的镜像 ID 必须相同。证据保存在 Actions 的 compose-smoke artifacts。
+
+后续推送 `vX.Y.Z` 标签时，先核对标签等于 `pyproject.toml` 版本，再运行测试及
+双平台冒烟测试；全部通过才由唯一具有 `packages: write` 权限的 publish 作业推送
+`ghcr.io/boxer-m/sql-optimization-agent:X.Y.Z`，附来源提交 OCI label。
+`image-release` artifact 和作业摘要记录多平台 manifest digest、来源 SHA。
+本次不会触发发布，也不会修改已有 v0.2.0 标签或 Release。首个镜像实际发布前，
+以下 GHCR 引用仅为使用方式，不能视为已存在的镜像。
+
+先按上文准备 `.env.workbench` 的数据库密码与审核令牌，再选择发布版本或 digest：
+
+```bash
+export APP_IMAGE=ghcr.io/boxer-m/sql-optimization-agent:X.Y.Z
+# 或使用发布作业实际输出的不可变 manifest digest：
+# export APP_IMAGE=ghcr.io/boxer-m/sql-optimization-agent@sha256:实际digest
+dc() { docker compose --env-file .env.workbench -f compose.yaml -f compose.review.yaml -f compose.workbench.yaml "$@"; }
+dc pull migrate api worker seed-optimization
+# 仅全新测试环境执行造数；已有优化数据不执行本行
+dc --profile setup run --rm --pull never seed-optimization
+dc up -d --no-build api worker
+# 已有审核库升级也执行上述 up，迁移成功退出后 API/worker 才启动
+dc stop
+```
+
+`APP_IMAGE` 优先于原有 `APP_IMAGE_TAG`，同一引用用于迁移、API、worker 和可选造数服务。
+私有 GHCR 包须先 `docker login ghcr.io`，不在环境文件中保存 registry token。
+
+本地复现 CI 冒烟（新建随机 Compose 项目及数据卷，结束后仅清理该项目）：
+
+```bash
+docker build -t sql-optimization-agent:smoke .
+python3 scripts/smoke_compose.py --image sql-optimization-agent:smoke --report compose-smoke.json
+```
+
+本地实际平台及证据见 `reports/ghcr_compose_smoke.json`。本地验证不代表 GHCR 推送
+或另一 CPU 架构已通过；两平台 Actions 结果须在 PR/后续标签触发后分别核对。

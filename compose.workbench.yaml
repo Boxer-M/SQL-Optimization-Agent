@@ -1,6 +1,6 @@
 name: sql-agent-workbench
 x-application: &application
-  image: sql-optimization-agent:${APP_IMAGE_TAG:-workbench}
+  image: ${APP_IMAGE:-sql-optimization-agent:${APP_IMAGE_TAG:-workbench}}
   build: .
   restart: unless-stopped
   environment: &appenv
