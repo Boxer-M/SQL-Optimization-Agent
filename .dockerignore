@@ -1,0 +1,8 @@
+.git
+.venv
+.env
+.env.*
+.batch-history
+reports
+__pycache__
+*.egg-info

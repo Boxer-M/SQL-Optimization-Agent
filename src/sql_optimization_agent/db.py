@@ -40,7 +40,7 @@ def readonly_connection(
 
     try:
         with psycopg.connect(
-            host="127.0.0.1",
+            host=values.get("POSTGRES_HOST", "127.0.0.1"),
             port=port,
             dbname="sql_optimization",
             user=values["POSTGRES_READER_USER"],
