@@ -1,0 +1,71 @@
+name: sql-agent-workbench
+x-application: &application
+  image: sql-optimization-agent:${APP_IMAGE_TAG:-workbench}
+  build: .
+  restart: unless-stopped
+  environment: &appenv
+    POSTGRES_HOST: postgres
+    POSTGRES_PORT: "5432"
+    POSTGRES_READER_USER: sql_optimization_reader
+    POSTGRES_READER_PASSWORD: ${POSTGRES_READER_PASSWORD:?Set reader password}
+    REVIEW_DB_HOST: review-db
+    REVIEW_DB_PORT: "5432"
+    REVIEW_DB_NAME: review_store
+    REVIEW_DB_USER: review_app
+    REVIEW_DB_PASSWORD: ${REVIEW_DB_PASSWORD:?Set review app password}
+    BATCH_JOB_MODEL_MODE: simulated
+    SQL_OPTIMIZATION_MODEL_FIXTURE: normal
+    SQL_OPTIMIZATION_ITEMS_MODE: qwen
+    SQL_OPTIMIZATION_ITEMS_FIXTURE: items-exists
+    REVIEW_TOKENS: ${REVIEW_TOKENS:?Set REVIEW_TOKENS}
+services:
+  seed-optimization:
+    <<: *application
+    profiles: [setup]
+    restart: "no"
+    environment:
+      POSTGRES_READER_PASSWORD: ${POSTGRES_READER_PASSWORD:?Set reader password}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set optimization admin password}
+    command: ["python","scripts/seed_optimization_container.py"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+  migrate:
+    <<: *application
+    restart: "no"
+    environment:
+      REVIEW_DB_HOST: review-db
+      REVIEW_DB_PORT: "5432"
+      REVIEW_DB_PASSWORD: ${REVIEW_DB_PASSWORD:?Set review app password}
+      REVIEW_ADMIN_PASSWORD: ${REVIEW_ADMIN_PASSWORD:?Set review admin password}
+    command: ["python","scripts/migrate_workbench.py"]
+    depends_on:
+      review-db:
+        condition: service_healthy
+  api:
+    <<: *application
+    ports: ["127.0.0.1:${WORKBENCH_PORT:-8000}:8000"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD","python","-c","import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/workbench')"]
+      interval: 3s
+      timeout: 5s
+      retries: 20
+  worker:
+    <<: *application
+    environment:
+      <<: *appenv
+      REVIEW_TOKENS: ""
+    command: ["python","scripts/batch_worker.py"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+volumes:
+  postgres_data:
+    name: ${POSTGRES_VOLUME_NAME:-${COMPOSE_PROJECT_NAME:-sql-agent-workbench}-postgres-data}
+  review_data:
+    name: ${REVIEW_VOLUME_NAME:-${COMPOSE_PROJECT_NAME:-sql-agent-workbench}-review-data}

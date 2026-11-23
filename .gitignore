@@ -10,3 +10,5 @@ dist/
 
 
 .batch-history/
+
+.env.workbench

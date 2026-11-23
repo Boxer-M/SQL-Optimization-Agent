@@ -1408,3 +1408,79 @@ export BATCH_JOB_MODEL_MODE=simulated
 SIGKILL 等非正常退出后，下一次 worker 扫描会检查锁已释放，将遗留 running 标记 interrupted；不会自动重新执行。若全部 worker 都停止，需先运行一次 `--once` 恢复扫描。网络断开尚未被 PostgreSQL 感知时需等待连接释放，不能盲目重提仍显示 running 的任务。reviewer 点击“人工重提”后生成新 job_id，parent_id 指向原任务，旧记录保留。可在专用测试环境中终止已认领任务的 worker，重启 worker 扫描，再通过浏览器重提；不要终止其他生产进程。viewer 不能提交或重提。
 
 实际浏览器及两套隔离 PostgreSQL 的验收报告为 `reports/workbench_batch_jobs_acceptance.json`，截图为 `reports/workbench_batch_jobs_browser.jpg`：4 个文件，3 完成、1 拒绝，计数分别 825/825、551/551（ID 差集 0/0）、1648/1648；刷新后可查任务，完成后打开归档并成功提交人工暂缓。两个真实 worker 仅一次认领；另一个已认领 worker 被实际 SIGKILL 后恢复为中断，浏览器人工重提并完成新任务；viewer 页面无写入口，HTTP 提交返回 403。本轮真实千问请求为 0。任务处理会连接隔离优化库，这是诊断所必需；报告查看和人工审核只访问审核库。
+
+## v0.2.0 Compose 工作台交付
+
+API 与独立 worker 使用同一应用镜像、不同命令；一次性 `migrate` 成功后才启动两者。复用原 `compose.yaml` 和 `compose.review.yaml`，第三份覆盖文件 `compose.workbench.yaml` 为两个数据卷加项目隔离命名。优化连接使用容器服务 `postgres`，审核连接使用 `review-db`；API/worker 仅获得应用凭据，管理员凭据仅注入迁移或显式造数服务。Docker 构建上下文排除 `.env*`、本地历史、报告和 `.git`。
+
+### 全新安装
+
+需要 Docker Desktop / Compose（支持健康检查及 service_completed_successfully）。应用运行无需主机 Python；下方凭据生成示例使用 Python 3.12。先配置一次 `.env.workbench`；已有文件勿覆盖，并选用未占用的三个宿主端口：
+
+```bash
+cp -n .env.workbench.example .env.workbench
+python3.12 - <<'PY'
+from pathlib import Path
+import secrets,json
+p=Path('.env.workbench');text=p.read_text()
+for key in ('POSTGRES_PASSWORD','POSTGRES_READER_PASSWORD','REVIEW_ADMIN_PASSWORD','REVIEW_DB_PASSWORD'):
+    text=text.replace(key+'=\n',key+'='+secrets.token_hex(32)+'\n')
+# 这里生成三枚随机令牌，不输出它们。通过本地安全方式读取后分发给相应测试用户。
+users={secrets.token_hex(32):{'name':name,'role':role} for name,role in [('reader','viewer'),('alice','reviewer'),('bob','reviewer')]}
+text=text.replace('REVIEW_TOKENS=\n',"REVIEW_TOKENS='"+json.dumps(users)+"'\n")
+p.write_text(text);p.chmod(0o600)
+PY
+# 此函数在后续命令中复用；--env-file 不改变现有项目 .env
+ dc() { docker compose --env-file .env.workbench -f compose.yaml -f compose.review.yaml -f compose.workbench.yaml "$@"; }
+dc config --quiet
+# 仅全新优化测试库显式运行；原种子脚本遇到冲突会回滚，不重置已有订单
+ dc --profile setup run --build --rm seed-optimization
+ dc up -d --build --wait
+ dc ps
+```
+
+浏览器打开 `http://127.0.0.1:8000/workbench`（若改端口则对应替换）。令牌来自本地 `.env.workbench` 中 REVIEW_TOKENS 的键，不要截图、提交或贴到日志。选择三种有效 SQL 和 `unsupported_select.sql`，提交后 worker 后台执行；刷新任务查看结果，打开自动归档报告后可审核。默认模式固定为模拟响应，区间为确定性改写；容器交付不注入百炼密钥。本地原有 CLI 和其他 Compose 文件仍可独立使用。
+
+### 从 v0.1.0 审核库升级
+
+先备份原审核库，并保留其管理员及 `review_app` 密码。停止旧 API/worker；若准备把既有数据卷交给新项目，也先停止使用该卷的旧 PostgreSQL 容器，**不要删除数据卷**。在 `.env.workbench` 填入原凭据，并显式设置：
+
+```text
+REVIEW_VOLUME_NAME=原审核数据卷名称
+# 若也复用已有优化库卷：
+POSTGRES_VOLUME_NAME=原优化数据卷名称
+```
+
+未设置这些名称时，使用新 Compose 项目自己的全新卷，不会自动发现旧卷。测试环境应先复制或恢复备份到独立卷验证，不要让两个数据库容器同时挂载同一卷。v0.1.0 和本版均使用 PostgreSQL 16；本流程不执行 PostgreSQL 大版本升级。
+
+```bash
+# 此处沿用上方 dc 函数；不要对已有业务库运行造数服务
+ dc build api
+ dc up -d --wait postgres review-db
+ dc run --rm migrate
+ dc up -d --wait api worker
+# 重复迁移应成功且不改变旧报告/事件
+ dc run --rm migrate
+ dc restart api worker
+```
+
+迁移复用现有审核初始化 SQL 和任务表迁移：缺少基础表时创建，已有基础表则保持原样；缺少任务表时补齐。迁移持有数据库事务 advisory lock，重复执行不重建表、不重设密码、不更新报告或审核事件，最后验证受限账号能访问任务表。若凭据不匹配、既有角色权限不安全或结构不符合预期，迁移失败，依赖它的 API/worker 不启动；应核查配置和备份，不应删除卷来“修复”。
+
+### 日常停止与恢复
+
+```bash
+dc stop                  # 保留全部数据和容器
+ dc up -d --wait         # 复用原 .env.workbench 凭据与数据
+# 若只重启应用：
+ dc restart api worker
+```
+
+不要使用 `down -v`。运行中的诊断若随 worker 停止而中断，仍遵循现有恢复扫描及人工重提流程；不会自动重跑。
+
+### v0.2.0 发布验收证据
+
+`reports/workbench_compose_v020_acceptance.json` 记录实际 Compose 命令、镜像 ID、启动顺序、环境版本、自然计划、原始计时及迁移前后快照。新装浏览器提交四份 SQL，3 完成、1 拒绝，打开自动归档报告后提交人工暂缓；三个有效场景分别为 825/825、551/551（双向 ID 差集 0/0）、1648/1648。
+
+升级库由真正的 `v0.1.0` SQL 与 API 初始化，先保存原报告及两条审核事件，再运行新版迁移。旧报告 SHA-256 `ba8f78afad3d1c2a5d819ace4a54f99e514605e39171a674e534492b0c7cc126`、版本 2 和两条历史在首次迁移、重复迁移、应用重启及最终 0.2.0 镜像替换后均不变；升级后新任务也完成 3、拒绝 1。浏览器截图为 `reports/v020_fresh_browser.jpg`、`reports/v020_upgrade_browser.jpg`。测试使用各自独立的 Compose 项目和卷，未重置原库。
+
+全量 313 项测试及 11 个子测试通过，主机与容器 `pip check`、JS 语法和差异检查通过。容器使用模拟模型响应，未注入百炼密钥，本轮真实千问请求为 0。首次依赖下载遭遇网络/DNS 失败，网络恢复后重试成功，最终镜像已重新构建并验证包版本 0.2.0。
