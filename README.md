@@ -1409,7 +1409,7 @@ SIGKILL 等非正常退出后，下一次 worker 扫描会检查锁已释放，�
 
 实际浏览器及两套隔离 PostgreSQL 的验收报告为 `reports/workbench_batch_jobs_acceptance.json`，截图为 `reports/workbench_batch_jobs_browser.jpg`：4 个文件，3 完成、1 拒绝，计数分别 825/825、551/551（ID 差集 0/0）、1648/1648；刷新后可查任务，完成后打开归档并成功提交人工暂缓。两个真实 worker 仅一次认领；另一个已认领 worker 被实际 SIGKILL 后恢复为中断，浏览器人工重提并完成新任务；viewer 页面无写入口，HTTP 提交返回 403。本轮真实千问请求为 0。任务处理会连接隔离优化库，这是诊断所必需；报告查看和人工审核只访问审核库。
 
-## v0.2.0 Compose 工作台交付
+## Compose 工作台交付（当前版本 0.2.1）
 
 API 与独立 worker 使用同一应用镜像、不同命令；一次性 `migrate` 成功后才启动两者。复用原 `compose.yaml` 和 `compose.review.yaml`，第三份覆盖文件 `compose.workbench.yaml` 为两个数据卷加项目隔离命名。优化连接使用容器服务 `postgres`，审核连接使用 `review-db`；API/worker 仅获得应用凭据，管理员凭据仅注入迁移或显式造数服务。Docker 构建上下文排除 `.env*`、本地历史、报告和 `.git`。
 
@@ -1525,3 +1525,25 @@ python3 scripts/smoke_compose.py --image sql-optimization-agent:smoke --report c
 
 本地实际平台及证据见 `reports/ghcr_compose_smoke.json`。本地验证不代表 GHCR 推送
 或另一 CPU 架构已通过；两平台 Actions 结果须在 PR/后续标签触发后分别核对。
+
+### v0.2.1 发布准备
+
+项目包版本与 `.env.workbench.example` 的本地镜像版本为 `0.2.1`。
+本版本加入双平台 GHCR 镜像发布流程，PR 构建与 Compose 冒烟先显式拉取
+`postgres:16`，再以 `--pull never` 验证预构建应用镜像。
+历史 v0.2.0 验收记录保持原样，不代表 v0.2.1 已发布。
+
+合并版本 PR 后，由维护者将注释标签 `v0.2.1` 指向同时包含发布工作流和
+0.2.1 版本声明的主分支提交。发布作业通过后，核对 manifest 的
+`linux/amd64`、`linux/arm64` 两个平台及对应镜像的来源提交 label，记录
+`image-release` artifact 的 digest，再拉取该 digest 并执行隔离冒烟：
+
+```bash
+# 将下列值替换为发布作业实际输出，不使用占位 digest 执行
+export APP_IMAGE=ghcr.io/boxer-m/sql-optimization-agent@sha256:实际digest
+docker buildx imagetools inspect "$APP_IMAGE"
+docker pull "$APP_IMAGE"
+python scripts/smoke_compose.py --image "$APP_IMAGE" --report compose-v021-published-smoke.json
+```
+
+此处发布后验收需要标签触发完成后执行；版本准备阶段不创建标签或发布 Release。
