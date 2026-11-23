@@ -1,0 +1,24 @@
+{
+  "batch_id": "51f4f39142526f8fd5d51a242038af9d20e38c41bbe7c3331ccf18b0c055fb4e",
+  "raw_sha256": "5d58309baa522778dceb89eb09295c1032e360fd71f5ff6f3c03299538f46353",
+  "browser_download_bytes_equal": true,
+  "viewer_write_http_status": 403,
+  "review_history": [
+    {
+      "version": 1,
+      "decision": "defer",
+      "reviewer": "审核者 A",
+      "reason": "已核对完整结果与采样，先暂缓以等待团队复核。",
+      "time": "2026-11-23T10:33:05.273959+00:00"
+    },
+    {
+      "version": 2,
+      "decision": "defer",
+      "reviewer": "审核者 B",
+      "reason": "第二位审核者核对后确认保留本轮人工意见。",
+      "time": "2026-11-23T10:33:49.591692+00:00"
+    }
+  ],
+  "real_model_requests": 0,
+  "original_report_and_recommendations_unchanged_after_reviews": true
+}
