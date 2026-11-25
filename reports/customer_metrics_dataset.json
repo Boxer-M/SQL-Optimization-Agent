@@ -1,0 +1,505 @@
+{
+  "order_fingerprint": "a866042204d5511a7ee1752caec4428a",
+  "user_fingerprint": "7c27d7aa9d8c194e000df24774b10dbe",
+  "status": "completed",
+  "seed": 20261125,
+  "seed_version": "customer-metrics-v1",
+  "base_orders": 999992,
+  "fixture_orders": 8,
+  "total_orders": 1000000,
+  "total_customers": 100004,
+  "customers_with_any_orders": 100003,
+  "null_amount_orders": 7875,
+  "null_timestamp_orders": 8850,
+  "min_timestamp": {
+    "timestamp": "2024-12-31T23:59:59.999999"
+  },
+  "max_timestamp": {
+    "timestamp": "2026-01-01T00:00:00"
+  },
+  "annual_orders_per_customer_histogram": [
+    [
+      0,
+      1
+    ],
+    [
+      1,
+      1
+    ],
+    [
+      2,
+      2
+    ],
+    [
+      9,
+      8857
+    ],
+    [
+      10,
+      91143
+    ]
+  ],
+  "merchant_distribution": [
+    [
+      2,
+      10000
+    ],
+    [
+      3,
+      10000
+    ],
+    [
+      4,
+      10000
+    ],
+    [
+      5,
+      10000
+    ],
+    [
+      6,
+      10000
+    ],
+    [
+      7,
+      10000
+    ],
+    [
+      8,
+      10000
+    ],
+    [
+      9,
+      10000
+    ],
+    [
+      10,
+      10000
+    ],
+    [
+      11,
+      10000
+    ],
+    [
+      12,
+      10000
+    ],
+    [
+      13,
+      10000
+    ],
+    [
+      15,
+      10000
+    ],
+    [
+      16,
+      10000
+    ],
+    [
+      17,
+      10000
+    ],
+    [
+      18,
+      10000
+    ],
+    [
+      19,
+      10000
+    ],
+    [
+      20,
+      10000
+    ],
+    [
+      21,
+      10000
+    ],
+    [
+      22,
+      10000
+    ],
+    [
+      23,
+      10000
+    ],
+    [
+      24,
+      10000
+    ],
+    [
+      25,
+      10000
+    ],
+    [
+      28,
+      10000
+    ],
+    [
+      29,
+      10000
+    ],
+    [
+      30,
+      10000
+    ],
+    [
+      31,
+      10000
+    ],
+    [
+      32,
+      10000
+    ],
+    [
+      33,
+      10000
+    ],
+    [
+      34,
+      10000
+    ],
+    [
+      35,
+      10000
+    ],
+    [
+      36,
+      10000
+    ],
+    [
+      37,
+      10000
+    ],
+    [
+      38,
+      10000
+    ],
+    [
+      39,
+      10000
+    ],
+    [
+      41,
+      10000
+    ],
+    [
+      42,
+      10000
+    ],
+    [
+      43,
+      10000
+    ],
+    [
+      44,
+      10000
+    ],
+    [
+      45,
+      10000
+    ],
+    [
+      46,
+      10000
+    ],
+    [
+      47,
+      10000
+    ],
+    [
+      48,
+      10000
+    ],
+    [
+      49,
+      10000
+    ],
+    [
+      50,
+      10000
+    ],
+    [
+      51,
+      10000
+    ],
+    [
+      52,
+      10000
+    ],
+    [
+      54,
+      10000
+    ],
+    [
+      55,
+      10000
+    ],
+    [
+      56,
+      10000
+    ],
+    [
+      57,
+      10000
+    ],
+    [
+      58,
+      10000
+    ],
+    [
+      59,
+      10000
+    ],
+    [
+      60,
+      10000
+    ],
+    [
+      61,
+      10000
+    ],
+    [
+      62,
+      10000
+    ],
+    [
+      63,
+      10000
+    ],
+    [
+      64,
+      10000
+    ],
+    [
+      65,
+      10000
+    ],
+    [
+      67,
+      10000
+    ],
+    [
+      68,
+      10000
+    ],
+    [
+      69,
+      10000
+    ],
+    [
+      70,
+      10000
+    ],
+    [
+      71,
+      10000
+    ],
+    [
+      72,
+      10000
+    ],
+    [
+      73,
+      10000
+    ],
+    [
+      74,
+      10000
+    ],
+    [
+      75,
+      10000
+    ],
+    [
+      76,
+      10000
+    ],
+    [
+      77,
+      10000
+    ],
+    [
+      78,
+      10000
+    ],
+    [
+      79,
+      10000
+    ],
+    [
+      80,
+      10000
+    ],
+    [
+      81,
+      10000
+    ],
+    [
+      82,
+      10000
+    ],
+    [
+      83,
+      10000
+    ],
+    [
+      84,
+      10000
+    ],
+    [
+      85,
+      10000
+    ],
+    [
+      86,
+      10000
+    ],
+    [
+      87,
+      10000
+    ],
+    [
+      89,
+      10000
+    ],
+    [
+      90,
+      10000
+    ],
+    [
+      91,
+      10000
+    ],
+    [
+      92,
+      10000
+    ],
+    [
+      93,
+      10000
+    ],
+    [
+      94,
+      10000
+    ],
+    [
+      95,
+      10000
+    ],
+    [
+      96,
+      10000
+    ],
+    [
+      97,
+      10000
+    ],
+    [
+      98,
+      10000
+    ],
+    [
+      99,
+      10000
+    ],
+    [
+      100,
+      10000
+    ],
+    [
+      1,
+      9999
+    ],
+    [
+      14,
+      9999
+    ],
+    [
+      26,
+      9999
+    ],
+    [
+      27,
+      9999
+    ],
+    [
+      40,
+      9999
+    ],
+    [
+      53,
+      9999
+    ],
+    [
+      66,
+      9999
+    ],
+    [
+      88,
+      9999
+    ]
+  ],
+  "customer_distribution": "100000 balanced synthetic customer IDs plus four semantic-sentinel users",
+  "indexes": [
+    {
+      "table": "orders",
+      "name": "orders_created_at_idx",
+      "definition": "CREATE INDEX orders_created_at_idx ON public.orders USING btree (created_at)"
+    },
+    {
+      "table": "orders",
+      "name": "orders_customer_created_cover_idx",
+      "definition": "CREATE INDEX orders_customer_created_cover_idx ON public.orders USING btree (customer_id, created_at) INCLUDE (amount, status)"
+    },
+    {
+      "table": "orders",
+      "name": "orders_customer_idx",
+      "definition": "CREATE INDEX orders_customer_idx ON public.orders USING btree (customer_id)"
+    },
+    {
+      "table": "orders",
+      "name": "orders_pkey",
+      "definition": "CREATE UNIQUE INDEX orders_pkey ON public.orders USING btree (order_id)"
+    },
+    {
+      "table": "users",
+      "name": "users_pkey",
+      "definition": "CREATE UNIQUE INDEX users_pkey ON public.users USING btree (customer_id)"
+    }
+  ],
+  "postgresql": "PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit",
+  "settings": {
+    "effective_cache_size": {
+      "setting": "524288",
+      "unit": "8kB"
+    },
+    "hash_mem_multiplier": {
+      "setting": "2",
+      "unit": null
+    },
+    "jit": {
+      "setting": "on",
+      "unit": null
+    },
+    "max_parallel_workers_per_gather": {
+      "setting": "2",
+      "unit": null
+    },
+    "shared_buffers": {
+      "setting": "16384",
+      "unit": "8kB"
+    },
+    "work_mem": {
+      "setting": "4096",
+      "unit": "kB"
+    }
+  },
+  "semantics": {
+    "count": "all date-qualified orders",
+    "revenue": "SUM(amount) FILTER paid, no COALESCE",
+    "last_order": "MAX(date-qualified created_at)"
+  },
+  "real_model_requests": 0
+}

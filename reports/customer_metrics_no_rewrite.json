@@ -1,0 +1,215 @@
+{
+  "scenario": "customer_metrics_2025",
+  "customer_scope": "all",
+  "source": "controlled_customer_metrics",
+  "model_requests": 0,
+  "model_request_ms": 0.0,
+  "requested_model": "qwen3.7-plus",
+  "stage": "complete",
+  "benchmark": null,
+  "measured_at_utc": "2026-11-25T03:56:48.456203+00:00",
+  "diagnostic_context": {
+    "scenario": "customer_metrics_2025",
+    "scope": "all",
+    "original_sql": "SELECT u.customer_id,\n (SELECT COUNT(*) FROM public.orders o WHERE o.customer_id=u.customer_id\n   AND o.created_at >= %s AND o.created_at < %s) AS order_count,\n (SELECT SUM(o.amount) FROM public.orders o WHERE o.customer_id=u.customer_id\n   AND o.created_at >= %s AND o.created_at < %s AND o.status='paid') AS revenue,\n (SELECT MAX(o.created_at) FROM public.orders o WHERE o.customer_id=u.customer_id\n   AND o.created_at >= %s AND o.created_at < %s) AS last_order_at\nFROM public.users u WHERE u.customer_id BETWEEN %s AND %s",
+    "date_context": {
+      "start": "2025-01-01 00:00:00",
+      "end": "2026-01-01 00:00:00",
+      "end_inclusive": false
+    },
+    "original_parameters": [
+      "2025-01-01 00:00:00",
+      "2026-01-01 00:00:00",
+      "2025-01-01 00:00:00",
+      "2026-01-01 00:00:00",
+      "2025-01-01 00:00:00",
+      "2026-01-01 00:00:00",
+      1,
+      2147483647
+    ],
+    "semantics": {
+      "order_count": "all qualifying orders",
+      "revenue": "SUM(amount) of paid orders, NULL preserved",
+      "last_order_at": "MAX of all qualifying order timestamps",
+      "empty_customer": "0 / NULL / NULL"
+    },
+    "tables": [
+      {
+        "schema": "public",
+        "table": "users",
+        "columns": [
+          {
+            "name": "customer_id",
+            "data_type": "integer",
+            "nullable": false
+          },
+          {
+            "name": "region",
+            "data_type": "text",
+            "nullable": true
+          }
+        ],
+        "primary_key": [
+          "customer_id"
+        ],
+        "indexes": [
+          {
+            "name": "users_pkey",
+            "definition": "CREATE UNIQUE INDEX users_pkey ON public.users USING btree (customer_id)"
+          }
+        ]
+      },
+      {
+        "schema": "public",
+        "table": "orders",
+        "columns": [
+          {
+            "name": "order_id",
+            "data_type": "bigint",
+            "nullable": false
+          },
+          {
+            "name": "customer_id",
+            "data_type": "integer",
+            "nullable": false
+          },
+          {
+            "name": "created_at",
+            "data_type": "timestamp without time zone",
+            "nullable": true
+          },
+          {
+            "name": "status",
+            "data_type": "text",
+            "nullable": false
+          },
+          {
+            "name": "amount",
+            "data_type": "numeric(12,2)",
+            "nullable": true
+          },
+          {
+            "name": "merchant_id",
+            "data_type": "integer",
+            "nullable": false
+          }
+        ],
+        "primary_key": [
+          "order_id"
+        ],
+        "indexes": [
+          {
+            "name": "orders_created_at_idx",
+            "definition": "CREATE INDEX orders_created_at_idx ON public.orders USING btree (created_at)"
+          },
+          {
+            "name": "orders_customer_created_cover_idx",
+            "definition": "CREATE INDEX orders_customer_created_cover_idx ON public.orders USING btree (customer_id, created_at) INCLUDE (amount, status)"
+          },
+          {
+            "name": "orders_customer_idx",
+            "definition": "CREATE INDEX orders_customer_idx ON public.orders USING btree (customer_id)"
+          },
+          {
+            "name": "orders_pkey",
+            "definition": "CREATE UNIQUE INDEX orders_pkey ON public.orders USING btree (order_id)"
+          }
+        ]
+      }
+    ],
+    "estimated_plan": [
+      {
+        "Node Type": "Seq Scan",
+        "Parallel Aware": false,
+        "Relation Name": "users",
+        "Startup Cost": 0.0,
+        "Total Cost": 1027576.08,
+        "Plan Rows": 100004,
+        "Plan Width": 52,
+        "Filter": "((customer_id >= '1'::smallint) AND (customer_id <= 2147483647))"
+      },
+      {
+        "Node Type": "Aggregate",
+        "Parallel Aware": false,
+        "Startup Cost": 4.67,
+        "Total Cost": 4.68,
+        "Plan Rows": 1,
+        "Plan Width": 8
+      },
+      {
+        "Node Type": "Index Only Scan",
+        "Parallel Aware": false,
+        "Index Name": "orders_customer_created_cover_idx",
+        "Relation Name": "orders",
+        "Startup Cost": 0.42,
+        "Total Cost": 4.65,
+        "Plan Rows": 10,
+        "Plan Width": 0,
+        "Index Cond": "((customer_id = u.customer_id) AND (created_at >= '2025-01-01 00:00:00'::timestamp without time zone) AND (created_at < '2026-01-01 00:00:00'::timestamp without time zone))"
+      },
+      {
+        "Node Type": "Aggregate",
+        "Parallel Aware": false,
+        "Startup Cost": 4.7,
+        "Total Cost": 4.71,
+        "Plan Rows": 1,
+        "Plan Width": 32
+      },
+      {
+        "Node Type": "Index Only Scan",
+        "Parallel Aware": false,
+        "Index Name": "orders_customer_created_cover_idx",
+        "Relation Name": "orders",
+        "Startup Cost": 0.42,
+        "Total Cost": 4.67,
+        "Plan Rows": 9,
+        "Plan Width": 6,
+        "Index Cond": "((customer_id = u.customer_id) AND (created_at >= '2025-01-01 00:00:00'::timestamp without time zone) AND (created_at < '2026-01-01 00:00:00'::timestamp without time zone))",
+        "Filter": "(status = 'paid'::text)"
+      },
+      {
+        "Node Type": "Result",
+        "Parallel Aware": false,
+        "Startup Cost": 0.85,
+        "Total Cost": 0.86,
+        "Plan Rows": 1,
+        "Plan Width": 8
+      },
+      {
+        "Node Type": "Limit",
+        "Parallel Aware": false,
+        "Startup Cost": 0.42,
+        "Total Cost": 0.85,
+        "Plan Rows": 1,
+        "Plan Width": 8
+      },
+      {
+        "Node Type": "Index Only Scan",
+        "Parallel Aware": false,
+        "Index Name": "orders_customer_created_cover_idx",
+        "Relation Name": "orders",
+        "Startup Cost": 0.42,
+        "Total Cost": 4.67,
+        "Plan Rows": 10,
+        "Plan Width": 8,
+        "Index Cond": "((customer_id = u.customer_id) AND (created_at IS NOT NULL) AND (created_at >= '2025-01-01 00:00:00'::timestamp without time zone) AND (created_at < '2026-01-01 00:00:00'::timestamp without time zone))"
+      }
+    ]
+  },
+  "model_id": "controlled-fixture-not-a-real-model",
+  "received_content": "{\"action\":\"no_rewrite\",\"reason\":\"Controlled original retention.\"}",
+  "suggestion": {
+    "action": "no_rewrite",
+    "reason": "Controlled original retention."
+  },
+  "status": "no_rewrite",
+  "reason": "Model retained original; candidate validation and timing skipped",
+  "performance_assessment": null,
+  "performance_assessment_skipped": "result_not_verified_or_original_retained",
+  "recommendation": {
+    "decision": "keep_original",
+    "reason_code": "model_kept_original",
+    "advisory_only": true
+  },
+  "sql_diff": null
+}

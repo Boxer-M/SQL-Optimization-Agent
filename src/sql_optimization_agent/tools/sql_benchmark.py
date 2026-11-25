@@ -160,15 +160,17 @@ def run_benchmark(
 
 
 def measure_pair(connection, candidate_sql: str, candidate_params=None, *,
-                 original_sql: str = ORIGINAL, original_params=None) -> dict:
+                 original_sql: str = ORIGINAL, original_params=None, samples_per_query: int = 7) -> dict:
     """Measure an already validated candidate; callers must compare results first."""
+    if type(samples_per_query) is not int or not 1 <= samples_per_query <= 100:
+        raise ValueError('samples_per_query must be an integer in 1..100')
     # Each query is warmed once, then strictly alternate original / rewritten.
     _explain(connection, original_sql, original_params)
     _explain(connection, candidate_sql, candidate_params)
     samples = {"original": [], "rewritten": []}
     execution_order = []
     queries = {"original": original_sql, "rewritten": candidate_sql}
-    for _ in range(7):
+    for _ in range(samples_per_query):
         for name in ("original", "rewritten"):
             execution_order.append(name)
             samples[name].append(_explain(connection, queries[name], candidate_params if name == "rewritten" else original_params))
@@ -180,7 +182,7 @@ def measure_pair(connection, candidate_sql: str, candidate_params=None, *,
     spreads = {name: (max(values) - min(values)) / median(values)
                if median(values) else None for name, values in times.items()}
     return {
-            "warmups_per_query": 1, "samples_per_query": 7,
+            "warmups_per_query": 1, "samples_per_query": samples_per_query,
             "execution_order": execution_order,
             "execution_ms": times, "median_ms": medians,
             "rewritten_time_change_percent": change,

@@ -1634,3 +1634,80 @@ docker compose --env-file .env.advanced -f compose.benchmarks.yaml stop
 
 实测总表、原始样本、索引及复现环境见 `reports/advanced_sql_benchmarks.md` 与同名 JSON。
 真实千问请求为 0；v0.2.2 发布不由本基准分支触发。
+
+### 百万订单客户经营报表（CLI）
+
+场景 `customer_metrics_2025` 复用公共优化服务、千问客户端、严格动作解析、完整结果比较、
+性能判定、推荐和 SQL Diff。此轮仅由 CLI 显式启用，不改变 HTTP/MCP 默认场景。
+模型只选择 `aggregate_once` 或 `no_rewrite` 并给出理由；程序从仓库参数化模板生成 SQL，
+模型文本、SQL、标识符或参数均不能直接进入执行器。每次真实运行最多一次 POST，不修复、不重试。
+
+指标口径固定为 `[2025-01-01 00:00:00, 2026-01-01 00:00:00)`：
+
+- 订单数：范围内全部订单，包括非 paid 状态。
+- 成交额：范围内 `paid` 订单的 `SUM(orders.amount)`，不把 NULL 改成 0。
+- 最近下单：范围内全部订单的 `MAX(created_at)`。
+- 无订单客户：`0 / NULL / NULL`；有订单但金额全 NULL 的客户：订单数保留、成交额仍 NULL。
+
+固定种子 `20261125`，999,992 基础订单加 8 条手工/边界订单，恰好 **1,000,000 条订单、100,004 位客户**。
+使用独立 Compose 项目及数据卷，不接触日常数据库。原查询的三个相关子查询与候选共用
+`orders(customer_id, created_at) INCLUDE (amount,status)` 覆盖索引；初始化后 VACUUM ANALYZE，
+使原查询可以合理使用 Index Only Scan。保留其他现有索引，不强制执行计划。
+
+先按项目安装方式在 Python 3.12 环境安装 `pip install -e '.[test]'`，再准备独立配置。
+复制 `.env.customer-metrics.example` 为 Git 忽略的 `.env.customer-metrics`，本地填写随机数据库密码，
+以及已测通的 QWEN_API_KEY、QWEN_BASE_URL、QWEN_MODEL。不要打印或提交凭据。
+新端口默认 64630，冲突时只修改该环境文件。
+
+```bash
+docker compose -p sql-agent-customer-metrics --env-file .env.customer-metrics \
+  -f compose.benchmarks.yaml up -d --wait
+.venv/bin/python scripts/seed_customer_metrics.py --env-file .env.customer-metrics --initialize
+# --initialize 只允许空库加隔离标记；重复装载只重建这个带标记的专用测试库数据。
+
+# 模拟动作 + 真实 PostgreSQL，全客户全年报表
+.venv/bin/python scripts/optimize_orders.py --scenario customer_metrics_2025 \
+  --config-file .env.customer-metrics --fixture customer-aggregate \
+  > reports/customer_metrics_controlled_main.json
+
+# 同一数据和索引，仅改变客户范围为 customer_id=1，仍各采样 30 次
+.venv/bin/python scripts/optimize_orders.py --scenario customer_metrics_2025 \
+  --config-file .env.customer-metrics --fixture customer-aggregate --customer-scope narrow \
+  > reports/customer_metrics_controlled_narrow.json
+
+# 固定 INNER JOIN 负例；预期对账拒绝，计时与模型请求均为 0
+.venv/bin/python scripts/check_customer_metrics_negative.py --config-file .env.customer-metrics
+
+# 显式真实模式：一次请求，若模型选 no_rewrite 或失败则如实结束，不回退伪装为真实成果
+.venv/bin/python scripts/optimize_orders.py --scenario customer_metrics_2025 \
+  --config-file .env.customer-metrics --qwen > reports/customer_metrics_qwen_live.json
+
+# 无建议和格式错误的模拟回归，均不进行候选采样
+.venv/bin/python scripts/optimize_orders.py --scenario customer_metrics_2025 \
+  --config-file .env.customer-metrics --fixture customer-no-rewrite
+.venv/bin/python scripts/optimize_orders.py --scenario customer_metrics_2025 \
+  --config-file .env.customer-metrics --fixture customer-invalid
+
+CUSTOMER_METRICS_TEST_ENV=.env.customer-metrics ADVANCED_BENCHMARK_ENV=.env.customer-metrics \
+  .venv/bin/python -m pytest -q
+.venv/bin/python -m pip check
+git diff --check
+docker compose -p sql-agent-customer-metrics --env-file .env.customer-metrics \
+  -f compose.benchmarks.yaml stop
+```
+
+每对正确 SQL 在同一只读 REPEATABLE READ 快照中，对全部客户的 ID、订单数、成交额、时间及重复次数
+完整比较。通过后各预热一次、交替各 30 次，记录服务端 EXPLAIN Execution Time（TIMING OFF，
+不包含客户端传输）；P50 为中位数，P95 用最近秩法。另采集完整 timing-on 自然计划，单独记录订单节点
+与 SubPlan 的 actual rows/loops；loops 是执行器调用次数，不等于物理磁盘读取次数。
+60 秒语句超时、30 秒取数、120,000 行/64 MiB 预算；work_mem 为 4MB。区间重叠或退化仍推荐保留原查询。
+
+报告可离线重新生成，不连接数据库或模型：
+
+```bash
+.venv/bin/python scripts/summarize_customer_metrics.py --baseline ca0162f20370756ff3aa203ab7f59e2a4ff4ae70
+```
+
+真实与受控建议报告分开保存。完整命令、数据分布、原始 30 次样本、P50/P95、计划与可引用成果见
+`reports/customer_metrics_acceptance.md`。高级基准分支尚未合并时，应先合并 `test/advanced-sql-benchmarks`，
+再合并本场景分支；本轮不处理版本标签或 Release。

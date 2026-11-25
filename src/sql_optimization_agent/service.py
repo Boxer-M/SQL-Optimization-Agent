@@ -20,6 +20,7 @@ from sql_optimization_agent.sql_diff import attach_sql_diff
 
 ORDERS_DATE_SCENARIO = "orders_date_filter_2025_06_15"
 DEFAULT_ORDER_DATE = "2025-06-15"
+CUSTOMER_METRICS_SCENARIO = "customer_metrics_2025"
 
 
 class OptimizationService:
@@ -35,7 +36,16 @@ class OptimizationService:
         self.date_repair_enabled = date_repair_enabled
         self.enabled_scenarios = (ORDERS_DATE_SCENARIO,ORDER_ITEMS_SCENARIO) if enabled_scenarios is None else enabled_scenarios
 
-    def optimize(self, scenario: str, *, date: str | None = None, use_qwen: bool | None = None, repair_on_mismatch: bool = False) -> dict:
+    def optimize(self, scenario: str, *, date: str | None = None, use_qwen: bool | None = None, repair_on_mismatch: bool = False, customer_scope: str = "all") -> dict:
+        if scenario == CUSTOMER_METRICS_SCENARIO:
+            if scenario not in self.enabled_scenarios:
+                return attach_sql_diff(attach_recommendation(attach_assessment({'status':'unsupported_scenario','stage':'configuration','reason':'Customer metrics is disabled','model_requests':0,'benchmark':None})))
+            from sql_optimization_agent.customer_metrics import run
+            if date is not None or repair_on_mismatch or (not use_qwen and self.fixture is None):
+                return attach_sql_diff(attach_recommendation(attach_assessment({
+                    "status":"unsupported_mode","stage":"configuration","model_requests":0,"benchmark":None,
+                    "reason":"Customer metrics requires explicit --qwen or a customer fixture; date and repair flags are unsupported"})))
+            return run(self.config,scope=customer_scope,fixture=self.fixture,use_qwen=bool(use_qwen))
         if scenario == 'orders_date_interval':
             from sql_optimization_agent.date_interval import run, bounds
             try:

@@ -1,0 +1,22 @@
+{
+  "summary": "全量 pytest：352 passed，11 subtests passed，含真实 PostgreSQL 语义测试；1 条已有 Starlette/httpx 弃用警告。pip check、git diff --check 通过。离线 CI 不需要密钥或数据库，默认跳过 8 个显式本地集成用例。",
+  "baseline_sha": "ca0162f20370756ff3aa203ab7f59e2a4ff4ae70",
+  "pytest_passed": 352,
+  "subtests_passed": 11,
+  "real_model_requests": 1,
+  "model_request_counts": {
+    "qwen_live": 1,
+    "controlled_main": 0,
+    "controlled_narrow": 0,
+    "wrong_inner": 0,
+    "no_rewrite": 0,
+    "invalid": 0
+  },
+  "samples_per_timed_query": 30,
+  "main_customer_rows": 100004,
+  "dataset_repeat_identical": true,
+  "expected_pr_order": [
+    "test/advanced-sql-benchmarks",
+    "feat/customer-metrics-optimization"
+  ]
+}

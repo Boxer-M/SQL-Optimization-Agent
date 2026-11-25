@@ -14,3 +14,4 @@ dist/
 .env.workbench
 
 .env.advanced
+.env.customer-metrics

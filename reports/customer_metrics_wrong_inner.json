@@ -1,0 +1,138 @@
+{
+  "scenario": "customer_metrics_2025",
+  "customer_scope": "all",
+  "stage": "result_validation",
+  "status": "result_mismatch",
+  "source": "controlled_negative_inner_join",
+  "model_requests": 0,
+  "benchmark": null,
+  "diagnostic_context": {
+    "original_sql": "SELECT u.customer_id,\n (SELECT COUNT(*) FROM public.orders o WHERE o.customer_id=u.customer_id\n   AND o.created_at >= %s AND o.created_at < %s) AS order_count,\n (SELECT SUM(o.amount) FROM public.orders o WHERE o.customer_id=u.customer_id\n   AND o.created_at >= %s AND o.created_at < %s AND o.status='paid') AS revenue,\n (SELECT MAX(o.created_at) FROM public.orders o WHERE o.customer_id=u.customer_id\n   AND o.created_at >= %s AND o.created_at < %s) AS last_order_at\nFROM public.users u WHERE u.customer_id BETWEEN %s AND %s"
+  },
+  "candidate": {
+    "sql": "WITH customer_totals AS (\n SELECT customer_id,COUNT(*) AS order_count,\n   SUM(amount) FILTER (WHERE status='paid') AS revenue,MAX(created_at) AS last_order_at\n FROM public.orders WHERE created_at >= %s AND created_at < %s GROUP BY customer_id\n)\nSELECT u.customer_id,COALESCE(t.order_count,0)::bigint AS order_count,\n t.revenue,t.last_order_at\nFROM public.users u INNER JOIN customer_totals t ON t.customer_id=u.customer_id\nWHERE u.customer_id BETWEEN %s AND %s",
+    "params": [
+      {
+        "timestamp": "2025-01-01T00:00:00"
+      },
+      {
+        "timestamp": "2026-01-01T00:00:00"
+      },
+      1,
+      2147483647
+    ]
+  },
+  "sql": {
+    "original": "SELECT u.customer_id,\n (SELECT COUNT(*) FROM public.orders o WHERE o.customer_id=u.customer_id\n   AND o.created_at >= %s AND o.created_at < %s) AS order_count,\n (SELECT SUM(o.amount) FROM public.orders o WHERE o.customer_id=u.customer_id\n   AND o.created_at >= %s AND o.created_at < %s AND o.status='paid') AS revenue,\n (SELECT MAX(o.created_at) FROM public.orders o WHERE o.customer_id=u.customer_id\n   AND o.created_at >= %s AND o.created_at < %s) AS last_order_at\nFROM public.users u WHERE u.customer_id BETWEEN %s AND %s",
+    "candidate": "WITH customer_totals AS (\n SELECT customer_id,COUNT(*) AS order_count,\n   SUM(amount) FILTER (WHERE status='paid') AS revenue,MAX(created_at) AS last_order_at\n FROM public.orders WHERE created_at >= %s AND created_at < %s GROUP BY customer_id\n)\nSELECT u.customer_id,COALESCE(t.order_count,0)::bigint AS order_count,\n t.revenue,t.last_order_at\nFROM public.users u INNER JOIN customer_totals t ON t.customer_id=u.customer_id\nWHERE u.customer_id BETWEEN %s AND %s"
+  },
+  "parameters": {
+    "original": [
+      {
+        "timestamp": "2025-01-01T00:00:00"
+      },
+      {
+        "timestamp": "2026-01-01T00:00:00"
+      },
+      {
+        "timestamp": "2025-01-01T00:00:00"
+      },
+      {
+        "timestamp": "2026-01-01T00:00:00"
+      },
+      {
+        "timestamp": "2025-01-01T00:00:00"
+      },
+      {
+        "timestamp": "2026-01-01T00:00:00"
+      },
+      1,
+      2147483647
+    ],
+    "candidate": [
+      {
+        "timestamp": "2025-01-01T00:00:00"
+      },
+      {
+        "timestamp": "2026-01-01T00:00:00"
+      },
+      1,
+      2147483647
+    ]
+  },
+  "settings": {
+    "work_mem": "4MB",
+    "statement_timeout_ms": 60000,
+    "isolation": "repeatable read"
+  },
+  "budgets": {
+    "rows": 120000,
+    "bytes": 67108864,
+    "fetch_seconds": 30
+  },
+  "identity": {
+    "database": "sql_optimization",
+    "user": "sql_optimization_reader",
+    "read_only": "on",
+    "isolation": "repeatable read"
+  },
+  "comparison": {
+    "original_rows": 100004,
+    "candidate_rows": 100003,
+    "columns_equal": true,
+    "rows_and_multiplicities_equal": false,
+    "equivalent": false,
+    "reason": "Column metadata or full row multiplicities differ; performance test skipped",
+    "missing_from_candidate": [
+      {
+        "row": [
+          100002,
+          0,
+          null,
+          null
+        ],
+        "copies": 1
+      }
+    ],
+    "extra_in_candidate": [],
+    "columns": [
+      [
+        "customer_id",
+        23,
+        4,
+        null,
+        null
+      ],
+      [
+        "order_count",
+        20,
+        8,
+        null,
+        null
+      ],
+      [
+        "revenue",
+        1700,
+        null,
+        null,
+        null
+      ],
+      [
+        "last_order_at",
+        1114,
+        8,
+        null,
+        null
+      ]
+    ]
+  },
+  "timing_skipped": "Full customer metrics differ; no warmups or samples executed",
+  "performance_assessment": null,
+  "performance_assessment_skipped": "result_not_verified_or_original_retained",
+  "recommendation": {
+    "decision": "keep_original",
+    "reason_code": "candidate_rejected",
+    "advisory_only": true
+  },
+  "sql_diff": null
+}

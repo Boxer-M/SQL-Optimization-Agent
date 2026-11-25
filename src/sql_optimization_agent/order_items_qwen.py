@@ -29,7 +29,7 @@ MODEL_FIXTURES = {
 }
 
 
-def parse_advice(content: str) -> dict:
+def parse_advice(content: str, *, allowed_actions=('exists','no_rewrite')) -> dict:
     def unique(pairs):
         value={}
         for key,item in pairs:
@@ -42,8 +42,8 @@ def parse_advice(content: str) -> dict:
         raise QwenFailure('invalid_suggestion','Advice must be a JSON object without duplicate keys') from None
     if not isinstance(value,dict) or set(value)!={'action','reason'}:
         raise QwenFailure('invalid_suggestion','Advice accepts only action and reason; SQL and extra fields are forbidden')
-    if value['action'] not in ('exists','no_rewrite'):
-        raise QwenFailure('invalid_suggestion','Only exists and no_rewrite actions are supported')
+    if value['action'] not in allowed_actions:
+        raise QwenFailure('invalid_suggestion','Only '+' and '.join(allowed_actions)+' actions are supported')
     if not isinstance(value['reason'],str) or not value['reason'].strip() or len(value['reason'])>1000:
         raise QwenFailure('invalid_suggestion','Advice requires a nonempty reason of at most 1000 characters')
     return value
