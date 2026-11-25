@@ -1564,3 +1564,73 @@ python scripts/smoke_compose.py --image "$APP_IMAGE" --report compose-v021-publi
 
 本轮浏览器验收见 `reports/workbench_ui_acceptance.md`，混合批次及自然计划/原始样本见
 `reports/workbench_ui_batch.json`。前端使用现有 FastAPI 与 API，不引入前端构建工具或外部字体。
+
+### 独立复杂 JOIN 与大规模聚合基准
+
+本模块仅供隔离测试库，不接入工作台、公共场景或千问。固定候选定义在
+`src/sql_optimization_agent/benchmarks/advanced_queries.py`，造数 SQL 为
+`sql/seed_advanced_benchmarks.sql`。默认种子 `20261125`，以整数同余规则生成可复现数据，
+不依赖 PostgreSQL `random()` 或机器时间。新测试库保留订单/明细的原有列类型，扩展测试用
+商家、商品和数量字段，并补充 users、products、refunds。不迁移或重置日常优化库。
+
+首次使用创建独立环境文件（若文件已存在，本命令拒绝覆盖）：
+
+```bash
+python3.12 - <<'PY'
+from pathlib import Path
+import secrets
+p = Path('.env.advanced')
+with p.open('x') as f:
+    f.write('POSTGRES_HOST=127.0.0.1\nPOSTGRES_PORT=64620\nPOSTGRES_READER_USER=sql_optimization_reader\n')
+    f.write('POSTGRES_READER_PASSWORD=' + secrets.token_hex(24) + '\n')
+    f.write('ADVANCED_BENCHMARK_ADMIN_PASSWORD=' + secrets.token_hex(24) + '\n')
+p.chmod(0o600)
+PY
+# 先确认 64620 未被占用；冲突时只修改 .env.advanced 的端口。
+lsof -nP -iTCP:64620 -sTCP:LISTEN
+docker compose --env-file .env.advanced -f compose.benchmarks.yaml up -d --wait
+.venv/bin/python scripts/benchmark_advanced.py --env-file .env.advanced --initialize \
+  --sizes 300000 1000000 --seed 20261125 --report reports/advanced_sql_benchmarks.json
+```
+
+`--initialize` 仅允许为空库加隔离标记；未标记且非空的库一律拒绝。重复运行会替换**该隔离库**
+中的五张基准表数据，其他库和 Docker 卷不受影响。普通项目 `.env` 不会自动读取。
+完整矩阵包含重复造数一致性检查，运行期间不要对该测试库写入或并发跑其他实验。
+默认 60 秒语句超时，结果取数每条 30 秒、120,000 行和 64 MiB 预算。
+
+四组实验：
+
+- A：四表地区/品类汇总，对比直接 JOIN 与过滤订单、按订单/品类预聚合。核对金额、明细数、去重订单数，覆盖单日与全年范围。金额取明细数量乘商品价格；NULL 价格按 SQL SUM 语义处理。
+- B：仅统计日期范围内 `paid` 订单，以独立聚合销售额/退款额为正确基线，保留无交易用户，金额缺失输出 0。对比订单级预聚合；2×3 JOIN 放大和 WHERE 丢失无交易用户的两个错误候选必须在结果比较阶段拒绝，跳过采样。手工样本销售 30、退款 10，无交易用户 0/0。
+- C：300,000 / 1,000,000 基础订单，100 商家均匀分布或约 80% 集中于商家 1。分别按商家和 100,000 客户聚合，对比多余的二级分组与直接聚合；独立比较额外商家索引、64kB/4MB/64MB work_mem。索引实验不重新 ANALYZE 表，其他表统计及配置保持不变。
+- D：复用 A 的单日/全年采样，其他数据、索引及设置相同，观察收益边界；另用明确标注的固定计时样本验证区间重叠、退化时仍推荐 keep_original。
+
+每对查询在同一只读 REPEATABLE READ 快照中复用完整多重集/列元数据比较，保留 Decimal、
+NULL 和重复次数。正确后各预热一次、严格交替各 7 次；复用现有 Runner 的
+`EXPLAIN (ANALYZE, BUFFERS, TIMING OFF, FORMAT JSON)` 服务端执行时间，
+不包含客户端传输。记录 P50、最近秩 P95（7 个样本时就是最大值，不是稳定尾延迟估计）。
+另行采集 `EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON)` 的完整实际计划，不混入计时样本。
+计划保留父子路径、actual rows、loops、连接/聚合/排序节点、临时块和溢出信息。
+SQL 文本的表出现次序与执行器 outer/inner 连接拓扑分别记录；树的遍历次序不当作并行调度或哈希构建的时间线。
+本轮不测吞吐，不给出 QPS；性能判定只适用于本次自然计划、暖缓存、串行采样。
+
+语义回归另外使用只读 VALUES 夹具，验证同一订单/品类的三条明细合计 40、明细数 3、去重订单数 1，以及全 NULL 价格组 SUM 仍为 NULL，不改动正式采样数据。
+
+语义回归与停止命令：
+
+```bash
+ADVANCED_BENCHMARK_ENV=.env.advanced .venv/bin/python -m pytest -q
+# 不设置此变量时，CI 自动跳过专用 PostgreSQL 集成用例；纯逻辑测试照常运行。
+git diff --check
+docker compose --env-file .env.advanced -f compose.benchmarks.yaml stop
+```
+
+可离线重新生成阅读报告：
+
+```bash
+.venv/bin/python scripts/summarize_advanced_benchmarks.py reports/advanced_sql_benchmarks.json \
+  --output reports/advanced_sql_benchmarks.md
+```
+
+实测总表、原始样本、索引及复现环境见 `reports/advanced_sql_benchmarks.md` 与同名 JSON。
+真实千问请求为 0；v0.2.2 发布不由本基准分支触发。

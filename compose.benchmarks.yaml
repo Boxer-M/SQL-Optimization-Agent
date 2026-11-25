@@ -1,0 +1,17 @@
+name: sql-agent-advanced-bench
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: sql_optimization
+      POSTGRES_USER: sql_optimization_admin
+      POSTGRES_PASSWORD: ${ADVANCED_BENCHMARK_ADMIN_PASSWORD:?Set isolated admin password}
+    ports: ["127.0.0.1:${POSTGRES_PORT:-64620}:5432"]
+    volumes: [advanced_data:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sql_optimization_admin -d sql_optimization"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+volumes:
+  advanced_data:
